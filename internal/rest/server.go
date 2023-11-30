@@ -56,10 +56,8 @@ func NewServer(
 		}),
 	)
 
-	root := e.Group("/")
-
 	controllers.Register(
-		root,
+		e.Group("/api/v1"),
 		logger.With("module", "rest"),
 		authService,
 		userService,
