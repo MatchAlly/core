@@ -75,7 +75,7 @@ func NewServer(
 }
 
 func (s *Server) Start() error {
-	err := s.echo.Start(fmt.Sprintf("0.0.0.0:%d", s.port))
+	err := s.echo.Start(fmt.Sprintf("api-matchally.koyeb.app:%d", s.port))
 	if err != nil {
 		return errors.Wrap(err, "Failed to start server")
 	}
