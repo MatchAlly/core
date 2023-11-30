@@ -75,10 +75,13 @@ func NewServer(
 }
 
 func (s *Server) Start() error {
-	err := s.echo.Start(fmt.Sprintf("0.0.0.0:%d", s.port))
+	address := fmt.Sprintf("0.0.0.0:%d", s.port)
+	err := s.echo.Start(address)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start server")
 	}
+
+	fmt.Printf("Server listening on %s\n", address)
 
 	return nil
 }
