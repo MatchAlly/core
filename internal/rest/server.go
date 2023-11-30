@@ -58,7 +58,7 @@ func NewServer(
 	)
 
 	controllers.Register(
-		e.Group(""),
+		e.Group("/"),
 		logger.With("module", "rest"),
 		authService,
 		userService,
@@ -82,10 +82,6 @@ func (s *Server) Start() error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to start server")
 	}
-
-	s.logger.Infow("Server started",
-		"port", s.port,
-	)
 
 	return nil
 }
