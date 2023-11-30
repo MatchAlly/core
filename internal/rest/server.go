@@ -20,7 +20,7 @@ import (
 )
 
 type Config struct {
-	Port int `mapstructure:"port" default:"8001"`
+	Port int `mapstructure:"port" default:"8000"`
 }
 
 type Server struct {
@@ -56,7 +56,7 @@ func NewServer(
 		}),
 	)
 
-	root := e.Group("/api")
+	root := e.Group("/")
 
 	controllers.Register(
 		root,
