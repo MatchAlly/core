@@ -24,8 +24,9 @@ type Config struct {
 }
 
 type Server struct {
-	echo *echo.Echo
-	port int
+	echo   *echo.Echo
+	port   int
+	logger *zap.SugaredLogger
 }
 
 func NewServer(
@@ -69,8 +70,9 @@ func NewServer(
 	)
 
 	return &Server{
-		echo: e,
-		port: port,
+		echo:   e,
+		port:   port,
+		logger: logger,
 	}, nil
 }
 
@@ -81,7 +83,9 @@ func (s *Server) Start() error {
 		return errors.Wrap(err, "Failed to start server")
 	}
 
-	fmt.Printf("Server listening on %s\n", address)
+	s.logger.Infow("Server started",
+		"port", s.port,
+	)
 
 	return nil
 }
