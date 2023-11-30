@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:8.0.23
+    environment:
+      MYSQL_DATABASE: 'core'
+      MYSQL_USER: 'matchally'
+      MYSQL_PASSWORD: 'secret'
+      MYSQL_RANDOM_ROOT_PASSWORD: 'true'
+    ports:
+      - 3307:3306
+
+volumes:
+  db:
+    driver: local
