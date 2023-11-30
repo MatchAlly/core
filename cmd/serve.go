@@ -72,7 +72,6 @@ func serve(cmd *cobra.Command, args []string) {
 
 	// Initialize REST server
 	restServer, err := rest.NewServer(
-		config.Address,
 		config.Port,
 		l,
 		authenticationService,

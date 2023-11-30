@@ -15,7 +15,6 @@ const shutdownPeriod = 15 * time.Second
 type Config struct {
 	LogEnv        string        `env:"LOG_ENV"`
 	DBDSN         string        `env:"DB_DSN"`
-	Address       string        `env:"ADDRESS" envDefault:"0.0.0.0"`
 	Port          int           `env:"PORT" envDefault:"8000"`
 	JWTSecret     string        `env:"JWT_SECRET"`
 	JWTExpiration time.Duration `env:"JWT_EXPIRATION"`
