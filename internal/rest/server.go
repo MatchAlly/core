@@ -58,7 +58,7 @@ func NewServer(
 	)
 
 	controllers.Register(
-		e.Group("/"),
+		e.Group(""),
 		logger.With("module", "rest"),
 		authService,
 		userService,
