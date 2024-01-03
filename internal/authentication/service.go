@@ -18,9 +18,10 @@ type Config struct {
 
 type Service interface {
 	Login(ctx context.Context, email, password string) (valid bool, accessToken, refreshToken string, err error)
-	VerifyAccessToken(ctx context.Context, token string) (valid bool, claims *AccessClaims, err error)
-	RefreshTokenPair(ctx context.Context, refreshToken string) (accessToken, newRefreshToken string, err error)
 	Signup(ctx context.Context, email, username, password string) (success bool, err error)
+	VerifyAccessToken(ctx context.Context, token string) (valid bool, claims *AccessClaims, err error)
+	VerifyRefreshToken(ctx context.Context, token string) (valid bool, claims *RefreshClaims, err error)
+	RefreshTokens(ctx context.Context, refreshToken string) (newAccessToken, newRefreshToken string, err error)
 }
 
 type ServiceImpl struct {
@@ -51,7 +52,7 @@ func (s *ServiceImpl) Login(ctx context.Context, email string, password string) 
 
 	accessToken, refreshToken, err := s.generateTokenPair(user.Name, user.Id)
 	if err != nil {
-		return false, "", "", errors.Wrap(err, "failed to generate jwt")
+		return false, "", "", errors.Wrap(err, "failed to generate jwts")
 	}
 
 	return true, accessToken, refreshToken, nil
@@ -103,8 +104,8 @@ func (s *ServiceImpl) VerifyAccessToken(ctx context.Context, token string) (bool
 	return true, claims, nil
 }
 
-func (s *ServiceImpl) verifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (s *ServiceImpl) VerifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.secret), nil
 	})
 	if err != nil {
@@ -127,8 +128,8 @@ func (s *ServiceImpl) verifyRefreshToken(ctx context.Context, token string) (boo
 	return true, claims, nil
 }
 
-func (s *ServiceImpl) RefreshTokenPair(ctx context.Context, refreshToken string) (string, string, error) {
-	valid, claims, err := s.verifyRefreshToken(ctx, refreshToken)
+func (s *ServiceImpl) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
+	valid, claims, err := s.VerifyRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to verify refresh token")
 	}
@@ -160,17 +161,15 @@ func (s *ServiceImpl) generateTokenPair(name string, userId uint) (string, strin
 
 	userIdString := strconv.FormatUint(uint64(userId), 10)
 
-	accessStandardClaims := jwt.StandardClaims{
-		Subject:   userIdString,
-		IssuedAt:  now.Unix(),
-		NotBefore: now.Unix(),
-		ExpiresAt: now.Add(15 * time.Minute).Unix(),
-		Issuer:    "MatchAlly",
-	}
-
 	accessclaims := AccessClaims{
-		StandardClaims: accessStandardClaims,
-		Name:           name,
+		StandardClaims: jwt.StandardClaims{
+			Subject:   userIdString,
+			IssuedAt:  now.Unix(),
+			NotBefore: now.Unix(),
+			ExpiresAt: now.Add(15 * time.Minute).Unix(),
+			Issuer:    "MatchAlly",
+		},
+		Name: name,
 	}
 
 	accessTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, accessclaims)
@@ -179,15 +178,17 @@ func (s *ServiceImpl) generateTokenPair(name string, userId uint) (string, strin
 		return "", "", errors.Wrap(err, "failed to sign access token")
 	}
 
-	refreshStandardClaims := jwt.StandardClaims{
-		Subject:   userIdString,
-		IssuedAt:  now.Unix(),
-		NotBefore: now.Unix(),
-		ExpiresAt: now.Add(12 * time.Hour).Unix(),
-		Issuer:    "MatchAlly",
+	refreshClaims := RefreshClaims{
+		StandardClaims: jwt.StandardClaims{
+			Subject:   userIdString,
+			IssuedAt:  now.Unix(),
+			NotBefore: now.Unix(),
+			ExpiresAt: now.Add(12 * time.Hour).Unix(),
+			Issuer:    "MatchAlly",
+		},
 	}
 
-	refreshTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshStandardClaims)
+	refreshTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshTokenSigned, err := refreshTokenUnsigned.SignedString([]byte(s.secret))
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to sign refresh token")

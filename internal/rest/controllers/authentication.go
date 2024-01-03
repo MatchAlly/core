@@ -7,17 +7,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type loginRequest struct {
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+type loginResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 func (h *Handlers) Login(c echo.Context) error {
-	type loginRequest struct {
-		Email    string `json:"email" validate:"required"`
-		Password string `json:"password" validate:"required"`
-	}
-
-	type loginResponse struct {
-		AccessToken  string `json:"accessToken"`
-		RefreshToken string `json:"refreshToken"`
-	}
-
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[loginRequest](c)
@@ -31,7 +31,6 @@ func (h *Handlers) Login(c echo.Context) error {
 			"error", err)
 		return echo.ErrInternalServerError
 	}
-
 	if !correct {
 		return echo.ErrUnauthorized
 	}
@@ -44,16 +43,16 @@ func (h *Handlers) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+type refreshRequest struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
+}
+
+type refreshResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 func (h *Handlers) Refresh(c echo.Context) error {
-	type refreshRequest struct {
-		RefreshToken string `json:"refreshToken" validate:"required"`
-	}
-
-	type refreshResponse struct {
-		AccessToken  string `json:"accessToken"`
-		RefreshToken string `json:"refreshToken"`
-	}
-
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[refreshRequest](c)
@@ -61,9 +60,9 @@ func (h *Handlers) Refresh(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	accessToken, refreshToken, err := h.authService.RefreshTokenPair(ctx, req.RefreshToken)
+	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
 	if err != nil {
-		h.logger.Error("failed to generate refreshed token pair",
+		h.logger.Error("failed to generate new tokens",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -76,16 +75,17 @@ func (h *Handlers) Refresh(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+type signupRequest struct {
+	Email    string `json:"email" validate:"required"`
+	Name     string `json:"name" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
 func (h *Handlers) Signup(c echo.Context) error {
-	type request struct {
-		Email    string `json:"email" validate:"required"`
-		Name     string `json:"name" validate:"required"`
-		Password string `json:"password" validate:"required"`
-	}
 
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[request](c)
+	req, err := helpers.Bind[signupRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -96,7 +96,6 @@ func (h *Handlers) Signup(c echo.Context) error {
 			"error", err)
 		return echo.ErrInternalServerError
 	}
-
 	if !success {
 		return echo.ErrBadRequest
 	}
@@ -107,7 +106,6 @@ func (h *Handlers) Signup(c echo.Context) error {
 			"error", err)
 		return echo.ErrInternalServerError
 	}
-
 	if !exists {
 		return echo.ErrInternalServerError
 	}
