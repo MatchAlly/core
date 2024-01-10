@@ -28,15 +28,15 @@ func (h *Handlers) DeleteUser(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handlers) RemoveUserFromClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		UserId uint `param:"userId" validate:"required,gt=0"`
-		ClubId uint `param:"clubId" validate:"required,gt=0"`
-	}
+type removeUserFromClubRequest struct {
+	UserId uint `param:"userId" validate:"required,gt=0"`
+	ClubId uint `param:"clubId" validate:"required,gt=0"`
+}
 
+func (h *Handlers) RemoveUserFromClub(c handlers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[request](c)
+	req, err := helpers.Bind[removeUserFromClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -50,14 +50,14 @@ func (h *Handlers) RemoveUserFromClub(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handlers) AddVirtualUserToClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		Name string `json:"name" validate:"required"`
-	}
+type addVirtualUserToClubRequest struct {
+	Name string `json:"name" validate:"required"`
+}
 
+func (h *Handlers) AddVirtualUserToClub(c handlers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[request](c)
+	req, err := helpers.Bind[addVirtualUserToClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -67,28 +67,5 @@ func (h *Handlers) AddVirtualUserToClub(c handlers.AuthenticatedContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	return c.NoContent(http.StatusOK)
-}
-
-func (h *Handlers) RespondToInvite(c handlers.AuthenticatedContext) error {
-	/*
-		type request struct {
-			InviteId uint `param:"inviteId" validate:"required,gt=0"`
-			Accept   bool `json:"accept" validate:"required"`
-		}
-
-		ctx := c.Request().Context()
-
-		req, err := helpers.Bind[request](c)
-		if err != nil {
-			return echo.ErrBadRequest
-		}
-
-		if err := h.clubService.RespondToInvite(ctx, req.InviteId, req.Accept); err != nil {
-			h.logger.Error("failed to respond to invite",
-				"error", err)
-			return echo.ErrInternalServerError
-		}
-	*/
 	return c.NoContent(http.StatusOK)
 }

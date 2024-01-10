@@ -54,15 +54,15 @@ func Register(
 
 	// Authentication
 	authGroup := e.Group("/auth")
+	authGroup.POST("/signup", h.Signup)
 	authGroup.POST("/login", h.Login)
 	authGroup.POST("/refresh", h.Refresh)
-	authGroup.POST("/signup", h.Signup)
 
 	// Users
 	userGroup := e.Group("/user", authGuard)
-	userGroup.DELETE("/user", authHandler(h.DeleteUser))
-	userGroup.GET("/user/invites", authHandler(h.GetUserInvites))
-	userGroup.POST("/user/invites/:inviteId", authHandler(h.RespondToInvite))
+	userGroup.DELETE("", authHandler(h.DeleteUser))
+	userGroup.GET("/invites", authHandler(h.GetUserInvites))
+	//userGroup.POST("/invites/:inviteId", authHandler(h.RespondToInvite))
 
 	// Clubs
 	clubGroup := e.Group("/club", authGuard)

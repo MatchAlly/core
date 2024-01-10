@@ -10,14 +10,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handlers) CreateClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		Name string `json:"name" validate:"required"`
-	}
+type createClubRequest struct {
+	Name string `json:"name" validate:"required"`
+}
 
+func (h *Handlers) CreateClub(c handlers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[request](c)
+	req, err := helpers.Bind[createClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -39,17 +39,17 @@ func (h *Handlers) CreateClub(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-func (h *Handlers) DeleteClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		ClubId uint `json:"clubId" validate:"required,gt=0"`
-	}
+type deleteClubRequest struct {
+	ClubId uint `json:"clubId" validate:"required,gt=0"`
+}
 
-	req, err := helpers.Bind[request](c)
+func (h *Handlers) DeleteClub(c handlers.AuthenticatedContext) error {
+	ctx := c.Request().Context()
+
+	req, err := helpers.Bind[deleteClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
-
-	ctx := c.Request().Context()
 
 	if err := h.clubService.DeleteClub(ctx, req.ClubId); err != nil {
 		h.logger.Error("failed to delete Club",
@@ -60,18 +60,18 @@ func (h *Handlers) DeleteClub(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handlers) UpdateClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		ClubId uint   `json:"clubId" validate:"required,gt=0"`
-		Name   string `json:"name" validate:"required"`
-	}
+type updateClubRequest struct {
+	ClubId uint   `json:"clubId" validate:"required,gt=0"`
+	Name   string `json:"name" validate:"required"`
+}
 
-	req, err := helpers.Bind[request](c)
+func (h *Handlers) UpdateClub(c handlers.AuthenticatedContext) error {
+	ctx := c.Request().Context()
+
+	req, err := helpers.Bind[updateClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
-
-	ctx := c.Request().Context()
 
 	if err := h.clubService.UpdateClub(ctx, req.ClubId, req.Name); err != nil {
 		h.logger.Error("failed to update Club",
@@ -82,19 +82,19 @@ func (h *Handlers) UpdateClub(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handlers) UpdateUserRole(c handlers.AuthenticatedContext) error {
-	type request struct {
-		ClubId uint      `param:"clubId" validate:"required,gt=0"`
-		UserId uint      `param:"userId" validate:"required,gt=0"`
-		Role   club.Role `json:"role" validate:"required"`
-	}
+type updateUserRoleRequest struct {
+	ClubId uint      `param:"clubId" validate:"required,gt=0"`
+	UserId uint      `param:"userId" validate:"required,gt=0"`
+	Role   club.Role `json:"role" validate:"required"`
+}
 
-	req, err := helpers.Bind[request](c)
+func (h *Handlers) UpdateUserRole(c handlers.AuthenticatedContext) error {
+	ctx := c.Request().Context()
+
+	req, err := helpers.Bind[updateUserRoleRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
-
-	ctx := c.Request().Context()
 
 	if err := h.clubService.UpdateUserRole(ctx, req.UserId, req.ClubId, req.Role); err != nil {
 		h.logger.Error("failed to update user role",
@@ -105,25 +105,25 @@ func (h *Handlers) UpdateUserRole(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
+type getUsersInClubRequest struct {
+	ClubId uint `query:"clubId" validate:"required,gt=0"`
+}
+
+type userInClub struct {
+	Id    uint   `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+type getUsersInClubResponse struct {
+	Users []userInClub `json:"users"`
+}
+
 func (h *Handlers) GetUsersInClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		ClubId uint `query:"clubId" validate:"required,gt=0"`
-	}
-
-	type responseUser struct {
-		Id    uint   `json:"id"`
-		Name  string `json:"name"`
-		Email string `json:"email"`
-		Role  string `json:"role"`
-	}
-
-	type response struct {
-		Users []responseUser `json:"users"`
-	}
-
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[request](c)
+	req, err := helpers.Bind[getUsersInClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -142,33 +142,33 @@ func (h *Handlers) GetUsersInClub(c handlers.AuthenticatedContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	respUsers := make([]responseUser, len(users))
+	respUsers := make([]userInClub, len(users))
 	for i, u := range users {
-		respUsers[i] = responseUser{
+		respUsers[i] = userInClub{
 			Id:    u.Id,
 			Name:  u.Name,
 			Email: u.Email,
 		}
 	}
 
-	resp := response{
+	resp := getUsersInClubResponse{
 		Users: respUsers,
 	}
 
 	return c.JSON(http.StatusOK, resp)
 }
 
+type userInvitesClub struct {
+	Id     uint   `json:"id"`
+	ClubId uint   `json:"clubId"`
+	Name   string `json:"name"`
+}
+
+type userInvitesResponse struct {
+	Invites []userInvitesClub `json:"invites"`
+}
+
 func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
-	type responseClub struct {
-		Id     uint   `json:"id"`
-		ClubId uint   `json:"club_id"`
-		Name   string `json:"name"`
-	}
-
-	type response struct {
-		Invites []responseClub `json:"invites"`
-	}
-
 	ctx := c.Request().Context()
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
@@ -197,31 +197,31 @@ func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	invites := make([]responseClub, len(clubs))
+	invites := make([]userInvitesClub, len(clubs))
 	for i, c := range clubs {
-		invites[i] = responseClub{
+		invites[i] = userInvitesClub{
 			Id:     clubUsers[i].Id,
 			ClubId: c.Id,
 			Name:   c.Name,
 		}
 	}
 
-	resp := response{
+	resp := userInvitesResponse{
 		Invites: invites,
 	}
 
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handlers) InviteUsersToClub(c handlers.AuthenticatedContext) error {
-	type request struct {
-		ClubId uint     `json:"club_id"`
-		Emails []string `json:"emails"`
-	}
+type inviteUsersToClubRequest struct {
+	ClubId uint     `json:"clubId"`
+	Emails []string `json:"emails"`
+}
 
+func (h *Handlers) InviteUsersToClub(c handlers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[request](c)
+	req, err := helpers.Bind[inviteUsersToClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}

@@ -10,7 +10,7 @@ info:
     email: sebholmgaard@gmail.com
 
 servers:
-  - url: https://api.matchally.me
+  - url: https://api-matchally.koyeb.app/
   - url: "{scheme}://{host}{base}"
     description: Custom
     variables:
@@ -20,9 +20,9 @@ servers:
           - "http"
           - "https"
       host:
-        default: "localhost:8081"
+        default: "localhost:8080"
       base:
-        default: "/api"
+        default: ""
 
 tags:
   - name: Authorization endpoints
@@ -41,51 +41,14 @@ components:
       description: "Bearer token from MatchAlly"
 
 paths:
-  /login:
-    post:
-      operationId: Login
-      tags:
-        - Authorization endpoints
-      description: |
-        Endpoint for users to login to MatchAlly
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: "user@matchally.com"
-                password:
-                  type: string
-                  example: "password1234"
-      responses:
-        "200":
-          description: "Login successful"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  jwt:
-                    type: string
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "500":
-          description: "Internal Server Error"
-
-  /signup:
+  # Authorization endpoints
+  auth/signup:
     post:
       operationId: Signup
       tags:
         - Authorization endpoints
       description: |
-        Endpoint for users to signup to MatchAllu
+        Endpoint for users to signup to MatchAlly
       requestBody:
         required: true
         content:
@@ -110,6 +73,86 @@ paths:
         "500":
           description: "Internal Server Error"
 
+  auth/login:
+    post:
+      operationId: Login
+      tags:
+        - Authorization endpoints
+      description: |
+        Endpoint for users to login to MatchAlly
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@matchally.me"
+                password:
+                  type: string
+                  example: "password1234"
+      responses:
+        "200":
+          description: "Login successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                  refreshToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+        "500":
+          description: "Internal Server Error"
+
+  auth/refresh:
+    post:
+      operationId: Refresh
+      tags:
+        - Authorization endpoints
+      description: |
+        Endpoint for users refresh their access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+      responses:
+        "200":
+          description: "Refresh successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                  refreshToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+        "500":
+          description: "Internal Server Error"
+
+  # User endpoints
   /user:
     delete:
       operationId: DeleteUser
@@ -123,8 +166,6 @@ paths:
       responses:
         "200":
           description: "User deleted"
-        "400":
-          description: "Bad Request"
         "401":
           description: "Unauthorized"
         "500":
@@ -153,52 +194,18 @@ paths:
                     id:
                       type: integer
                       example: 123
-                    Club_id:
+                    clubId:
                       type: integer
                       example: 123
-        "400":
-          description: "Bad Request"
+                    name:
+                      type: string
+                      example: "The Best Club"
         "401":
           description: "Unauthorized"
         "500":
           description: "Internal Server Error"
 
-  /user/invites/{inviteId}:
-    post:
-      operationId: RespondToInvite
-      tags:
-        - User endpoints
-      security:
-        - JWT: []
-      description: |
-        Endpoint for responding to an invite.
-        Only the user themselves can respond to their invites.
-      parameters:
-        - in: path
-          name: inviteId
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                accept:
-                  type: boolean
-                  example: true
-      responses:
-        "200":
-          description: "Response successful"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "500":
-          description: "Internal Server Error"
-
+  # Club endpoints
   /Club/users:
     get:
       operationId: GetUsersInClub
@@ -235,7 +242,7 @@ paths:
         "500":
           description: "Internal Server Error"
 
-  /Club:
+  /club:
     put:
       operationId: UpdateClub
       tags:

@@ -129,13 +129,9 @@ func (s *ServiceImpl) VerifyRefreshToken(ctx context.Context, token string) (boo
 }
 
 func (s *ServiceImpl) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
-	valid, claims, err := s.VerifyRefreshToken(ctx, refreshToken)
+	_, claims, err := s.VerifyRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to verify refresh token")
-	}
-
-	if !valid {
-		return "", "", errors.New("refresh token is invalid")
 	}
 
 	userId, err := strconv.ParseUint(claims.Subject, 10, 64)

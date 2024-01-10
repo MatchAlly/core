@@ -60,6 +60,17 @@ func (h *Handlers) Refresh(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
+	valid, _, err := h.authService.VerifyRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		h.logger.Error("failed to verify refresh token",
+			"error", err)
+		return echo.ErrInternalServerError
+	}
+
+	if !valid {
+		return echo.ErrUnauthorized
+	}
+
 	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
 	if err != nil {
 		h.logger.Error("failed to generate new tokens",
