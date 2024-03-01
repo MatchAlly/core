@@ -11,6 +11,22 @@ services:
     ports:
       - 3307:3306
 
+  core:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    develop:
+      watch:
+        - action: rebuild
+          files:
+            - ./**/*.go
+            - ./go.mod
+            - ./go.sum
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+
 volumes:
-  db:
+  database:
     driver: local

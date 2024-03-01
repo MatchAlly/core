@@ -9,6 +9,35 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type updateUserRequest struct {
+	Email string `json:"userId" validate:"required,email"`
+	Name  string `json:"clubId" validate:"required,min=1,max=255"`
+}
+
+func (h *Handlers) UpdateUser(c handlers.AuthenticatedContext) error {
+	ctx := c.Request().Context()
+
+	req, err := helpers.Bind[updateUserRequest](c)
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
+	if err != nil {
+		h.logger.Error("failed to parse userId",
+			"error", err)
+		return echo.ErrInternalServerError
+	}
+
+	if err := h.userService.UpdateUser(ctx, uint(userId), req.Email, req.Name); err != nil {
+		h.logger.Error("failed to delete user",
+			"error", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
 func (h *Handlers) DeleteUser(c handlers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
@@ -28,44 +57,61 @@ func (h *Handlers) DeleteUser(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-type removeUserFromClubRequest struct {
-	UserId uint `param:"userId" validate:"required,gt=0"`
-	ClubId uint `param:"clubId" validate:"required,gt=0"`
+type invite struct {
+	Id     uint   `json:"id"`
+	ClubId uint   `json:"clubId"`
+	Name   string `json:"name"`
 }
 
-func (h *Handlers) RemoveUserFromClub(c handlers.AuthenticatedContext) error {
+type getUserInvitesResponse struct {
+	Invites []invite `json:"invites"`
+}
+
+func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
-	req, err := helpers.Bind[removeUserFromClubRequest](c)
+	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
 	if err != nil {
-		return echo.ErrBadRequest
-	}
-
-	if err := h.clubService.RemoveUserFromClub(ctx, req.UserId, req.ClubId); err != nil {
-		h.logger.Error("failed to remove user from Club",
+		h.logger.Error("failed to parse userId",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
-	return c.NoContent(http.StatusOK)
-}
-
-type addVirtualUserToClubRequest struct {
-	Name string `json:"name" validate:"required"`
-}
-
-func (h *Handlers) AddVirtualUserToClub(c handlers.AuthenticatedContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[addVirtualUserToClubRequest](c)
+	clubUsers, err := h.clubService.GetInvitesByUserId(ctx, uint(userId))
 	if err != nil {
-		return echo.ErrBadRequest
-	}
-	if err := h.userService.CreateVirtualUser(ctx, req.Name); err != nil {
-		h.logger.Error("failed to create virtual user",
+		h.logger.Error("failed to get user invites",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
-	return c.NoContent(http.StatusOK)
+	clubIds := make([]uint, len(clubUsers))
+	for i, clubUser := range clubUsers {
+		clubIds[i] = clubUser.ClubId
+	}
+
+	clubs, err := h.clubService.GetClubs(ctx, clubIds)
+	if err != nil {
+		h.logger.Error("failed to get Clubs",
+			"error", err)
+		return echo.ErrInternalServerError
+	}
+
+	invites := make([]invite, len(clubs))
+	for i, c := range clubs {
+		invites[i] = invite{
+			Id:     clubUsers[i].Id,
+			ClubId: c.Id,
+			Name:   c.Name,
+		}
+	}
+
+	resp := getUserInvitesResponse{
+		Invites: invites,
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handlers) RespondToInvite(c handlers.AuthenticatedContext) error {
+	return nil // TODO
 }

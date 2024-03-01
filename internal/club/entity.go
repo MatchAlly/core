@@ -20,7 +20,7 @@ type Club struct {
 	CreatedAt time.Time
 }
 
-type ClubsUsers struct {
+type Invite struct {
 	Id uint `gorm:"primaryKey"`
 
 	ClubId uint `gorm:"primaryKey"`

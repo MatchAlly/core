@@ -10,7 +10,7 @@ type Service interface {
 	GetClub(ctx context.Context, id uint) (*Club, error)
 	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
 	GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error)
-	GetInvitesByUserId(ctx context.Context, userId uint) ([]ClubsUsers, error)
+	GetInvitesByUserId(ctx context.Context, userId uint) ([]Invite, error)
 	InviteToClub(ctx context.Context, userIds []uint, clubId uint) error
 	CreateClub(ctx context.Context, name string, adminUserId uint) (clubId uint, err error)
 	RemoveUserFromClub(ctx context.Context, userId uint, clubId uint) error

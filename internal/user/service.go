@@ -12,9 +12,8 @@ type Service interface {
 	GetUserByEmail(ctx context.Context, email string) (exists bool, user *User, err error)
 	GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error)
 	CreateUser(ctx context.Context, email, name, hash string) error
-	CreateVirtualUser(ctx context.Context, name string) error
 	DeleteUser(ctx context.Context, id uint) error
-	UpdateUser(ctx context.Context, id uint, email, name, hash string, virtual bool) error
+	UpdateUser(ctx context.Context, id uint, email, name string) error
 }
 
 type ServiceImpl struct {
@@ -47,27 +46,13 @@ func (s *ServiceImpl) GetUsers(ctx context.Context, ids []uint) ([]*User, error)
 
 func (s *ServiceImpl) CreateUser(ctx context.Context, email, name, hash string) error {
 	user := &User{
-		Email:   email,
-		Name:    name,
-		Hash:    hash,
-		Virtual: false,
+		Email: email,
+		Name:  name,
+		Hash:  hash,
 	}
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {
 		return errors.Wrap(err, "failed to create user")
-	}
-
-	return nil
-}
-
-func (s *ServiceImpl) CreateVirtualUser(ctx context.Context, name string) error {
-	user := &User{
-		Name:    name,
-		Virtual: true,
-	}
-
-	if err := s.repo.CreateUser(ctx, user); err != nil {
-		return errors.Wrap(err, "failed to create virtual user")
 	}
 
 	return nil
@@ -103,13 +88,11 @@ func (s *ServiceImpl) DeleteUser(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (s *ServiceImpl) UpdateUser(ctx context.Context, id uint, email, name, hash string, virtual bool) error {
+func (s *ServiceImpl) UpdateUser(ctx context.Context, id uint, email, name string) error {
 	user := &User{
-		Id:      id,
-		Email:   email,
-		Name:    name,
-		Hash:    hash,
-		Virtual: virtual,
+		Id:    id,
+		Email: email,
+		Name:  name,
 	}
 
 	if err := s.repo.UpdateUser(ctx, user); err != nil {

@@ -158,61 +158,6 @@ func (h *Handlers) GetUsersInClub(c handlers.AuthenticatedContext) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-type userInvitesClub struct {
-	Id     uint   `json:"id"`
-	ClubId uint   `json:"clubId"`
-	Name   string `json:"name"`
-}
-
-type userInvitesResponse struct {
-	Invites []userInvitesClub `json:"invites"`
-}
-
-func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
-	ctx := c.Request().Context()
-
-	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
-	if err != nil {
-		h.logger.Error("failed to parse userId",
-			"error", err)
-		return echo.ErrInternalServerError
-	}
-
-	clubUsers, err := h.clubService.GetInvitesByUserId(ctx, uint(userId))
-	if err != nil {
-		h.logger.Error("failed to get user invites",
-			"error", err)
-		return echo.ErrInternalServerError
-	}
-
-	clubIds := make([]uint, len(clubUsers))
-	for i, clubUser := range clubUsers {
-		clubIds[i] = clubUser.ClubId
-	}
-
-	clubs, err := h.clubService.GetClubs(ctx, clubIds)
-	if err != nil {
-		h.logger.Error("failed to get Clubs",
-			"error", err)
-		return echo.ErrInternalServerError
-	}
-
-	invites := make([]userInvitesClub, len(clubs))
-	for i, c := range clubs {
-		invites[i] = userInvitesClub{
-			Id:     clubUsers[i].Id,
-			ClubId: c.Id,
-			Name:   c.Name,
-		}
-	}
-
-	resp := userInvitesResponse{
-		Invites: invites,
-	}
-
-	return c.JSON(http.StatusOK, resp)
-}
-
 type inviteUsersToClubRequest struct {
 	ClubId uint     `json:"clubId"`
 	Emails []string `json:"emails"`
@@ -240,6 +185,28 @@ func (h *Handlers) InviteUsersToClub(c handlers.AuthenticatedContext) error {
 
 	if err := h.clubService.InviteToClub(ctx, userIds, req.ClubId); err != nil {
 		h.logger.Error("failed to invite users to club",
+			"error", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+type removeUserFromClubRequest struct {
+	UserId uint `param:"userId" validate:"required,gt=0"`
+	ClubId uint `param:"clubId" validate:"required,gt=0"`
+}
+
+func (h *Handlers) RemoveUserFromClub(c handlers.AuthenticatedContext) error {
+	ctx := c.Request().Context()
+
+	req, err := helpers.Bind[removeUserFromClubRequest](c)
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	if err := h.clubService.RemoveUserFromClub(ctx, req.UserId, req.ClubId); err != nil {
+		h.logger.Error("failed to remove user from Club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}

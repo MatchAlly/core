@@ -19,7 +19,7 @@ type Repository interface {
 	GetClub(ctx context.Context, id uint) (*Club, error)
 	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
 	GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error)
-	GetInvitesByUserId(ctx context.Context, userId uint) ([]ClubsUsers, error)
+	GetInvitesByUserId(ctx context.Context, userId uint) ([]Invite, error)
 	InviteToClub(ctx context.Context, userIds []uint, clubId uint) error
 	CreateClub(ctx context.Context, Club *Club) (clubId uint, err error)
 	AddUserToClub(ctx context.Context, userId uint, clubId uint, role Role) error
@@ -66,7 +66,7 @@ func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 }
 
 func (r *repository) GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error) {
-	var clubUsers []ClubsUsers
+	var clubUsers []Invite
 	result := r.db.WithContext(ctx).
 		Where("Club_id = ?", id).
 		Find(&clubUsers)
@@ -82,8 +82,8 @@ func (r *repository) GetUserIdsInClub(ctx context.Context, id uint) ([]uint, err
 	return userIds, nil
 }
 
-func (r *repository) GetInvitesByUserId(ctx context.Context, userId uint) ([]ClubsUsers, error) {
-	var clubUsers []ClubsUsers
+func (r *repository) GetInvitesByUserId(ctx context.Context, userId uint) ([]Invite, error) {
+	var clubUsers []Invite
 	result := r.db.WithContext(ctx).
 		Where("user_id = ? AND accepted = ?", userId, false).
 		Find(&clubUsers)
@@ -110,7 +110,7 @@ func (r *repository) CreateClub(ctx context.Context, Club *Club) (uint, error) {
 }
 
 func (r *repository) AddUserToClub(ctx context.Context, userId uint, clubId uint, role Role) error {
-	clubUser := &ClubsUsers{
+	invite := &Invite{
 		ClubId:   clubId,
 		UserId:   userId,
 		Accepted: true,
@@ -118,7 +118,7 @@ func (r *repository) AddUserToClub(ctx context.Context, userId uint, clubId uint
 	}
 
 	result := r.db.WithContext(ctx).
-		Create(&clubUser)
+		Create(&invite)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -129,7 +129,7 @@ func (r *repository) AddUserToClub(ctx context.Context, userId uint, clubId uint
 func (r *repository) RemoveUserFromClub(ctx context.Context, userId uint, clubId uint) error {
 	result := r.db.WithContext(ctx).
 		Where("user_id = ? AND Club_id = ?", userId, clubId).
-		Delete(&ClubsUsers{})
+		Delete(&Invite{})
 	if result.Error != nil {
 		return result.Error
 	}

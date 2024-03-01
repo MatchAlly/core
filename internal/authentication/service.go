@@ -61,7 +61,7 @@ func (s *ServiceImpl) Login(ctx context.Context, email string, password string) 
 func (s *ServiceImpl) Signup(ctx context.Context, email string, username string, password string) (bool, error) {
 	exists, _, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to get user by email")
+		return false, errors.Wrap(err, "failed to check for existing user with email")
 	}
 
 	if exists {
