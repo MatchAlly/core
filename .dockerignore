@@ -1,8 +1,12 @@
 *
-!migrations
+!cmd
 !internal
+!migrations
 !pkg
+!.dockerignore
+!.env
+!Dockerfile
 !go.mod
 !go.sum
-!cmd
 !main.go
+

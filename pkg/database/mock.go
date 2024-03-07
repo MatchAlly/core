@@ -1,23 +1,13 @@
 package database
 
 import (
-	"database/sql/driver"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
-
-type AnyTime struct{}
-
-func (a AnyTime) Match(v driver.Value) bool {
-	_, ok := v.(time.Time)
-
-	return ok
-}
 
 func NewMockClient(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	t.Helper()

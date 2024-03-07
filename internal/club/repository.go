@@ -66,32 +66,32 @@ func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 }
 
 func (r *repository) GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error) {
-	var clubUsers []Invite
+	var invites []Invite
 	result := r.db.WithContext(ctx).
 		Where("Club_id = ?", id).
-		Find(&clubUsers)
+		Find(&invites)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	var userIds []uint
-	for _, clubUser := range clubUsers {
-		userIds = append(userIds, clubUser.UserId)
+	for _, invite := range invites {
+		userIds = append(userIds, invite.UserId)
 	}
 
 	return userIds, nil
 }
 
 func (r *repository) GetInvitesByUserId(ctx context.Context, userId uint) ([]Invite, error) {
-	var clubUsers []Invite
+	var invites []Invite
 	result := r.db.WithContext(ctx).
 		Where("user_id = ? AND accepted = ?", userId, false).
-		Find(&clubUsers)
+		Find(&invites)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return clubUsers, nil
+	return invites, nil
 }
 
 func (r *repository) CreateClub(ctx context.Context, Club *Club) (uint, error) {
@@ -161,8 +161,8 @@ func (r *repository) UpdateClub(ctx context.Context, id uint, name string) error
 
 func (r *repository) UpdateUserRole(ctx context.Context, userId uint, clubId uint, role Role) error {
 	result := r.db.WithContext(ctx).
-		Model(&ClubsUsers{}).
-		Where("user_id = ? AND Club_id = ?", userId, clubId).
+		Model(&Invite{}).
+		Where("user_id = ? AND club_id = ?", userId, clubId).
 		Update("role", role)
 	if result.Error != nil {
 		return result.Error
@@ -172,9 +172,9 @@ func (r *repository) UpdateUserRole(ctx context.Context, userId uint, clubId uin
 }
 
 func (r *repository) InviteToClub(ctx context.Context, userIds []uint, clubId uint) error {
-	var clubUsers []ClubsUsers
+	var invites []Invite
 	for _, userId := range userIds {
-		clubUsers = append(clubUsers, ClubsUsers{
+		invites = append(invites, Invite{
 			ClubId:   clubId,
 			UserId:   userId,
 			Accepted: false,
@@ -183,7 +183,7 @@ func (r *repository) InviteToClub(ctx context.Context, userIds []uint, clubId ui
 	}
 
 	result := r.db.WithContext(ctx).
-		Create(&clubUsers)
+		Create(&invites)
 	if result.Error != nil {
 		return result.Error
 	}

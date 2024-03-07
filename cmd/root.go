@@ -13,11 +13,11 @@ import (
 const shutdownPeriod = 15 * time.Second
 
 type Config struct {
-	LogEnv        string        `env:"LOG_ENV"`
-	DBDSN         string        `env:"DB_DSN"`
+	LogEnv        string        `env:"LOG_ENV" envDefault:"dev"`
+	DBDSN         string        `env:"DB_DSN" envDefault:"matchally:secret@tcp(host.docker.internal:3306)/core?charset=utf8&parseTime=True"`
 	Port          int           `env:"PORT" envDefault:"8000"`
-	JWTSecret     string        `env:"JWT_SECRET"`
-	JWTExpiration time.Duration `env:"JWT_EXPIRATION"`
+	JWTSecret     string        `env:"JWT_SECRET" envDefault:"secret"`
+	JWTExpiration time.Duration `env:"JWT_EXPIRATION" envDefault:"6h"`
 }
 
 var rootCmd = &cobra.Command{

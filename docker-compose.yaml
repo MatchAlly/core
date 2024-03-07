@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  database:
+  db:
     image: mysql:8.0.23
     environment:
       MYSQL_DATABASE: 'core'
@@ -9,7 +9,12 @@ services:
       MYSQL_PASSWORD: 'secret'
       MYSQL_RANDOM_ROOT_PASSWORD: 'true'
     ports:
-      - 3307:3306
+      - 3306:3306
+    healthcheck:
+            test: "mysql $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+            timeout: 5s
+            interval: 5s
+            retries: 10
 
   core:
     build:
@@ -25,8 +30,11 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      - database
+      db:
+        condition: service_healthy
+    links:
+      - db
 
 volumes:
-  database:
+  db:
     driver: local

@@ -2,6 +2,7 @@ package club
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -56,7 +57,7 @@ func (s *service) GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error)
 	return userIds, nil
 }
 
-func (s *service) GetInvitesByUserId(ctx context.Context, userId uint) ([]ClubsUsers, error) {
+func (s *service) GetInvitesByUserId(ctx context.Context, userId uint) ([]Invite, error) {
 	invites, err := s.repo.GetInvitesByUserId(ctx, userId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get user invites")
@@ -69,6 +70,8 @@ func (s *service) CreateClub(ctx context.Context, name string, adminUserId uint)
 	club := &Club{
 		Name: name,
 	}
+
+	fmt.Println("Creating club with name: ", name)
 
 	clubId, err := s.repo.CreateClub(ctx, club)
 	if err != nil {

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
@@ -17,7 +18,7 @@ func NewClient(ctx context.Context, dsn string) (*gorm.DB, error) {
 
 	db, err := gorm.Open(dialect, gormConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to database")
+		return nil, errors.Wrap(err, fmt.Sprintf("failed to connect to database, dsn: %s", dsn))
 	}
 
 	sqlDB, err := db.DB()

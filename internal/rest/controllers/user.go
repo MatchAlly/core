@@ -57,14 +57,14 @@ func (h *Handlers) DeleteUser(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-type invite struct {
+type responseInvite struct {
 	Id     uint   `json:"id"`
 	ClubId uint   `json:"clubId"`
 	Name   string `json:"name"`
 }
 
 type getUserInvitesResponse struct {
-	Invites []invite `json:"invites"`
+	Invites []responseInvite `json:"invites"`
 }
 
 func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
@@ -77,16 +77,16 @@ func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	clubUsers, err := h.clubService.GetInvitesByUserId(ctx, uint(userId))
+	invites, err := h.clubService.GetInvitesByUserId(ctx, uint(userId))
 	if err != nil {
 		h.logger.Error("failed to get user invites",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
-
-	clubIds := make([]uint, len(clubUsers))
-	for i, clubUser := range clubUsers {
-		clubIds[i] = clubUser.ClubId
+	// hello
+	clubIds := make([]uint, len(invites))
+	for i, invite := range invites {
+		clubIds[i] = invite.ClubId
 	}
 
 	clubs, err := h.clubService.GetClubs(ctx, clubIds)
@@ -96,17 +96,17 @@ func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	invites := make([]invite, len(clubs))
+	responseInvites := make([]responseInvite, len(clubs))
 	for i, c := range clubs {
-		invites[i] = invite{
-			Id:     clubUsers[i].Id,
+		responseInvites[i] = responseInvite{
+			Id:     invites[i].Id,
 			ClubId: c.Id,
 			Name:   c.Name,
 		}
 	}
 
 	resp := getUserInvitesResponse{
-		Invites: invites,
+		Invites: responseInvites,
 	}
 
 	return c.JSON(http.StatusOK, resp)
