@@ -1,8 +1,7 @@
-package controllers
+package handlers
 
 import (
-	"core/internal/rest/handlers"
-	"core/internal/rest/helpers"
+	"core/internal/api/helpers"
 	"net/http"
 	"strconv"
 
@@ -14,7 +13,7 @@ type updateUserRequest struct {
 	Name  string `json:"clubId" validate:"required,min=1,max=255"`
 }
 
-func (h *Handlers) UpdateUser(c handlers.AuthenticatedContext) error {
+func (h *Handler) UpdateUser(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[updateUserRequest](c)
@@ -38,7 +37,7 @@ func (h *Handlers) UpdateUser(c handlers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handlers) DeleteUser(c handlers.AuthenticatedContext) error {
+func (h *Handler) DeleteUser(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
@@ -67,7 +66,7 @@ type getUserInvitesResponse struct {
 	Invites []responseInvite `json:"invites"`
 }
 
-func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
+func (h *Handler) GetUserInvites(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
@@ -112,6 +111,6 @@ func (h *Handlers) GetUserInvites(c handlers.AuthenticatedContext) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handlers) RespondToInvite(c handlers.AuthenticatedContext) error {
+func (h *Handler) RespondToInvite(c helpers.AuthenticatedContext) error {
 	return nil // TODO
 }

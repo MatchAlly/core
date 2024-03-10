@@ -1,16 +1,10 @@
-package rest
+package api
 
 import (
 	"context"
+	"core/internal/api/handlers"
+	"core/internal/api/helpers"
 	"core/internal/authentication"
-	"core/internal/club"
-	"core/internal/leaderboard"
-	"core/internal/match"
-	"core/internal/rating"
-	"core/internal/rest/controllers"
-	"core/internal/rest/helpers"
-	"core/internal/statistic"
-	"core/internal/user"
 	"fmt"
 
 	"github.com/labstack/echo/v4"
@@ -20,7 +14,7 @@ import (
 )
 
 type Config struct {
-	Port int `mapstructure:"port" default:"8000"`
+	Port int `mapstructure:"port" default:"8080"`
 }
 
 type Server struct {
@@ -30,15 +24,10 @@ type Server struct {
 }
 
 func NewServer(
-	port int,
+	config Config,
 	logger *zap.SugaredLogger,
+	handler *handlers.Handler,
 	authService authentication.Service,
-	userService user.Service,
-	clubService club.Service,
-	matchService match.Service,
-	ratingService rating.Service,
-	statisticService statistic.Service,
-	leaderboardService leaderboard.Service,
 ) (*Server, error) {
 	e := echo.New()
 
@@ -57,29 +46,23 @@ func NewServer(
 		}),
 	)
 
-	controllers.Register(
+	Register(
+		handler,
 		e.Group(""),
-		logger.With("module", "rest"),
+		logger.With("module", "api"),
 		authService,
-		userService,
-		clubService,
-		matchService,
-		ratingService,
-		statisticService,
-		leaderboardService,
 	)
 
 	return &Server{
 		echo:   e,
-		port:   port,
+		port:   config.Port,
 		logger: logger,
 	}, nil
 }
 
 func (s *Server) Start() error {
 	address := fmt.Sprintf("0.0.0.0:%d", s.port)
-	err := s.echo.Start(address)
-	if err != nil {
+	if err := s.echo.Start(address); err != nil {
 		return errors.Wrap(err, "Failed to start server")
 	}
 
@@ -87,8 +70,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	err := s.echo.Shutdown(ctx)
-	if err != nil {
+	if err := s.echo.Shutdown(ctx); err != nil {
 		return errors.Wrap(err, "Failed to shutdown server")
 	}
 

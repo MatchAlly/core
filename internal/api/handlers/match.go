@@ -1,16 +1,15 @@
-package controllers
+package handlers
 
 import (
+	"core/internal/api/helpers"
 	"core/internal/match"
-	"core/internal/rest/handlers"
-	"core/internal/rest/helpers"
 	"core/internal/statistic"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handlers) PostMatch(c handlers.AuthenticatedContext) error {
+func (h *Handler) PostMatch(c helpers.AuthenticatedContext) error {
 	type request struct {
 		TeamA   []uint `json:"teamA" validate:"required"`
 		TeamB   []uint `json:"teamB" validate:"required"`

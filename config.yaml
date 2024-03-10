@@ -1,0 +1,13 @@
+log:
+  environment: dev
+
+database:
+  dsn: "postgresql://core:secret@]localhost:5432/core"
+
+api:
+  port: 8080
+
+authentication:
+  secret: "secret"
+  access_expirery: 3600 # 1 hour
+  refresh_expirery: 3600 # 1 hour

@@ -34,7 +34,7 @@ func (s *ServiceImpl) GetTopXAmongUserIdsByRating(ctx context.Context, topX int,
 }
 
 func (s *ServiceImpl) CreateRating(ctx context.Context, userId uint) error {
-	rating := Rating{
+	rating := &Rating{
 		UserId:     userId,
 		Value:      startRating,
 		Deviation:  maxDeviation,

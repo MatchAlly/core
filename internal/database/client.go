@@ -5,20 +5,22 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-func NewClient(ctx context.Context, dsn string) (*gorm.DB, error) {
-	dialect := mysql.Open(dsn)
+type Config struct {
+	DSN string `mapstructure:"dsn" validate:"required"`
+}
 
+func NewClient(ctx context.Context, config Config) (*gorm.DB, error) {
 	gormConfig := &gorm.Config{}
 	gormConfig.Logger = logger.Default.LogMode(logger.Silent)
 
-	db, err := gorm.Open(dialect, gormConfig)
+	db, err := gorm.Open(postgres.Open(config.DSN), gormConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to connect to database, dsn: %s", dsn))
+		return nil, errors.Wrap(err, fmt.Sprintf("failed to connect to database, dsn: %s", config.DSN))
 	}
 
 	sqlDB, err := db.DB()

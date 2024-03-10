@@ -2,16 +2,15 @@ version: '3.8'
 
 services:
   db:
-    image: mysql:8.0.23
-    environment:
-      MYSQL_DATABASE: 'core'
-      MYSQL_USER: 'matchally'
-      MYSQL_PASSWORD: 'secret'
-      MYSQL_RANDOM_ROOT_PASSWORD: 'true'
+    image: postgres:16.2
     ports:
-      - 3306:3306
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=core
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=core
     healthcheck:
-            test: "mysql $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+            test: ["CMD-SHELL", "pg_isready -d core -U core"]
             timeout: 5s
             interval: 5s
             retries: 10
@@ -20,13 +19,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    develop:
-      watch:
-        - action: rebuild
-          files:
-            - ./**/*.go
-            - ./go.mod
-            - ./go.sum
     ports:
       - 8080:8080
     depends_on:

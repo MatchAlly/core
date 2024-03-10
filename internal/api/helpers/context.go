@@ -1,4 +1,4 @@
-package handlers
+package helpers
 
 import (
 	"core/internal/authentication"
@@ -14,10 +14,10 @@ type AuthenticatedContext struct {
 	JWT    string
 }
 
-type AuthenticatedHandlerFunc func(ctx AuthenticatedContext) error
+type AuthenticatedContextFunc func(ctx AuthenticatedContext) error
 
-func AuthenticatedHandlerFactory(logger *zap.SugaredLogger) func(handler AuthenticatedHandlerFunc) func(ctx echo.Context) error {
-	return func(handler AuthenticatedHandlerFunc) func(ctx echo.Context) error {
+func AuthenticatedContextFactory(logger *zap.SugaredLogger) func(handler AuthenticatedContextFunc) func(ctx echo.Context) error {
+	return func(handler AuthenticatedContextFunc) func(ctx echo.Context) error {
 		return func(ctx echo.Context) error {
 			claims, ok := ctx.Get("jwt_claims").(*authentication.AccessClaims)
 			if !ok {

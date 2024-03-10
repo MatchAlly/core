@@ -1,15 +1,14 @@
-package controllers
+package handlers
 
 import (
+	"core/internal/api/helpers"
 	"core/internal/leaderboard"
-	"core/internal/rest/handlers"
-	"core/internal/rest/helpers"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handlers) GetLeaderboard(c handlers.AuthenticatedContext) error {
+func (h *Handler) GetLeaderboard(c helpers.AuthenticatedContext) error {
 	type request struct {
 		ClubId          uint                        `query:"clubId" validate:"required,gt=0"`
 		TopX            int                         `query:"topX" validate:"required,gt=0,lte=50"`

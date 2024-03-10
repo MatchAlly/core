@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
+	"core/internal/database"
 	"core/migrations"
-	"core/pkg/database"
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/spf13/cobra"
@@ -23,14 +23,16 @@ func init() { //nolint:gochecknoinits
 func migrate(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 
-	config := loadConfig()
-
-	l := GetLogger(config.LogEnv)
-
-	db, err := database.NewClient(ctx, config.DBDSN)
+	config, err := loadConfig()
 	if err != nil {
-		l.Fatal("failed to connect to database",
-			"error", err)
+		zap.L().Fatal("failed to read config", zap.Error(err))
+	}
+
+	l := GetLogger(config.Log)
+
+	db, err := database.NewClient(ctx, config.Database)
+	if err != nil {
+		l.Fatal("failed to connect to database", zap.Error(err))
 	}
 
 	m := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
@@ -38,9 +40,8 @@ func migrate(cmd *cobra.Command, args []string) {
 	})
 
 	if err = m.Migrate(); err != nil {
-		l.Fatal("Migration failed",
-			"error", err)
+		l.Fatal("Migration failed", zap.Error(err))
 	}
 
-	zap.L().Info("Migration finished successfully")
+	l.Info("Migration finished successfully")
 }

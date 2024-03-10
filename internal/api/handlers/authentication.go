@@ -1,7 +1,8 @@
-package controllers
+package handlers
 
 import (
-	"core/internal/rest/helpers"
+	"core/internal/api/helpers"
+
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -17,7 +18,7 @@ type loginResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-func (h *Handlers) Login(c echo.Context) error {
+func (h *Handler) Login(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[loginRequest](c)
@@ -52,7 +53,7 @@ type refreshResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-func (h *Handlers) Refresh(c echo.Context) error {
+func (h *Handler) Refresh(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[refreshRequest](c)
@@ -92,7 +93,7 @@ type signupRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-func (h *Handlers) Signup(c echo.Context) error {
+func (h *Handler) Signup(c echo.Context) error {
 
 	ctx := c.Request().Context()
 

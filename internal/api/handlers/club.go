@@ -1,9 +1,8 @@
-package controllers
+package handlers
 
 import (
+	"core/internal/api/helpers"
 	"core/internal/club"
-	"core/internal/rest/handlers"
-	"core/internal/rest/helpers"
 	"net/http"
 	"strconv"
 
@@ -14,7 +13,7 @@ type createClubRequest struct {
 	Name string `json:"name" validate:"required"`
 }
 
-func (h *Handlers) CreateClub(c handlers.AuthenticatedContext) error {
+func (h *Handler) CreateClub(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[createClubRequest](c)
@@ -43,7 +42,7 @@ type deleteClubRequest struct {
 	ClubId uint `json:"clubId" validate:"required,gt=0"`
 }
 
-func (h *Handlers) DeleteClub(c handlers.AuthenticatedContext) error {
+func (h *Handler) DeleteClub(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[deleteClubRequest](c)
@@ -65,7 +64,7 @@ type updateClubRequest struct {
 	Name   string `json:"name" validate:"required"`
 }
 
-func (h *Handlers) UpdateClub(c handlers.AuthenticatedContext) error {
+func (h *Handler) UpdateClub(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[updateClubRequest](c)
@@ -88,7 +87,7 @@ type updateUserRoleRequest struct {
 	Role   club.Role `json:"role" validate:"required"`
 }
 
-func (h *Handlers) UpdateUserRole(c handlers.AuthenticatedContext) error {
+func (h *Handler) UpdateUserRole(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[updateUserRoleRequest](c)
@@ -120,7 +119,7 @@ type getUsersInClubResponse struct {
 	Users []userInClub `json:"users"`
 }
 
-func (h *Handlers) GetUsersInClub(c handlers.AuthenticatedContext) error {
+func (h *Handler) GetUsersInClub(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[getUsersInClubRequest](c)
@@ -163,7 +162,7 @@ type inviteUsersToClubRequest struct {
 	Emails []string `json:"emails"`
 }
 
-func (h *Handlers) InviteUsersToClub(c handlers.AuthenticatedContext) error {
+func (h *Handler) InviteUsersToClub(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[inviteUsersToClubRequest](c)
@@ -197,7 +196,7 @@ type removeUserFromClubRequest struct {
 	ClubId uint `param:"clubId" validate:"required,gt=0"`
 }
 
-func (h *Handlers) RemoveUserFromClub(c handlers.AuthenticatedContext) error {
+func (h *Handler) RemoveUserFromClub(c helpers.AuthenticatedContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[removeUserFromClubRequest](c)

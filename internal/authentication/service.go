@@ -13,7 +13,9 @@ import (
 )
 
 type Config struct {
-	Secret string `mapstructure:"secret"`
+	Secret          string        `mapstructure:"secret" validate:"required"`
+	AccessExpirery  time.Duration `mapstructure:"access_expirery" validate:"required"`
+	RefreshExpirery time.Duration `mapstructure:"refresh_expirery" validate:"required"`
 }
 
 type Service interface {
@@ -25,13 +27,13 @@ type Service interface {
 }
 
 type ServiceImpl struct {
-	secret      string
+	config      Config
 	userService user.Service
 }
 
-func NewService(secret string, userService user.Service) Service {
+func NewService(config Config, userService user.Service) Service {
 	return &ServiceImpl{
-		secret:      secret,
+		config:      config,
 		userService: userService,
 	}
 }
@@ -82,7 +84,7 @@ func (s *ServiceImpl) Signup(ctx context.Context, email string, username string,
 
 func (s *ServiceImpl) VerifyAccessToken(ctx context.Context, token string) (bool, *AccessClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.secret), nil
+		return []byte(s.config.Secret), nil
 	})
 	if err != nil {
 		return false, nil, err
@@ -106,7 +108,7 @@ func (s *ServiceImpl) VerifyAccessToken(ctx context.Context, token string) (bool
 
 func (s *ServiceImpl) VerifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.secret), nil
+		return []byte(s.config.Secret), nil
 	})
 	if err != nil {
 		return false, nil, err
@@ -169,7 +171,7 @@ func (s *ServiceImpl) generateTokenPair(name string, userId uint) (string, strin
 	}
 
 	accessTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, accessclaims)
-	accessTokenSigned, err := accessTokenUnsigned.SignedString([]byte(s.secret))
+	accessTokenSigned, err := accessTokenUnsigned.SignedString([]byte(s.config.Secret))
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to sign access token")
 	}
@@ -185,7 +187,7 @@ func (s *ServiceImpl) generateTokenPair(name string, userId uint) (string, strin
 	}
 
 	refreshTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenSigned, err := refreshTokenUnsigned.SignedString([]byte(s.secret))
+	refreshTokenSigned, err := refreshTokenUnsigned.SignedString([]byte(s.config.Secret))
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to sign refresh token")
 	}

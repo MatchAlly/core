@@ -2,21 +2,22 @@ package cmd
 
 import (
 	"context"
+	"core/internal/api"
+	"core/internal/api/handlers"
 	"core/internal/authentication"
 	"core/internal/club"
+	"core/internal/database"
 	"core/internal/leaderboard"
 	"core/internal/match"
 	"core/internal/rating"
-	"core/internal/rest"
 	"core/internal/statistic"
 	"core/internal/user"
-	"core/pkg/database"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // serveCmd represents the serve command.
@@ -33,15 +34,17 @@ func init() { //nolint:gochecknoinits
 func serve(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 
-	config := loadConfig()
+	config, err := loadConfig()
+	if err != nil {
+		zap.L().Fatal("failed to read config", zap.Error(err))
+	}
 
-	l := GetLogger(config.LogEnv)
+	l := GetLogger(config.Log)
 
 	// Initialize database connection
-	db, err := database.NewClient(ctx, config.DBDSN)
+	db, err := database.NewClient(ctx, config.Database)
 	if err != nil {
-		l.Fatal("Failed to connect to database",
-			"error", err)
+		l.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
 	// Initialize User service
@@ -53,7 +56,7 @@ func serve(cmd *cobra.Command, args []string) {
 	clubService := club.NewService(clubRepository)
 
 	// Initialize Authentication service
-	authenticationService := authentication.NewService(config.JWTSecret, userService)
+	authenticationService := authentication.NewService(config.Authentication, userService)
 
 	// Initialize Match service
 	matchRepository := match.NewRepository(db)
@@ -70,41 +73,27 @@ func serve(cmd *cobra.Command, args []string) {
 	// Initialize Leaderboard service
 	leaderboardService := leaderboard.NewService(clubService, userService, ratingService, statisticService)
 
-	// Initialize REST server
-	restServer, err := rest.NewServer(
-		config.Port,
-		l,
-		authenticationService,
-		userService,
-		clubService,
-		matchService,
-		ratingService,
-		statisticService,
-		leaderboardService,
-	)
+	// Initialize API server
+	handler := handlers.NewHandler(l, authenticationService, userService, clubService, matchService, ratingService, statisticService, leaderboardService)
+	apiServer, err := api.NewServer(config.API, l, handler, authenticationService)
 	if err != nil {
-		l.Fatal("Failed to create rest server",
-			"error", err)
+		l.Fatal("Failed to create api server", zap.Error(err))
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	// Start the REST server
-	fmt.Println("starting server...")
-	l.Infow("REST server starting",
-		"port", config.Port)
+	// Start the API server
+	l.Info("API server starting", zap.Int("port", config.API.Port))
 	go func() {
-		if err := restServer.Start(); err != nil {
-			l.Fatal("Failed to start rest server",
-				"error", err)
+		if err := apiServer.Start(); err != nil {
+			l.Fatal("Failed to start api server", zap.Error(err))
 			cancel()
 		}
 	}()
 
 	l.Info("Ready")
 
-	fmt.Println("ready")
 	// Wait for shutdown signal
 	<-ctx.Done()
 
@@ -114,8 +103,7 @@ func serve(cmd *cobra.Command, args []string) {
 	shutdownctx, stop := context.WithTimeout(context.Background(), shutdownPeriod)
 	defer stop()
 
-	if err := restServer.Shutdown(shutdownctx); err != nil {
-		l.Error("Failed to shutdown rest server",
-			"error", err)
+	if err := apiServer.Shutdown(shutdownctx); err != nil {
+		l.Error("Failed to shutdown api server", zap.Error(err))
 	}
 }
