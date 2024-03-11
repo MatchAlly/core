@@ -12,6 +12,7 @@ import (
 	"core/internal/rating"
 	"core/internal/statistic"
 	"core/internal/user"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,7 +21,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// serveCmd represents the serve command.
 var serveCmd = &cobra.Command{
 	Use:  "serve",
 	Long: "Start the service",
@@ -47,30 +47,24 @@ func serve(cmd *cobra.Command, args []string) {
 		l.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
-	// Initialize User service
+	// Initialize Services
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 
-	// Initialize Club service
 	clubRepository := club.NewRepository(db)
 	clubService := club.NewService(clubRepository)
 
-	// Initialize Authentication service
 	authenticationService := authentication.NewService(config.Authentication, userService)
 
-	// Initialize Match service
 	matchRepository := match.NewRepository(db)
 	matchService := match.NewService(matchRepository)
 
-	// Initialize Rating service
 	ratingRepository := rating.NewRepository(db)
 	ratingService := rating.NewService(ratingRepository)
 
-	// Initialize Statistics service
 	statisticRepository := statistic.NewRepository(db)
 	statisticService := statistic.NewService(statisticRepository)
 
-	// Initialize Leaderboard service
 	leaderboardService := leaderboard.NewService(clubService, userService, ratingService, statisticService)
 
 	// Initialize API server
@@ -84,7 +78,7 @@ func serve(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	// Start the API server
-	l.Info("API server starting", zap.Int("port", config.API.Port))
+	l.Info("API server starting", zap.String("port", fmt.Sprint(config.API.Port)))
 	go func() {
 		if err := apiServer.Start(); err != nil {
 			l.Fatal("Failed to start api server", zap.Error(err))

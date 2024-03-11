@@ -20,14 +20,14 @@ import (
 const shutdownPeriod = 15 * time.Second
 
 type Config struct {
-	Log            LogConfig             `mapstructure:"database" validate:"dive"`
-	Database       database.Config       `mapstructure:"database" validate:"dive"`
-	API            api.Config            `mapstructure:"api" validate:"dive"`
-	Authentication authentication.Config `mapstructure:"authentication" validate:"dive"`
+	Log            LogConfig             `mapstructure:"log"`
+	Database       database.Config       `mapstructure:"database"`
+	API            api.Config            `mapstructure:"api"`
+	Authentication authentication.Config `mapstructure:"authentication"`
 }
 
 type LogConfig struct {
-	Environment string `mapstructure:"environment" validate:"required"`
+	Level string `mapstructure:"level" validate:"required"`
 }
 
 var rootCmd = &cobra.Command{
@@ -45,12 +45,15 @@ func init() { //nolint:gochecknoinits
 }
 
 func initConfig() {
+	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
-	if err := viper.ReadInConfig(); err != nil {
-		zap.L().Fatal("Failed to read config", zap.Error(err))
+
+	if err := viper.ReadInConfig(); err == nil {
+		zap.L().Info("Using config file", zap.String("file", viper.ConfigFileUsed()))
 	}
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	fmt.Println("init config done")
 }
 
 func loadConfig(configs ...string) (*Config, error) {
@@ -72,33 +75,25 @@ func loadConfig(configs ...string) (*Config, error) {
 		return !match.MatchString(strings.ToLower(string(ns)))
 	})
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
+	fmt.Println("load config done")
 	return &config, nil
 }
 
 func GetLogger(config LogConfig) *zap.SugaredLogger {
-	var logger *zap.Logger
-	var err error
-	switch config.Environment {
-	case "dev":
-		logger, err = zap.NewDevelopment()
-	case "prod":
-		logger, err = zap.NewProduction()
-	default:
-		logger, err = zap.NewProduction()
-	}
+	logger, err := zap.NewProduction()
 	if err != nil {
 		zap.L().Fatal("Failed to build logger", zap.Error(err))
 	}
 
-	logger.Info("Logger initialized", zap.String("environment", config.Environment))
+	logger.Info("Logger initialized", zap.String("level", config.Level))
 
 	return logger.Sugar()
 }
 
-// Adapted from https://github.com/spf13/viper/issues/188#issuecomment-401431526
 func bindEnvs(iface interface{}, parts ...string) {
 	ifv := reflect.ValueOf(iface)
 	ift := reflect.TypeOf(iface)

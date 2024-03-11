@@ -3,12 +3,12 @@ package user
 import (
 	"context"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
-const ErrCodeMySQLDuplicateEntry uint16 = 1062
+const UniqueViolationCode = pq.ErrorCode("23505")
 
 var (
 	ErrDuplicateEntry = errors.New("already exists")
@@ -76,8 +76,8 @@ func (r *RepositoryImpl) CreateUser(ctx context.Context, user *User) error {
 	result := r.db.WithContext(ctx).
 		Create(&user)
 	if result.Error != nil {
-		var mysqlErr *mysql.MySQLError
-		if errors.As(result.Error, &mysqlErr) && mysqlErr.Number == ErrCodeMySQLDuplicateEntry {
+		pgErr, ok := result.Error.(*pq.Error)
+		if ok && pgErr.Code == UniqueViolationCode {
 			return ErrDuplicateEntry
 		}
 
