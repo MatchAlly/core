@@ -13,7 +13,7 @@ type updateUserRequest struct {
 	Name  string `json:"clubId" validate:"required,min=1,max=255"`
 }
 
-func (h *Handler) UpdateUser(c helpers.AuthenticatedContext) error {
+func (h *Handler) UpdateUser(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[updateUserRequest](c)
@@ -23,13 +23,13 @@ func (h *Handler) UpdateUser(c helpers.AuthenticatedContext) error {
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
 	if err != nil {
-		h.logger.Error("failed to parse userId",
+		h.l.Error("failed to parse userId",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
 	if err := h.userService.UpdateUser(ctx, uint(userId), req.Email, req.Name); err != nil {
-		h.logger.Error("failed to delete user",
+		h.l.Error("failed to delete user",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -37,18 +37,18 @@ func (h *Handler) UpdateUser(c helpers.AuthenticatedContext) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handler) DeleteUser(c helpers.AuthenticatedContext) error {
+func (h *Handler) DeleteUser(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
 	if err != nil {
-		h.logger.Error("failed to parse userId",
+		h.l.Error("failed to parse userId",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
 	if err := h.userService.DeleteUser(ctx, uint(userId)); err != nil {
-		h.logger.Error("failed to delete user",
+		h.l.Error("failed to delete user",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -66,19 +66,19 @@ type getUserInvitesResponse struct {
 	Invites []responseInvite `json:"invites"`
 }
 
-func (h *Handler) GetUserInvites(c helpers.AuthenticatedContext) error {
+func (h *Handler) GetUserInvites(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
 	if err != nil {
-		h.logger.Error("failed to parse userId",
+		h.l.Error("failed to parse userId",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
 	invites, err := h.clubService.GetInvitesByUserId(ctx, uint(userId))
 	if err != nil {
-		h.logger.Error("failed to get user invites",
+		h.l.Error("failed to get user invites",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -90,7 +90,7 @@ func (h *Handler) GetUserInvites(c helpers.AuthenticatedContext) error {
 
 	clubs, err := h.clubService.GetClubs(ctx, clubIds)
 	if err != nil {
-		h.logger.Error("failed to get Clubs",
+		h.l.Error("failed to get Clubs",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -111,6 +111,6 @@ func (h *Handler) GetUserInvites(c helpers.AuthenticatedContext) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) RespondToInvite(c helpers.AuthenticatedContext) error {
+func (h *Handler) RespondToInvite(c helpers.AuthContext) error {
 	return nil // TODO
 }

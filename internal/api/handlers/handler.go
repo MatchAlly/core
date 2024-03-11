@@ -13,7 +13,7 @@ import (
 )
 
 type Handler struct {
-	logger             *zap.SugaredLogger
+	l                  *zap.SugaredLogger
 	authService        authentication.Service
 	userService        user.Service
 	clubService        club.Service
@@ -24,7 +24,7 @@ type Handler struct {
 }
 
 func NewHandler(
-	logger *zap.SugaredLogger,
+	l *zap.SugaredLogger,
 	authService authentication.Service,
 	userService user.Service,
 	clubService club.Service,
@@ -34,7 +34,7 @@ func NewHandler(
 	leaderboardService leaderboard.Service,
 ) *Handler {
 	return &Handler{
-		logger:             logger,
+		l:                  l,
 		authService:        authService,
 		userService:        userService,
 		clubService:        clubService,

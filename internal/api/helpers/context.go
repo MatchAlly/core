@@ -7,41 +7,41 @@ import (
 	"go.uber.org/zap"
 )
 
-type AuthenticatedContext struct {
+type AuthContext struct {
 	echo.Context
 	Log    *zap.SugaredLogger
 	Claims authentication.AccessClaims
 	JWT    string
 }
 
-type AuthenticatedContextFunc func(ctx AuthenticatedContext) error
+type AuthenticatedContextFunc func(ctx AuthContext) error
 
-func AuthenticatedContextFactory(logger *zap.SugaredLogger) func(handler AuthenticatedContextFunc) func(ctx echo.Context) error {
+func AuthenticatedContextFactory(l *zap.SugaredLogger) func(handler AuthenticatedContextFunc) func(ctx echo.Context) error {
 	return func(handler AuthenticatedContextFunc) func(ctx echo.Context) error {
 		return func(ctx echo.Context) error {
 			claims, ok := ctx.Get("jwt_claims").(*authentication.AccessClaims)
 			if !ok {
-				logger.Debug("missing jwt_claims")
+				l.Debug("missing jwt_claims")
 
 				return echo.ErrUnauthorized
 			}
 
 			jwt, ok := ctx.Get("jwt").(string)
 			if !ok {
-				logger.Debug("missing jwt")
+				l.Debug("missing jwt")
 
 				return echo.ErrUnauthorized
 			}
 
-			logger = logger.With(
+			l = l.With(
 				"user_id", claims.Subject,
 				"name", claims.Name,
 			)
 
-			return handler(AuthenticatedContext{
+			return handler(AuthContext{
 				Context: ctx,
 				Claims:  *claims,
-				Log:     logger,
+				Log:     l,
 				JWT:     jwt,
 			})
 		}

@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handler) GetLeaderboard(c helpers.AuthenticatedContext) error {
+func (h *Handler) GetLeaderboard(c helpers.AuthContext) error {
 	type request struct {
 		ClubId          uint                        `query:"clubId" validate:"required,gt=0"`
 		TopX            int                         `query:"topX" validate:"required,gt=0,lte=50"`
@@ -28,7 +28,7 @@ func (h *Handler) GetLeaderboard(c helpers.AuthenticatedContext) error {
 
 	leaderboard, err := h.leaderboardService.GetLeaderboard(ctx, req.ClubId, req.TopX, req.LeaderboardType)
 	if err != nil {
-		h.logger.Error("failed to get leaderboard",
+		h.l.Error("failed to get leaderboard",
 			"error", err)
 		return echo.ErrInternalServerError
 	}

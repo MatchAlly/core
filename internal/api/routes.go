@@ -10,8 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func Register(h *handlers.Handler, e *echo.Group, logger *zap.SugaredLogger, authService authentication.Service) {
-	authCtx := helpers.AuthenticatedContextFactory(logger)
+func Register(h *handlers.Handler, e *echo.Group, l *zap.SugaredLogger, authService authentication.Service) {
+	authCtx := helpers.AuthenticatedContextFactory(l)
 	authGuard := middleware.AuthGuard(authService)
 
 	// Authentication

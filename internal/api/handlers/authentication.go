@@ -28,7 +28,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	correct, accessToken, refreshToken, err := h.authService.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		h.logger.Error("failed to login",
+		h.l.Error("failed to login",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -63,7 +63,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 
 	valid, _, err := h.authService.VerifyRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		h.logger.Error("failed to verify refresh token",
+		h.l.Error("failed to verify refresh token",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -74,7 +74,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 
 	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
 	if err != nil {
-		h.logger.Error("failed to generate new tokens",
+		h.l.Error("failed to generate new tokens",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -104,7 +104,7 @@ func (h *Handler) Signup(c echo.Context) error {
 
 	success, err := h.authService.Signup(ctx, req.Email, req.Name, req.Password)
 	if err != nil {
-		h.logger.Error("failed to signup",
+		h.l.Error("failed to signup",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -114,7 +114,7 @@ func (h *Handler) Signup(c echo.Context) error {
 
 	exists, u, err := h.userService.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		h.logger.Error("failed to get user by email",
+		h.l.Error("failed to get user by email",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -123,7 +123,7 @@ func (h *Handler) Signup(c echo.Context) error {
 	}
 
 	if err = h.statisticService.CreateStatistic(ctx, u.Id); err != nil {
-		h.logger.Error("failed to create statistic",
+		h.l.Error("failed to create statistic",
 			"error", err)
 		return echo.ErrInternalServerError
 	}

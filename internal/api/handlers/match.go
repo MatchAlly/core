@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handler) PostMatch(c helpers.AuthenticatedContext) error {
+func (h *Handler) PostMatch(c helpers.AuthContext) error {
 	type request struct {
 		TeamA   []uint `json:"teamA" validate:"required"`
 		TeamB   []uint `json:"teamB" validate:"required"`
@@ -32,7 +32,7 @@ func (h *Handler) PostMatch(c helpers.AuthenticatedContext) error {
 	result, winners, losers := h.matchService.DetermineResult(ctx, req.TeamA, req.TeamB, req.ScoresA, req.ScoresB)
 
 	if err = h.matchService.CreateMatch(ctx, req.TeamA, req.TeamB, req.ScoresA, req.ScoresB, result); err != nil {
-		h.logger.Error("failed to create match",
+		h.l.Error("failed to create match",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -40,19 +40,19 @@ func (h *Handler) PostMatch(c helpers.AuthenticatedContext) error {
 	if result == match.Draw {
 		allPlayers := append(req.TeamA, req.TeamB...)
 		if err := h.statisticService.UpdateStatisticsByUserIds(ctx, allPlayers, statistic.ResultDraw); err != nil {
-			h.logger.Error("failed to update statistics for draw",
+			h.l.Error("failed to update statistics for draw",
 				"error", err)
 			return echo.ErrInternalServerError
 		}
 	} else {
 		if err := h.statisticService.UpdateStatisticsByUserIds(ctx, winners, statistic.ResultWin); err != nil {
-			h.logger.Error("failed to update statistics for winners",
+			h.l.Error("failed to update statistics for winners",
 				"error", err)
 			return echo.ErrInternalServerError
 		}
 
 		if err := h.statisticService.UpdateStatisticsByUserIds(ctx, losers, statistic.ResultLoss); err != nil {
-			h.logger.Error("failed to update statistics for losers",
+			h.l.Error("failed to update statistics for losers",
 				"error", err)
 			return echo.ErrInternalServerError
 		}
@@ -64,7 +64,7 @@ func (h *Handler) PostMatch(c helpers.AuthenticatedContext) error {
 
 	isDraw := result == match.Draw
 	if err := h.ratingService.UpdateRatings(ctx, isDraw, winners, losers); err != nil {
-		h.logger.Error("failed to update ratings",
+		h.l.Error("failed to update ratings",
 			"error", err)
 		return echo.ErrInternalServerError
 	}

@@ -18,14 +18,14 @@ type Config struct {
 }
 
 type Server struct {
-	echo   *echo.Echo
-	port   int
-	logger *zap.SugaredLogger
+	echo *echo.Echo
+	port int
+	l    *zap.SugaredLogger
 }
 
 func NewServer(
 	config Config,
-	logger *zap.SugaredLogger,
+	l *zap.SugaredLogger,
 	handler *handlers.Handler,
 	authService authentication.Service,
 ) (*Server, error) {
@@ -49,14 +49,14 @@ func NewServer(
 	Register(
 		handler,
 		e.Group(""),
-		logger.With("module", "api"),
+		l.With("module", "api"),
 		authService,
 	)
 
 	return &Server{
-		echo:   e,
-		port:   config.Port,
-		logger: logger,
+		echo: e,
+		port: config.Port,
+		l:    l,
 	}, nil
 }
 

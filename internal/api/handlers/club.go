@@ -13,7 +13,7 @@ type createClubRequest struct {
 	Name string `json:"name" validate:"required"`
 }
 
-func (h *Handler) CreateClub(c helpers.AuthenticatedContext) error {
+func (h *Handler) CreateClub(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[createClubRequest](c)
@@ -23,14 +23,14 @@ func (h *Handler) CreateClub(c helpers.AuthenticatedContext) error {
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
 	if err != nil {
-		h.logger.Error("failed to parse userId",
+		h.l.Error("failed to parse userId",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
 	_, err = h.clubService.CreateClub(ctx, req.Name, uint(userId))
 	if err != nil {
-		h.logger.Error("failed to create Club",
+		h.l.Error("failed to create Club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -42,7 +42,7 @@ type deleteClubRequest struct {
 	ClubId uint `json:"clubId" validate:"required,gt=0"`
 }
 
-func (h *Handler) DeleteClub(c helpers.AuthenticatedContext) error {
+func (h *Handler) DeleteClub(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[deleteClubRequest](c)
@@ -51,7 +51,7 @@ func (h *Handler) DeleteClub(c helpers.AuthenticatedContext) error {
 	}
 
 	if err := h.clubService.DeleteClub(ctx, req.ClubId); err != nil {
-		h.logger.Error("failed to delete Club",
+		h.l.Error("failed to delete Club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -64,7 +64,7 @@ type updateClubRequest struct {
 	Name   string `json:"name" validate:"required"`
 }
 
-func (h *Handler) UpdateClub(c helpers.AuthenticatedContext) error {
+func (h *Handler) UpdateClub(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[updateClubRequest](c)
@@ -73,7 +73,7 @@ func (h *Handler) UpdateClub(c helpers.AuthenticatedContext) error {
 	}
 
 	if err := h.clubService.UpdateClub(ctx, req.ClubId, req.Name); err != nil {
-		h.logger.Error("failed to update Club",
+		h.l.Error("failed to update Club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -87,7 +87,7 @@ type updateUserRoleRequest struct {
 	Role   club.Role `json:"role" validate:"required"`
 }
 
-func (h *Handler) UpdateUserRole(c helpers.AuthenticatedContext) error {
+func (h *Handler) UpdateUserRole(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[updateUserRoleRequest](c)
@@ -96,7 +96,7 @@ func (h *Handler) UpdateUserRole(c helpers.AuthenticatedContext) error {
 	}
 
 	if err := h.clubService.UpdateUserRole(ctx, req.UserId, req.ClubId, req.Role); err != nil {
-		h.logger.Error("failed to update user role",
+		h.l.Error("failed to update user role",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -119,7 +119,7 @@ type getUsersInClubResponse struct {
 	Users []userInClub `json:"users"`
 }
 
-func (h *Handler) GetUsersInClub(c helpers.AuthenticatedContext) error {
+func (h *Handler) GetUsersInClub(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[getUsersInClubRequest](c)
@@ -129,14 +129,14 @@ func (h *Handler) GetUsersInClub(c helpers.AuthenticatedContext) error {
 
 	userIds, err := h.clubService.GetUserIdsInClub(ctx, req.ClubId)
 	if err != nil {
-		h.logger.Error("failed to get userIds in Club",
+		h.l.Error("failed to get userIds in Club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
 
 	users, err := h.userService.GetUsers(ctx, userIds)
 	if err != nil {
-		h.logger.Error("failed to get users",
+		h.l.Error("failed to get users",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -162,7 +162,7 @@ type inviteUsersToClubRequest struct {
 	Emails []string `json:"emails"`
 }
 
-func (h *Handler) InviteUsersToClub(c helpers.AuthenticatedContext) error {
+func (h *Handler) InviteUsersToClub(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[inviteUsersToClubRequest](c)
@@ -172,7 +172,7 @@ func (h *Handler) InviteUsersToClub(c helpers.AuthenticatedContext) error {
 
 	users, err := h.userService.GetUsersByEmails(ctx, req.Emails)
 	if err != nil {
-		h.logger.Error("failed to get users by email",
+		h.l.Error("failed to get users by email",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -183,7 +183,7 @@ func (h *Handler) InviteUsersToClub(c helpers.AuthenticatedContext) error {
 	}
 
 	if err := h.clubService.InviteToClub(ctx, userIds, req.ClubId); err != nil {
-		h.logger.Error("failed to invite users to club",
+		h.l.Error("failed to invite users to club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}
@@ -196,7 +196,7 @@ type removeUserFromClubRequest struct {
 	ClubId uint `param:"clubId" validate:"required,gt=0"`
 }
 
-func (h *Handler) RemoveUserFromClub(c helpers.AuthenticatedContext) error {
+func (h *Handler) RemoveUserFromClub(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[removeUserFromClubRequest](c)
@@ -205,7 +205,7 @@ func (h *Handler) RemoveUserFromClub(c helpers.AuthenticatedContext) error {
 	}
 
 	if err := h.clubService.RemoveUserFromClub(ctx, req.UserId, req.ClubId); err != nil {
-		h.logger.Error("failed to remove user from Club",
+		h.l.Error("failed to remove user from Club",
 			"error", err)
 		return echo.ErrInternalServerError
 	}

@@ -84,14 +84,14 @@ func loadConfig(configs ...string) (*Config, error) {
 }
 
 func GetLogger(config LogConfig) *zap.SugaredLogger {
-	logger, err := zap.NewProduction()
+	l, err := zap.NewProduction()
 	if err != nil {
 		zap.L().Fatal("Failed to build logger", zap.Error(err))
 	}
 
-	logger.Info("Logger initialized", zap.String("level", config.Level))
+	l.Info("Logger initialized", zap.String("level", config.Level))
 
-	return logger.Sugar()
+	return l.Sugar()
 }
 
 func bindEnvs(iface interface{}, parts ...string) {
