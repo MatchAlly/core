@@ -76,7 +76,7 @@ func (h *Handler) GetUserInvites(c helpers.AuthContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	invites, err := h.clubService.GetInvitesByUserId(ctx, uint(userId))
+	invites, err := h.inviteService.GetInvitesByUserId(ctx, uint(userId))
 	if err != nil {
 		h.l.Error("failed to get user invites",
 			"error", err)
