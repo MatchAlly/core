@@ -12,17 +12,17 @@ type Service interface {
 	DetermineResult(ctx context.Context, teamA, teamB []uint, scoresA, scoresB []int) (result Result, winners []uint, losers []uint)
 }
 
-type ServiceImpl struct {
+type service struct {
 	repo Repository
 }
 
 func NewService(repo Repository) Service {
-	return &ServiceImpl{
+	return &service{
 		repo: repo,
 	}
 }
 
-func (s *ServiceImpl) CreateMatch(ctx context.Context, teamA, teamB []uint, scoresA, scoresB []int, result Result) error {
+func (s *service) CreateMatch(ctx context.Context, teamA, teamB []uint, scoresA, scoresB []int, result Result) error {
 	sets := make([]string, len(scoresA))
 	for i, scoreA := range scoresA {
 		sets[i] = fmt.Sprintf("%d-%d", scoreA, scoresB[i])
@@ -42,7 +42,7 @@ func (s *ServiceImpl) CreateMatch(ctx context.Context, teamA, teamB []uint, scor
 	return nil
 }
 
-func (s *ServiceImpl) DetermineResult(ctx context.Context, teamA, teamB []uint, scoresA, scoresB []int) (Result, []uint, []uint) {
+func (s *service) DetermineResult(ctx context.Context, teamA, teamB []uint, scoresA, scoresB []int) (Result, []uint, []uint) {
 	teamASetWins := 0
 	teamBSetWins := 0
 

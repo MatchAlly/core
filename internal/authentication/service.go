@@ -26,19 +26,19 @@ type Service interface {
 	RefreshTokens(ctx context.Context, refreshToken string) (newAccessToken, newRefreshToken string, err error)
 }
 
-type ServiceImpl struct {
+type service struct {
 	config      Config
 	userService user.Service
 }
 
 func NewService(config Config, userService user.Service) Service {
-	return &ServiceImpl{
+	return &service{
 		config:      config,
 		userService: userService,
 	}
 }
 
-func (s *ServiceImpl) Login(ctx context.Context, email string, password string) (bool, string, string, error) {
+func (s *service) Login(ctx context.Context, email string, password string) (bool, string, string, error) {
 	exists, user, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
 		return false, "", "", errors.Wrap(err, "failed to get user by email")
@@ -60,7 +60,7 @@ func (s *ServiceImpl) Login(ctx context.Context, email string, password string) 
 	return true, accessToken, refreshToken, nil
 }
 
-func (s *ServiceImpl) Signup(ctx context.Context, email string, username string, password string) (bool, error) {
+func (s *service) Signup(ctx context.Context, email string, username string, password string) (bool, error) {
 	exists, _, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to check for existing user with email")
@@ -82,7 +82,7 @@ func (s *ServiceImpl) Signup(ctx context.Context, email string, username string,
 	return true, nil
 }
 
-func (s *ServiceImpl) VerifyAccessToken(ctx context.Context, token string) (bool, *AccessClaims, error) {
+func (s *service) VerifyAccessToken(ctx context.Context, token string) (bool, *AccessClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.config.Secret), nil
 	})
@@ -106,7 +106,7 @@ func (s *ServiceImpl) VerifyAccessToken(ctx context.Context, token string) (bool
 	return true, claims, nil
 }
 
-func (s *ServiceImpl) VerifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
+func (s *service) VerifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.config.Secret), nil
 	})
@@ -130,7 +130,7 @@ func (s *ServiceImpl) VerifyRefreshToken(ctx context.Context, token string) (boo
 	return true, claims, nil
 }
 
-func (s *ServiceImpl) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
+func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
 	_, claims, err := s.VerifyRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to verify refresh token")
@@ -154,7 +154,7 @@ func (s *ServiceImpl) RefreshTokens(ctx context.Context, refreshToken string) (s
 	return accessToken, newRefreshToken, nil
 }
 
-func (s *ServiceImpl) generateTokenPair(name string, userId uint) (string, string, error) {
+func (s *service) generateTokenPair(name string, userId uint) (string, string, error) {
 	now := time.Now()
 
 	userIdString := strconv.FormatUint(uint64(userId), 10)

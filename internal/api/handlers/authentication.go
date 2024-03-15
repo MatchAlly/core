@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type loginRequest struct {
@@ -94,7 +95,6 @@ type signupRequest struct {
 }
 
 func (h *Handler) Signup(c echo.Context) error {
-
 	ctx := c.Request().Context()
 
 	req, err := helpers.Bind[signupRequest](c)
@@ -104,27 +104,21 @@ func (h *Handler) Signup(c echo.Context) error {
 
 	success, err := h.authService.Signup(ctx, req.Email, req.Name, req.Password)
 	if err != nil {
-		h.l.Error("failed to signup",
-			"error", err)
+		h.l.Error("failed to signup", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 	if !success {
+		h.l.Debug("cant sign up, user already exists", zap.String("name", req.Name))
 		return echo.ErrBadRequest
 	}
 
-	exists, u, err := h.userService.GetUserByEmail(ctx, req.Email)
+	exists, _, err := h.userService.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		h.l.Error("failed to get user by email",
-			"error", err)
+		h.l.Error("failed to get user by email", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 	if !exists {
-		return echo.ErrInternalServerError
-	}
-
-	if err = h.statisticService.CreateStatistic(ctx, u.Id); err != nil {
-		h.l.Error("failed to create statistic",
-			"error", err)
+		h.l.Debug("signed up user not found", zap.String("name", req.Name))
 		return echo.ErrInternalServerError
 	}
 

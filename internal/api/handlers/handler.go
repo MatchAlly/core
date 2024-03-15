@@ -3,7 +3,7 @@ package handlers
 import (
 	"core/internal/authentication"
 	"core/internal/club"
-	"core/internal/leaderboard"
+	"core/internal/invite"
 	"core/internal/match"
 	"core/internal/rating"
 	"core/internal/statistic"
@@ -13,14 +13,14 @@ import (
 )
 
 type Handler struct {
-	l                  *zap.SugaredLogger
-	authService        authentication.Service
-	userService        user.Service
-	clubService        club.Service
-	matchService       match.Service
-	ratingService      rating.Service
-	statisticService   statistic.Service
-	leaderboardService leaderboard.Service
+	l                *zap.SugaredLogger
+	authService      authentication.Service
+	userService      user.Service
+	clubService      club.Service
+	matchService     match.Service
+	ratingService    rating.Service
+	statisticService statistic.Service
+	inviteService    invite.Service
 }
 
 func NewHandler(
@@ -31,16 +31,15 @@ func NewHandler(
 	matchService match.Service,
 	ratingService rating.Service,
 	statisticService statistic.Service,
-	leaderboardService leaderboard.Service,
+	inviteService invite.Service,
 ) *Handler {
 	return &Handler{
-		l:                  l,
-		authService:        authService,
-		userService:        userService,
-		clubService:        clubService,
-		matchService:       matchService,
-		ratingService:      ratingService,
-		statisticService:   statisticService,
-		leaderboardService: leaderboardService,
+		l:                l,
+		authService:      authService,
+		userService:      userService,
+		clubService:      clubService,
+		matchService:     matchService,
+		ratingService:    ratingService,
+		statisticService: statisticService,
 	}
 }

@@ -16,17 +16,17 @@ type Service interface {
 	UpdateUser(ctx context.Context, id uint, email, name string) error
 }
 
-type ServiceImpl struct {
+type service struct {
 	repo Repository
 }
 
 func NewService(repo Repository) Service {
-	return &ServiceImpl{
+	return &service{
 		repo: repo,
 	}
 }
 
-func (s *ServiceImpl) GetUser(ctx context.Context, id uint) (*User, error) {
+func (s *service) GetUser(ctx context.Context, id uint) (*User, error) {
 	user, err := s.repo.GetUser(ctx, id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user %d", id)
@@ -35,7 +35,7 @@ func (s *ServiceImpl) GetUser(ctx context.Context, id uint) (*User, error) {
 	return user, nil
 }
 
-func (s *ServiceImpl) GetUsers(ctx context.Context, ids []uint) ([]*User, error) {
+func (s *service) GetUsers(ctx context.Context, ids []uint) ([]*User, error) {
 	users, err := s.repo.GetUsers(ctx, ids)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get users %v", ids)
@@ -44,7 +44,7 @@ func (s *ServiceImpl) GetUsers(ctx context.Context, ids []uint) ([]*User, error)
 	return users, nil
 }
 
-func (s *ServiceImpl) CreateUser(ctx context.Context, email, name, hash string) error {
+func (s *service) CreateUser(ctx context.Context, email, name, hash string) error {
 	user := &User{
 		Email: email,
 		Name:  name,
@@ -58,7 +58,7 @@ func (s *ServiceImpl) CreateUser(ctx context.Context, email, name, hash string) 
 	return nil
 }
 
-func (s *ServiceImpl) GetUserByEmail(ctx context.Context, email string) (bool, *User, error) {
+func (s *service) GetUserByEmail(ctx context.Context, email string) (bool, *User, error) {
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -71,7 +71,7 @@ func (s *ServiceImpl) GetUserByEmail(ctx context.Context, email string) (bool, *
 	return true, user, nil
 }
 
-func (s *ServiceImpl) GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error) {
+func (s *service) GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error) {
 	users, err := s.repo.GetUsersByEmails(ctx, emails)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get users by emails")
@@ -80,7 +80,7 @@ func (s *ServiceImpl) GetUsersByEmails(ctx context.Context, emails []string) ([]
 	return users, nil
 }
 
-func (s *ServiceImpl) DeleteUser(ctx context.Context, id uint) error {
+func (s *service) DeleteUser(ctx context.Context, id uint) error {
 	if err := s.repo.DeleteUser(ctx, id); err != nil {
 		return errors.Wrap(err, "failed to delete user by id")
 	}
@@ -88,7 +88,7 @@ func (s *ServiceImpl) DeleteUser(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (s *ServiceImpl) UpdateUser(ctx context.Context, id uint, email, name string) error {
+func (s *service) UpdateUser(ctx context.Context, id uint, email, name string) error {
 	user := &User{
 		Id:    id,
 		Email: email,

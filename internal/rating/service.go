@@ -14,17 +14,17 @@ type Service interface {
 	TransferRatings(ctx context.Context, fromUserId, toUserId uint) error
 }
 
-type ServiceImpl struct {
+type service struct {
 	repo Repository
 }
 
 func NewService(repo Repository) Service {
-	return &ServiceImpl{
+	return &service{
 		repo: repo,
 	}
 }
 
-func (s *ServiceImpl) GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) ([]uint, []int, error) {
+func (s *service) GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) ([]uint, []int, error) {
 	userIds, ratings, err := s.repo.GetTopXAmongUserIdsByRating(ctx, topX, userIds)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "failed to get top %d user ids by rating", topX)
@@ -33,7 +33,7 @@ func (s *ServiceImpl) GetTopXAmongUserIdsByRating(ctx context.Context, topX int,
 	return userIds, ratings, nil
 }
 
-func (s *ServiceImpl) CreateRating(ctx context.Context, userId uint) error {
+func (s *service) CreateRating(ctx context.Context, userId uint) error {
 	rating := &Rating{
 		UserId:     userId,
 		Value:      startRating,
@@ -48,7 +48,7 @@ func (s *ServiceImpl) CreateRating(ctx context.Context, userId uint) error {
 	return nil
 }
 
-func (s *ServiceImpl) UpdateRatings(ctx context.Context, draw bool, winningUserIds, losingUserIds []uint) error {
+func (s *service) UpdateRatings(ctx context.Context, draw bool, winningUserIds, losingUserIds []uint) error {
 	var updatedRatings []Rating
 
 	winnerRatings, err := s.repo.GetRatingsByUserIds(ctx, winningUserIds)
@@ -109,7 +109,7 @@ func (s *ServiceImpl) UpdateRatings(ctx context.Context, draw bool, winningUserI
 	return nil
 }
 
-func (s *ServiceImpl) TransferRatings(ctx context.Context, fromUserId, toUserId uint) error {
+func (s *service) TransferRatings(ctx context.Context, fromUserId, toUserId uint) error {
 	fromUserRating, err := s.repo.GetRatingByUserId(ctx, fromUserId)
 	if err != nil {
 		return errors.Wrap(err, "failed to get from user rating")
@@ -131,7 +131,7 @@ func (s *ServiceImpl) TransferRatings(ctx context.Context, fromUserId, toUserId 
 	return nil
 }
 
-func (s *ServiceImpl) getAverageRatingAndDeviation(ratings []Rating) (float64, float64) {
+func (s *service) getAverageRatingAndDeviation(ratings []Rating) (float64, float64) {
 	var totalRating, totalDeviation float64
 
 	for _, rating := range ratings {

@@ -5,11 +5,11 @@ type GameType string
 const (
 	FreeForAllGameType GameType = "ffa"
 	TeamGameType       GameType = "team"
-	CoopGameType       GameType = "coop"
 )
 
 type Game struct {
-	Id   uint     `gorm:"primaryKey"`
-	Name string   `gorm:"not null"`
-	Type GameType `gorm:"not null"`
+	Id     uint     `gorm:"primaryKey"`
+	ClubId uint     `gorm:"not null"`
+	Name   string   `gorm:"not null"`
+	Type   GameType `gorm:"not null"`
 }

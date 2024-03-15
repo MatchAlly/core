@@ -7,7 +7,7 @@ import (
 	"core/internal/authentication"
 	"core/internal/club"
 	"core/internal/database"
-	"core/internal/leaderboard"
+	"core/internal/invite"
 	"core/internal/match"
 	"core/internal/rating"
 	"core/internal/statistic"
@@ -65,10 +65,11 @@ func serve(cmd *cobra.Command, args []string) {
 	statisticRepository := statistic.NewRepository(db)
 	statisticService := statistic.NewService(statisticRepository)
 
-	leaderboardService := leaderboard.NewService(clubService, userService, ratingService, statisticService)
+	inviteRepository := invite.NewRepository(db)
+	inviteService := invite.NewService(inviteRepository)
 
 	// Initialize API server
-	handler := handlers.NewHandler(l, authenticationService, userService, clubService, matchService, ratingService, statisticService, leaderboardService)
+	handler := handlers.NewHandler(l, authenticationService, userService, clubService, matchService, ratingService, statisticService, inviteService)
 	apiServer, err := api.NewServer(config.API, l, handler, authenticationService)
 	if err != nil {
 		l.Fatal("Failed to create api server", zap.Error(err))

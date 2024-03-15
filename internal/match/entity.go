@@ -13,7 +13,8 @@ const (
 )
 
 type Match struct {
-	Id uint `gorm:"primaryKey"`
+	Id     uint `gorm:"primaryKey"`
+	ClubId uint `gorm:"not null"`
 
 	TeamA  []uint   `gorm:"serializer:json;not null"`
 	TeamB  []uint   `gorm:"serializer:json;not null"`

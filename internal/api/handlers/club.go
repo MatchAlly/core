@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type createClubRequest struct {
@@ -23,15 +24,13 @@ func (h *Handler) CreateClub(c helpers.AuthContext) error {
 
 	userId, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
 	if err != nil {
-		h.l.Error("failed to parse userId",
-			"error", err)
+		h.l.Error("failed to parse userId", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	_, err = h.clubService.CreateClub(ctx, req.Name, uint(userId))
 	if err != nil {
-		h.l.Error("failed to create Club",
-			"error", err)
+		h.l.Error("failed to create Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -51,8 +50,7 @@ func (h *Handler) DeleteClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.DeleteClub(ctx, req.ClubId); err != nil {
-		h.l.Error("failed to delete Club",
-			"error", err)
+		h.l.Error("failed to delete Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -73,8 +71,7 @@ func (h *Handler) UpdateClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.UpdateClub(ctx, req.ClubId, req.Name); err != nil {
-		h.l.Error("failed to update Club",
-			"error", err)
+		h.l.Error("failed to update Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -96,8 +93,7 @@ func (h *Handler) UpdateUserRole(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.UpdateUserRole(ctx, req.UserId, req.ClubId, req.Role); err != nil {
-		h.l.Error("failed to update user role",
-			"error", err)
+		h.l.Error("failed to update user role", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -129,15 +125,13 @@ func (h *Handler) GetUsersInClub(c helpers.AuthContext) error {
 
 	userIds, err := h.clubService.GetUserIdsInClub(ctx, req.ClubId)
 	if err != nil {
-		h.l.Error("failed to get userIds in Club",
-			"error", err)
+		h.l.Error("failed to get userIds in Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
 	users, err := h.userService.GetUsers(ctx, userIds)
 	if err != nil {
-		h.l.Error("failed to get users",
-			"error", err)
+		h.l.Error("failed to get users", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -172,8 +166,7 @@ func (h *Handler) InviteUsersToClub(c helpers.AuthContext) error {
 
 	users, err := h.userService.GetUsersByEmails(ctx, req.Emails)
 	if err != nil {
-		h.l.Error("failed to get users by email",
-			"error", err)
+		h.l.Error("failed to get users by email", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -183,8 +176,7 @@ func (h *Handler) InviteUsersToClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.InviteToClub(ctx, userIds, req.ClubId); err != nil {
-		h.l.Error("failed to invite users to club",
-			"error", err)
+		h.l.Error("failed to invite users to club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -205,8 +197,7 @@ func (h *Handler) RemoveUserFromClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.RemoveUserFromClub(ctx, req.UserId, req.ClubId); err != nil {
-		h.l.Error("failed to remove user from Club",
-			"error", err)
+		h.l.Error("failed to remove user from club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 

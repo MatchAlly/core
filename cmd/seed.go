@@ -7,7 +7,6 @@ import (
 	"core/internal/game"
 	"core/internal/match"
 	"core/internal/rating"
-	"core/internal/statistic"
 	"core/internal/user"
 	"encoding/json"
 	"os"
@@ -64,7 +63,6 @@ func seed(cmd *cobra.Command, args []string) {
 
 func seedUsers(ctx context.Context, db *gorm.DB, l *zap.SugaredLogger) error {
 	userRepo := user.NewRepository(db)
-	statisticRepo := statistic.NewRepository(db)
 
 	f, err := os.Open("internal/database/seeds/users.json")
 	if err != nil {
@@ -80,9 +78,6 @@ func seedUsers(ctx context.Context, db *gorm.DB, l *zap.SugaredLogger) error {
 	for _, u := range users {
 		if err := userRepo.CreateUser(ctx, &u); err != nil {
 			l.Error("failed to create user", zap.Error(err))
-		}
-		if err := statisticRepo.CreateStatistic(ctx, u.Id); err != nil {
-			l.Error("failed to create statistic", zap.Error(err))
 		}
 	}
 

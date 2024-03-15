@@ -1,6 +1,9 @@
 package club
 
 import (
+	"core/internal/game"
+	"core/internal/match"
+	"core/internal/user"
 	"time"
 )
 
@@ -17,35 +20,19 @@ type Club struct {
 
 	Name string `gorm:"not null"`
 
-	CreatedAt time.Time
-}
-
-type Invite struct {
-	Id uint `gorm:"primaryKey"`
-
-	ClubId uint `gorm:"primaryKey"`
-	UserId uint `gorm:"primaryKey"`
-
-	Accepted bool `gorm:"default:false"`
-	Role     Role `gorm:"default:member"`
+	Users   []user.User   `gorm:"many2many:user_clubs;"`
+	Games   []game.Game   `gorm:"constraint:OnDelete:CASCADE"`
+	Matches []match.Match `gorm:"constraint:OnDelete:CASCADE"`
 
 	CreatedAt time.Time
 }
 
-type ClubsGames struct {
+type Member struct {
 	Id uint `gorm:"primaryKey"`
 
-	ClubId uint `gorm:"primaryKey"`
-	GameId uint `gorm:"primaryKey"`
-
-	CreatedAt time.Time
-}
-
-type ClubsTournaments struct {
-	Id uint `gorm:"primaryKey"`
-
-	ClubId       uint `gorm:"primaryKey"`
-	TournamentId uint `gorm:"primaryKey"`
+	UserId uint `gorm:"not null"`
+	ClubId uint `gorm:"not null"`
+	Role   Role `gorm:"default:member"`
 
 	CreatedAt time.Time
 }

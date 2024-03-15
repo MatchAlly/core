@@ -26,17 +26,17 @@ type Repository interface {
 	UpdateUser(ctx context.Context, user *User) error
 }
 
-type RepositoryImpl struct {
+type repository struct {
 	db *gorm.DB
 }
 
 func NewRepository(db *gorm.DB) Repository {
-	return &RepositoryImpl{
+	return &repository{
 		db: db,
 	}
 }
 
-func (r *RepositoryImpl) GetUser(ctx context.Context, id uint) (*User, error) {
+func (r *repository) GetUser(ctx context.Context, id uint) (*User, error) {
 	var user *User
 	result := r.db.WithContext(ctx).
 		Where("id = ?", id).
@@ -48,7 +48,7 @@ func (r *RepositoryImpl) GetUser(ctx context.Context, id uint) (*User, error) {
 	return user, nil
 }
 
-func (r *RepositoryImpl) GetUsers(ctx context.Context, ids []uint) ([]*User, error) {
+func (r *repository) GetUsers(ctx context.Context, ids []uint) ([]*User, error) {
 	var users []*User
 	result := r.db.WithContext(ctx).
 		Where("id IN ?", ids).
@@ -60,7 +60,7 @@ func (r *RepositoryImpl) GetUsers(ctx context.Context, ids []uint) ([]*User, err
 	return users, nil
 }
 
-func (r *RepositoryImpl) GetUsersInClub(ctx context.Context, clubId uint) ([]User, error) {
+func (r *repository) GetUsersInClub(ctx context.Context, clubId uint) ([]User, error) {
 	var users []User
 	result := r.db.WithContext(ctx).
 		Where("club_id = ?", clubId).
@@ -72,7 +72,7 @@ func (r *RepositoryImpl) GetUsersInClub(ctx context.Context, clubId uint) ([]Use
 	return users, nil
 }
 
-func (r *RepositoryImpl) CreateUser(ctx context.Context, user *User) error {
+func (r *repository) CreateUser(ctx context.Context, user *User) error {
 	result := r.db.WithContext(ctx).
 		Create(&user)
 	if result.Error != nil {
@@ -87,7 +87,7 @@ func (r *RepositoryImpl) CreateUser(ctx context.Context, user *User) error {
 	return nil
 }
 
-func (r *RepositoryImpl) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
 	result := r.db.WithContext(ctx).
 		Where("email = ?", email).
@@ -103,7 +103,7 @@ func (r *RepositoryImpl) GetUserByEmail(ctx context.Context, email string) (*Use
 	return &user, nil
 }
 
-func (r *RepositoryImpl) GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error) {
+func (r *repository) GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error) {
 	var users []*User
 	result := r.db.WithContext(ctx).
 		Where("email IN ?", emails).
@@ -115,7 +115,7 @@ func (r *RepositoryImpl) GetUsersByEmails(ctx context.Context, emails []string) 
 	return users, nil
 }
 
-func (r *RepositoryImpl) DeleteUser(ctx context.Context, id uint) error {
+func (r *repository) DeleteUser(ctx context.Context, id uint) error {
 	result := r.db.WithContext(ctx).
 		Where("id = ?", id).
 		Delete(&User{})
@@ -126,7 +126,7 @@ func (r *RepositoryImpl) DeleteUser(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (r *RepositoryImpl) UpdateUser(ctx context.Context, user *User) error {
+func (r *repository) UpdateUser(ctx context.Context, user *User) error {
 	result := r.db.WithContext(ctx).
 		Model(&User{}).
 		Where("id = ?", user.Id).

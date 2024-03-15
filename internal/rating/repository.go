@@ -15,15 +15,15 @@ type Repository interface {
 	UpdateRatings(ctx context.Context, ratings []Rating) error
 }
 
-type RepositoryImpl struct {
+type repository struct {
 	db *gorm.DB
 }
 
 func NewRepository(db *gorm.DB) Repository {
-	return &RepositoryImpl{db: db}
+	return &repository{db: db}
 }
 
-func (r *RepositoryImpl) GetRatingByUserId(ctx context.Context, userId uint) (*Rating, error) {
+func (r *repository) GetRatingByUserId(ctx context.Context, userId uint) (*Rating, error) {
 	var rating Rating
 
 	result := r.db.WithContext(ctx).
@@ -36,7 +36,7 @@ func (r *RepositoryImpl) GetRatingByUserId(ctx context.Context, userId uint) (*R
 	return &rating, nil
 }
 
-func (r *RepositoryImpl) GetRatingsByUserIds(ctx context.Context, userIds []uint) ([]Rating, error) {
+func (r *repository) GetRatingsByUserIds(ctx context.Context, userIds []uint) ([]Rating, error) {
 	var ratings []Rating
 	result := r.db.WithContext(ctx).
 		Where("user_id IN ?", userIds).
@@ -48,7 +48,7 @@ func (r *RepositoryImpl) GetRatingsByUserIds(ctx context.Context, userIds []uint
 	return ratings, nil
 }
 
-func (r *RepositoryImpl) GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) ([]uint, []int, error) {
+func (r *repository) GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) ([]uint, []int, error) {
 	var topXUserIds []uint
 	var ratings []int
 
@@ -66,7 +66,7 @@ func (r *RepositoryImpl) GetTopXAmongUserIdsByRating(ctx context.Context, topX i
 	return topXUserIds, ratings, nil
 }
 
-func (r *RepositoryImpl) CreateRating(ctx context.Context, rating *Rating) error {
+func (r *repository) CreateRating(ctx context.Context, rating *Rating) error {
 	result := r.db.WithContext(ctx).
 		Create(rating)
 	if result.Error != nil {
@@ -76,7 +76,7 @@ func (r *RepositoryImpl) CreateRating(ctx context.Context, rating *Rating) error
 	return nil
 }
 
-func (r *RepositoryImpl) UpdateRatings(ctx context.Context, ratings []Rating) error {
+func (r *repository) UpdateRatings(ctx context.Context, ratings []Rating) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		for _, rating := range ratings {
 			result := tx.WithContext(ctx).
@@ -90,7 +90,7 @@ func (r *RepositoryImpl) UpdateRatings(ctx context.Context, ratings []Rating) er
 	})
 }
 
-func (r *RepositoryImpl) UpdateRating(ctx context.Context, rating *Rating) error {
+func (r *repository) UpdateRating(ctx context.Context, rating *Rating) error {
 	result := r.db.WithContext(ctx).
 		Model(&rating).
 		Updates(rating)
