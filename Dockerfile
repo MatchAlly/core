@@ -1,7 +1,7 @@
 FROM golang:1.22.2-alpine3.19 AS builder
 WORKDIR /build
 RUN apk add --no-cache build-base
-COPY ["go.mod", "go.sum", "./"]
+COPY go.* ./
 RUN go mod download -x
 COPY . .
 RUN  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /build/bin/service main.go
