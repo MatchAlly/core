@@ -2,7 +2,6 @@ package club
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -10,12 +9,12 @@ import (
 type Service interface {
 	GetClub(ctx context.Context, id uint) (*Club, error)
 	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
-	GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error)
+	GetMembers(ctx context.Context, id uint) ([]Member, error)
 	CreateClub(ctx context.Context, name string, adminUserId uint) (clubId uint, err error)
-	RemoveUserFromClub(ctx context.Context, userId uint, clubId uint) error
+	DeleteMember(ctx context.Context, memberId uint) error
 	DeleteClub(ctx context.Context, id uint) error
 	UpdateClub(ctx context.Context, id uint, name string) error
-	UpdateUserRole(ctx context.Context, userId uint, clubId uint, role Role) error
+	UpdateMemberRole(ctx context.Context, memberId uint, role Role) error
 }
 
 type service struct {
@@ -31,7 +30,7 @@ func NewService(repo Repository) Service {
 func (s *service) GetClub(ctx context.Context, id uint) (*Club, error) {
 	club, err := s.repo.GetClub(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get Club")
+		return nil, errors.Wrap(err, "failed to get club")
 	}
 
 	return club, nil
@@ -40,43 +39,41 @@ func (s *service) GetClub(ctx context.Context, id uint) (*Club, error) {
 func (s *service) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 	clubs, err := s.repo.GetClubs(ctx, ids)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get Clubs")
+		return nil, errors.Wrap(err, "failed to get clubs")
 	}
 
 	return clubs, nil
 }
 
-func (s *service) GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error) {
-	userIds, err := s.repo.GetUserIdsInClub(ctx, id)
+func (s *service) GetMembers(ctx context.Context, id uint) ([]Member, error) {
+	members, err := s.repo.GetMembers(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get userIds in Club")
+		return nil, errors.Wrap(err, "failed to get userIds in club")
 	}
 
-	return userIds, nil
+	return members, nil
 }
 
 func (s *service) CreateClub(ctx context.Context, name string, adminUserId uint) (uint, error) {
-	club := &Club{
+	c := &Club{
 		Name: name,
 	}
 
-	fmt.Println("Creating club with name: ", name)
-
-	clubId, err := s.repo.CreateClub(ctx, club)
+	clubId, err := s.repo.CreateClub(ctx, c)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to create Club")
+		return 0, errors.Wrap(err, "failed to create club")
 	}
 
 	if err := s.repo.AddUserToClub(ctx, adminUserId, clubId, AdminRole); err != nil {
-		return 0, errors.Wrap(err, "failed to add creating user to Club")
+		return 0, errors.Wrap(err, "failed to add creating user to club")
 	}
 
 	return clubId, nil
 }
 
-func (s *service) RemoveUserFromClub(ctx context.Context, userId uint, clubId uint) error {
-	if err := s.repo.RemoveUserFromClub(ctx, userId, clubId); err != nil {
-		return errors.Wrap(err, "failed to remove user from Club")
+func (s *service) DeleteMember(ctx context.Context, memberId uint) error {
+	if err := s.repo.DeleteMember(ctx, memberId); err != nil {
+		return errors.Wrap(err, "failed to delete member")
 	}
 
 	return nil
@@ -84,7 +81,7 @@ func (s *service) RemoveUserFromClub(ctx context.Context, userId uint, clubId ui
 
 func (s *service) DeleteClub(ctx context.Context, id uint) error {
 	if err := s.repo.DeleteClub(ctx, id); err != nil {
-		return errors.Wrap(err, "failed to delete Club")
+		return errors.Wrap(err, "failed to delete club")
 	}
 
 	return nil
@@ -92,15 +89,15 @@ func (s *service) DeleteClub(ctx context.Context, id uint) error {
 
 func (s *service) UpdateClub(ctx context.Context, id uint, name string) error {
 	if err := s.repo.UpdateClub(ctx, id, name); err != nil {
-		return errors.Wrap(err, "failed to update Club")
+		return errors.Wrap(err, "failed to update club")
 	}
 
 	return nil
 }
 
-func (s *service) UpdateUserRole(ctx context.Context, userId uint, clubId uint, role Role) error {
-	if err := s.repo.UpdateUserRole(ctx, userId, clubId, role); err != nil {
-		return errors.Wrap(err, "failed to update user role")
+func (s *service) UpdateMemberRole(ctx context.Context, memberId uint, role Role) error {
+	if err := s.repo.UpdateMemberRole(ctx, memberId, role); err != nil {
+		return errors.Wrap(err, "failed to update member role")
 	}
 
 	return nil

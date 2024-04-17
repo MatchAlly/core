@@ -3,7 +3,8 @@ package club
 import (
 	"core/internal/game"
 	"core/internal/match"
-	"core/internal/user"
+	"core/internal/rating"
+	"core/internal/statistic"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type Club struct {
 
 	Name string `gorm:"not null"`
 
-	Users   []user.User   `gorm:"many2many:user_clubs;"`
+	Members []Member      `gorm:"constraint:OnDelete:CASCADE"`
 	Games   []game.Game   `gorm:"constraint:OnDelete:CASCADE"`
 	Matches []match.Match `gorm:"constraint:OnDelete:CASCADE"`
 
@@ -30,9 +31,12 @@ type Club struct {
 type Member struct {
 	Id uint `gorm:"primaryKey"`
 
-	UserId uint `gorm:"not null"`
 	ClubId uint `gorm:"not null"`
 	Role   Role `gorm:"default:member"`
+	UserId uint `gorm:"not null"`
+
+	Statistics []statistic.Statistic `gorm:"constraint:OnDelete:CASCADE"`
+	Ratings    []rating.Rating       `gorm:"constraint:OnDelete:CASCADE"`
 
 	CreatedAt time.Time
 }

@@ -7,9 +7,9 @@ import (
 )
 
 type Repository interface {
-	GetRatingByUserId(ctx context.Context, userId uint) (*Rating, error)
-	GetRatingsByUserIds(ctx context.Context, userIds []uint) ([]Rating, error)
-	GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) (topXUserIds []uint, ratings []int, err error)
+	GetRatingByMemberId(ctx context.Context, memberId uint) (*Rating, error)
+	GetRatingsByMemberIds(ctx context.Context, memberIds []uint) ([]Rating, error)
+	GetTopMembersByRating(ctx context.Context, topX int, memberIds []uint) (topXMemberIds []uint, ratings []int, err error)
 	CreateRating(ctx context.Context, rating *Rating) error
 	UpdateRating(ctx context.Context, ratings *Rating) error
 	UpdateRatings(ctx context.Context, ratings []Rating) error
@@ -23,11 +23,11 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetRatingByUserId(ctx context.Context, userId uint) (*Rating, error) {
+func (r *repository) GetRatingByMemberId(ctx context.Context, memberId uint) (*Rating, error) {
 	var rating Rating
 
 	result := r.db.WithContext(ctx).
-		Where("user_id = ?", userId).
+		Where("member_id = ?", memberId).
 		First(&rating)
 	if result.Error != nil {
 		return nil, result.Error
@@ -36,10 +36,10 @@ func (r *repository) GetRatingByUserId(ctx context.Context, userId uint) (*Ratin
 	return &rating, nil
 }
 
-func (r *repository) GetRatingsByUserIds(ctx context.Context, userIds []uint) ([]Rating, error) {
+func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []uint) ([]Rating, error) {
 	var ratings []Rating
 	result := r.db.WithContext(ctx).
-		Where("user_id IN ?", userIds).
+		Where("member_id IN ?", memberIds).
 		Find(&ratings)
 	if result.Error != nil {
 		return nil, result.Error
@@ -48,22 +48,22 @@ func (r *repository) GetRatingsByUserIds(ctx context.Context, userIds []uint) ([
 	return ratings, nil
 }
 
-func (r *repository) GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) ([]uint, []int, error) {
-	var topXUserIds []uint
+func (r *repository) GetTopMembersByRating(ctx context.Context, topX int, memberIds []uint) ([]uint, []int, error) {
+	var topMemberIds []uint
 	var ratings []int
 
 	result := r.db.WithContext(ctx).
 		Model(&Rating{}).
 		Order("rating desc").
 		Limit(topX).
-		Pluck("user_id", &topXUserIds).
+		Pluck("member_id", &topMemberIds).
 		Pluck("value", &ratings).
-		Where("user_id IN ?", userIds)
+		Where("member_id IN ?", memberIds)
 	if result.Error != nil {
 		return nil, nil, result.Error
 	}
 
-	return topXUserIds, ratings, nil
+	return topMemberIds, ratings, nil
 }
 
 func (r *repository) CreateRating(ctx context.Context, rating *Rating) error {

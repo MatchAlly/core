@@ -8,9 +8,9 @@ import (
 
 type Service interface {
 	GetUser(ctx context.Context, id uint) (*User, error)
-	GetUsers(ctx context.Context, ids []uint) ([]*User, error)
+	GetUsers(ctx context.Context, ids []uint) ([]User, error)
 	GetUserByEmail(ctx context.Context, email string) (exists bool, user *User, err error)
-	GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error)
+	GetUsersByEmails(ctx context.Context, emails []string) ([]User, error)
 	CreateUser(ctx context.Context, email, name, hash string) error
 	DeleteUser(ctx context.Context, id uint) error
 	UpdateUser(ctx context.Context, id uint, email, name string) error
@@ -35,7 +35,7 @@ func (s *service) GetUser(ctx context.Context, id uint) (*User, error) {
 	return user, nil
 }
 
-func (s *service) GetUsers(ctx context.Context, ids []uint) ([]*User, error) {
+func (s *service) GetUsers(ctx context.Context, ids []uint) ([]User, error) {
 	users, err := s.repo.GetUsers(ctx, ids)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get users %v", ids)
@@ -71,7 +71,7 @@ func (s *service) GetUserByEmail(ctx context.Context, email string) (bool, *User
 	return true, user, nil
 }
 
-func (s *service) GetUsersByEmails(ctx context.Context, emails []string) ([]*User, error) {
+func (s *service) GetUsersByEmails(ctx context.Context, emails []string) ([]User, error) {
 	users, err := s.repo.GetUsersByEmails(ctx, emails)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get users by emails")

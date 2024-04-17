@@ -32,9 +32,9 @@ func Register(h *handlers.Handler, e *echo.Group, l *zap.SugaredLogger, authServ
 	clubs.POST("", authCtx(h.CreateClub))
 	clubs.PUT("", authCtx(h.UpdateClub))
 	clubs.DELETE("", authCtx(h.DeleteClub))
-	clubs.GET("/users", authCtx(h.GetUsersInClub))
-	clubs.DELETE("/users/:userId", authCtx(h.RemoveUserFromClub))
-	clubs.PUT("/users/:userId", authCtx(h.UpdateUserRole))
+	clubs.GET("/members", authCtx(h.GetMembersInClub))
+	clubs.DELETE("/members/:memberId", authCtx(h.RemoveUserFromClub))
+	clubs.PUT("/members/:memberId", authCtx(h.UpdateMemberRole))
 	clubs.POST("/invites", authCtx(h.InviteUsersToClub))
 	clubs.POST("/matches", authCtx(h.PostMatch))
 }

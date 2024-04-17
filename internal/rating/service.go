@@ -8,10 +8,9 @@ import (
 )
 
 type Service interface {
-	GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) (topXUserIds []uint, ratings []int, err error)
-	CreateRating(ctx context.Context, userId uint) error
-	UpdateRatings(ctx context.Context, draw bool, winningUserIds, losingUserIds []uint) error
-	TransferRatings(ctx context.Context, fromUserId, toUserId uint) error
+	GetTopMembersByRating(ctx context.Context, topX int, bemberIds []uint) (topXMemberIds []uint, ratings []int, err error)
+	CreateRating(ctx context.Context, memberId uint) error
+	UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []uint) error
 }
 
 type service struct {
@@ -24,18 +23,18 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) GetTopXAmongUserIdsByRating(ctx context.Context, topX int, userIds []uint) ([]uint, []int, error) {
-	userIds, ratings, err := s.repo.GetTopXAmongUserIdsByRating(ctx, topX, userIds)
+func (s *service) GetTopMembersByRating(ctx context.Context, topX int, memberIds []uint) ([]uint, []int, error) {
+	topMemberIds, ratings, err := s.repo.GetTopMembersByRating(ctx, topX, memberIds)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to get top %d user ids by rating", topX)
+		return nil, nil, errors.Wrapf(err, "failed to get top %d member ids by rating", topX)
 	}
 
-	return userIds, ratings, nil
+	return topMemberIds, ratings, nil
 }
 
-func (s *service) CreateRating(ctx context.Context, userId uint) error {
+func (s *service) CreateRating(ctx context.Context, memberId uint) error {
 	rating := &Rating{
-		UserId:     userId,
+		MemberId:   memberId,
 		Value:      startRating,
 		Deviation:  maxDeviation,
 		Volatility: startVolatility,
@@ -48,17 +47,17 @@ func (s *service) CreateRating(ctx context.Context, userId uint) error {
 	return nil
 }
 
-func (s *service) UpdateRatings(ctx context.Context, draw bool, winningUserIds, losingUserIds []uint) error {
+func (s *service) UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []uint) error {
 	var updatedRatings []Rating
 
-	winnerRatings, err := s.repo.GetRatingsByUserIds(ctx, winningUserIds)
+	winnerRatings, err := s.repo.GetRatingsByMemberIds(ctx, winningMemberIds)
 	if err != nil {
-		return errors.Wrap(err, "failed to get winning users")
+		return errors.Wrap(err, "failed to get winning members")
 	}
 
-	loserRatings, err := s.repo.GetRatingsByUserIds(ctx, losingUserIds)
+	loserRatings, err := s.repo.GetRatingsByMemberIds(ctx, losingMemberIds)
 	if err != nil {
-		return errors.Wrap(err, "failed to get losing users")
+		return errors.Wrap(err, "failed to get losing members")
 	}
 
 	winnerAverageRating, winnerAverageDeviation := s.getAverageRatingAndDeviation(winnerRatings)
@@ -103,28 +102,6 @@ func (s *service) UpdateRatings(ctx context.Context, draw bool, winningUserIds, 
 	}
 
 	if err := s.repo.UpdateRatings(ctx, updatedRatings); err != nil {
-		return errors.Wrap(err, "failed to update ratings")
-	}
-
-	return nil
-}
-
-func (s *service) TransferRatings(ctx context.Context, fromUserId, toUserId uint) error {
-	fromUserRating, err := s.repo.GetRatingByUserId(ctx, fromUserId)
-	if err != nil {
-		return errors.Wrap(err, "failed to get from user rating")
-	}
-
-	toUserRating, err := s.repo.GetRatingByUserId(ctx, toUserId)
-	if err != nil {
-		return errors.Wrap(err, "failed to get to user rating")
-	}
-
-	fromUserRating.UserId = toUserId
-	toUserRating.UserId = fromUserId
-
-	transferedRatings := []Rating{*fromUserRating, *toUserRating}
-	if err := s.repo.UpdateRatings(ctx, transferedRatings); err != nil {
 		return errors.Wrap(err, "failed to update ratings")
 	}
 

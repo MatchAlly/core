@@ -9,7 +9,7 @@ const (
 
 type Game struct {
 	Id     uint     `gorm:"primaryKey"`
-	ClubId uint     `gorm:"not null"`
+	ClubId uint     `gorm:"index;not null"`
 	Name   string   `gorm:"not null"`
 	Type   GameType `gorm:"not null"`
 }

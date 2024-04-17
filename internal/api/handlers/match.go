@@ -41,17 +41,17 @@ func (h *Handler) PostMatch(c helpers.AuthContext) error {
 
 	if result == match.Draw {
 		allPlayers := append(req.TeamA, req.TeamB...)
-		if err := h.statisticService.UpdateStatisticsByUserIds(ctx, allPlayers, req.GameId, statistic.ResultDraw); err != nil {
+		if err := h.statisticService.UpdateGameStatisticsByMemberIds(ctx, allPlayers, req.GameId, statistic.ResultDraw); err != nil {
 			h.l.Error("failed to update statistics for draw", zap.Error(err))
 			return echo.ErrInternalServerError
 		}
 	} else {
-		if err := h.statisticService.UpdateStatisticsByUserIds(ctx, winners, req.GameId, statistic.ResultWin); err != nil {
+		if err := h.statisticService.UpdateGameStatisticsByMemberIds(ctx, winners, req.GameId, statistic.ResultWin); err != nil {
 			h.l.Error("failed to update statistics for winners", zap.Error(err))
 			return echo.ErrInternalServerError
 		}
 
-		if err := h.statisticService.UpdateStatisticsByUserIds(ctx, losers, req.GameId, statistic.ResultLoss); err != nil {
+		if err := h.statisticService.UpdateGameStatisticsByMemberIds(ctx, losers, req.GameId, statistic.ResultLoss); err != nil {
 			h.l.Error("failed to update statistics for losers", zap.Error(err))
 			return echo.ErrInternalServerError
 		}

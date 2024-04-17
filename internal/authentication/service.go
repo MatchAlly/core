@@ -13,9 +13,9 @@ import (
 )
 
 type Config struct {
-	Secret          string        `mapstructure:"secret" validate:"required"`
-	AccessExpirery  time.Duration `mapstructure:"access_expirery" validate:"required"`
-	RefreshExpirery time.Duration `mapstructure:"refresh_expirery" validate:"required"`
+	Secret        string        `mapstructure:"secret" validate:"required"`
+	AccessExpiry  time.Duration `mapstructure:"access_expiry" validate:"required"`
+	RefreshExpiry time.Duration `mapstructure:"refresh_expiry" validate:"required"`
 }
 
 type Service interface {

@@ -10,6 +10,7 @@ type Repository interface {
 	GetInvitesByUserId(ctx context.Context, userId uint) ([]Invite, error)
 	GetInvitesByClubId(ctx context.Context, clubId uint) ([]Invite, error)
 	CreateInvite(ctx context.Context, userId, clubId uint) error
+	CreateInvites(ctx context.Context, userIds []uint, clubId uint) error
 }
 
 type repository struct {
@@ -54,6 +55,24 @@ func (r *repository) CreateInvite(ctx context.Context, userId, clubId uint) erro
 
 	result := r.db.WithContext(ctx).
 		Create(&invite)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func (r *repository) CreateInvites(ctx context.Context, userIds []uint, clubId uint) error {
+	invites := make([]Invite, len(userIds))
+	for i, userId := range userIds {
+		invites[i] = Invite{
+			UserId: userId,
+			ClubId: clubId,
+		}
+	}
+
+	result := r.db.WithContext(ctx).
+		Create(&invites)
 	if result.Error != nil {
 		return result.Error
 	}

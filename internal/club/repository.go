@@ -18,13 +18,13 @@ var (
 type Repository interface {
 	GetClub(ctx context.Context, id uint) (*Club, error)
 	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
-	GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error)
+	GetMembers(ctx context.Context, id uint) ([]Member, error)
 	CreateClub(ctx context.Context, Club *Club) (clubId uint, err error)
 	AddUserToClub(ctx context.Context, userId uint, clubId uint, role Role) error
-	RemoveUserFromClub(ctx context.Context, userId uint, clubId uint) error
+	DeleteMember(ctx context.Context, memberId uint) error
 	DeleteClub(ctx context.Context, id uint) error
 	UpdateClub(ctx context.Context, id uint, name string) error
-	UpdateUserRole(ctx context.Context, userId uint, clubId uint, role Role) error
+	UpdateMemberRole(ctx context.Context, memberId uint, role Role) error
 }
 
 type repository struct {
@@ -38,9 +38,9 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) GetClub(ctx context.Context, id uint) (*Club, error) {
-	var club Club
+	var c Club
 	result := r.db.WithContext(ctx).
-		First(&club, id)
+		First(&c, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
@@ -49,7 +49,7 @@ func (r *repository) GetClub(ctx context.Context, id uint) (*Club, error) {
 		return nil, result.Error
 	}
 
-	return &club, nil
+	return &c, nil
 }
 
 func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
@@ -63,26 +63,23 @@ func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 	return clubs, nil
 }
 
-func (r *repository) GetUserIdsInClub(ctx context.Context, id uint) ([]uint, error) {
-	var club Club
+func (r *repository) GetMembers(ctx context.Context, id uint) ([]Member, error) {
+	var members []Member
 	result := r.db.WithContext(ctx).
-		Preload("Users").
-		First(&club, id)
+		Model(&Member{}).
+		Where("club_id = ?", id).
+		Find(&members)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	userIds := make([]uint, len(club.Users))
-	for i, u := range club.Users {
-		userIds[i] = u.Id
-	}
-
-	return userIds, nil
+	return members, nil
 }
 
-func (r *repository) CreateClub(ctx context.Context, Club *Club) (uint, error) {
+func (r *repository) CreateClub(ctx context.Context, c *Club) (uint, error) {
 	result := r.db.WithContext(ctx).
-		Create(&Club)
+		Create(&c)
 	if result.Error != nil {
 		pgErr, ok := result.Error.(*pq.Error)
 		if ok && pgErr.Code == UniqueViolationCode {
@@ -92,15 +89,33 @@ func (r *repository) CreateClub(ctx context.Context, Club *Club) (uint, error) {
 		return 0, result.Error
 	}
 
-	return Club.Id, nil
+	return c.Id, nil
 }
 
 func (r *repository) AddUserToClub(ctx context.Context, userId uint, clubId uint, role Role) error {
-	return errors.New("not implemented")
+	m := Member{
+		UserId: userId,
+		ClubId: clubId,
+		Role:   role,
+	}
+
+	result := r.db.WithContext(ctx).
+		Create(&m)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
-func (r *repository) RemoveUserFromClub(ctx context.Context, userId uint, clubId uint) error {
-	return errors.New("not implemented")
+func (r *repository) DeleteMember(ctx context.Context, memberId uint) error {
+	result := r.db.WithContext(ctx).
+		Delete(&Member{}, memberId)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
 func (r *repository) DeleteClub(ctx context.Context, id uint) error {
@@ -125,10 +140,10 @@ func (r *repository) UpdateClub(ctx context.Context, id uint, name string) error
 	return nil
 }
 
-func (r *repository) UpdateUserRole(ctx context.Context, userId uint, clubId uint, role Role) error {
+func (r *repository) UpdateMemberRole(ctx context.Context, memberId uint, role Role) error {
 	result := r.db.WithContext(ctx).
-		Model(&Invite{}).
-		Where("user_id = ? AND club_id = ?", userId, clubId).
+		Model(&Member{}).
+		Where("id = ?", memberId).
 		Update("role", role)
 	if result.Error != nil {
 		return result.Error

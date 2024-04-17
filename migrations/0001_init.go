@@ -1,8 +1,6 @@
 package migrations
 
 import (
-	"core/internal/club"
-	"core/internal/match"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
@@ -13,22 +11,22 @@ import (
 var Migration00001Init = &gormigrate.Migration{
 	ID: "init_00001",
 	Migrate: func(tx *gorm.DB) error {
-		type User struct {
-			Id uint `gorm:"primaryKey"`
+		type Role string
+		type GameType string
+		type Result rune
 
-			Email   string `gorm:"index"`
-			Name    string `gorm:"index;not null"`
-			Hash    string
-			Virtual bool `gorm:"default:false"`
-
-			CreatedAt time.Time
+		type Game struct {
+			Id     uint     `gorm:"primaryKey"`
+			ClubId uint     `gorm:"index;not null"`
+			Name   string   `gorm:"not null"`
+			Type   GameType `gorm:"not null"`
 		}
 
 		type Statistic struct {
 			Id uint `gorm:"primaryKey"`
 
-			UserId uint `gorm:"not null"`
-			GameId uint `gorm:"not null"`
+			MemberId uint `gorm:"not null"`
+			GameId   uint `gorm:"not null"`
 
 			Wins   int
 			Draws  int
@@ -41,8 +39,8 @@ var Migration00001Init = &gormigrate.Migration{
 		type Rating struct {
 			Id uint `gorm:"primaryKey"`
 
-			UserId uint `gorm:"not null"`
-			GameId uint `gorm:"not null"`
+			MemberId uint `gorm:"not null"`
+			GameId   uint `gorm:"not null"`
 
 			Value      float64 `gorm:"default:1000.0"`
 			Deviation  float64
@@ -51,9 +49,29 @@ var Migration00001Init = &gormigrate.Migration{
 			CreatedAt time.Time
 		}
 
-		type Game struct {
-			Id   uint   `gorm:"primaryKey"`
-			Name string `gorm:"not null"`
+		type Member struct {
+			Id uint `gorm:"primaryKey"`
+
+			ClubId uint `gorm:"not null"`
+			Role   Role `gorm:"default:member"`
+			UserId uint `gorm:"not null"`
+
+			Statistics []Statistic `gorm:"constraint:OnDelete:CASCADE"`
+			Ratings    []Rating    `gorm:"constraint:OnDelete:CASCADE"`
+
+			CreatedAt time.Time
+		}
+
+		type Match struct {
+			Id     uint `gorm:"primaryKey"`
+			ClubId uint `gorm:"not null"`
+
+			TeamA  []uint   `gorm:"serializer:json;not null"`
+			TeamB  []uint   `gorm:"serializer:json;not null"`
+			Sets   []string `gorm:"serializer:json;not null"`
+			Result Result   `gorm:"not null"`
+
+			CreatedAt time.Time
 		}
 
 		type Club struct {
@@ -61,60 +79,20 @@ var Migration00001Init = &gormigrate.Migration{
 
 			Name string `gorm:"not null"`
 
-			CreatedAt time.Time
-		}
-
-		type ClubsUsers struct {
-			Id uint `gorm:"primaryKey"`
-
-			ClubId uint `gorm:"primaryKey"`
-			UserId uint `gorm:"primaryKey"`
-
-			Accepted bool      `gorm:"default:false"`
-			Role     club.Role `gorm:"default:member"`
-
-			CreatedAt time.Time
-		}
-
-		type ClubsGames struct {
-			Id uint `gorm:"primaryKey"`
-
-			ClubId uint `gorm:"primaryKey"`
-			GameId uint `gorm:"primaryKey"`
-
-			CreatedAt time.Time
-		}
-
-		type ClubsTournaments struct {
-			Id uint `gorm:"primaryKey"`
-
-			ClubId       uint `gorm:"primaryKey"`
-			TournamentId uint `gorm:"primaryKey"`
-
-			CreatedAt time.Time
-		}
-
-		type Match struct {
-			Id uint `gorm:"primaryKey"`
-
-			TeamA  []uint       `gorm:"serializer:json;not null"`
-			TeamB  []uint       `gorm:"serializer:json;not null"`
-			Sets   []string     `gorm:"serializer:json;not null"`
-			Result match.Result `gorm:"not null"`
+			Members []Member `gorm:"constraint:OnDelete:CASCADE"`
+			Games   []Game   `gorm:"constraint:OnDelete:CASCADE"`
+			Matches []Match  `gorm:"constraint:OnDelete:CASCADE"`
 
 			CreatedAt time.Time
 		}
 
 		return tx.AutoMigrate(
-			&User{},
+			&Game{},
 			&Statistic{},
 			&Rating{},
-			&Club{},
+			&Member{},
 			&Match{},
-			&Game{},
-			&ClubsUsers{},
-			&ClubsGames{},
-			&ClubsTournaments{},
+			&Club{},
 		)
 	},
 }

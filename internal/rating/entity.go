@@ -23,8 +23,8 @@ const (
 type Rating struct {
 	Id uint `gorm:"primaryKey"`
 
-	UserId uint `gorm:"not null"`
-	GameId uint `gorm:"not null"`
+	MemberId uint `gorm:"not null"`
+	GameId   uint `gorm:"not null"`
 
 	Value      float64 `gorm:"default:1000.0"`
 	Deviation  float64

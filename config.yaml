@@ -9,5 +9,5 @@ api:
 
 authentication:
   secret: "secret"
-  access_expirery: 3600 # 1 hour
-  refresh_expirery: 3600 # 1 hour
+  access_expiry: 3600 # 1 hour
+  refresh_expiry: 3600 # 1 hour

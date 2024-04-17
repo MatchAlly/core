@@ -7,9 +7,9 @@ import (
 )
 
 type Service interface {
-	GetStatisticsByUserId(ctx context.Context, userId uint) ([]Statistic, error)
-	CreateStatistic(ctx context.Context, userId, gameId uint) error
-	UpdateStatisticsByUserIds(ctx context.Context, userIds []uint, gameId uint, result MatchResult) error
+	GetStatisticsMemberId(ctx context.Context, memberId uint) ([]Statistic, error)
+	CreateDefaultStatistic(ctx context.Context, memberId, gameId uint) error
+	UpdateGameStatisticsByMemberIds(ctx context.Context, memberIds []uint, gameId uint, result MatchResult) error
 }
 
 type service struct {
@@ -22,31 +22,31 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) GetStatisticsByUserId(ctx context.Context, userId uint) ([]Statistic, error) {
-	stats, err := s.repo.GetStatisticsByUserId(ctx, userId)
+func (s *service) GetStatisticsMemberId(ctx context.Context, memberId uint) ([]Statistic, error) {
+	stats, err := s.repo.GetStatisticsByMemberId(ctx, memberId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get statistics for user %d", userId)
+		return nil, errors.Wrapf(err, "failed to get statistics for user %d", memberId)
 	}
 
 	return stats, nil
 }
 
-func (s *service) CreateStatistic(ctx context.Context, userId, gameId uint) error {
-	if err := s.repo.CreateStatistic(ctx, userId, gameId); err != nil {
-		return errors.Wrapf(err, "failed to create statistics for user %d", userId)
+func (s *service) CreateDefaultStatistic(ctx context.Context, userId, gameId uint) error {
+	if err := s.repo.CreateDefaultStatistic(ctx, userId, gameId); err != nil {
+		return errors.Wrapf(err, "failed to create default statistics for user %d", userId)
 	}
 
 	return nil
 }
 
-func (s *service) UpdateStatisticsByUserIds(ctx context.Context, userIds []uint, gameId uint, result MatchResult) error {
-	oldStatistics, err := s.repo.GetStatisticsByUserIds(ctx, userIds)
+func (s *service) UpdateGameStatisticsByMemberIds(ctx context.Context, memberIds []uint, gameId uint, result MatchResult) error {
+	oldStatistics, err := s.repo.GetGameStatisticsForMemberIds(ctx, memberIds, gameId)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get statistics for users %v", userIds)
+		return errors.Wrapf(err, "failed to get statistics for members %v", memberIds)
 	}
 
-	updatedStatistics := make([]Statistic, len(userIds))
-	for i := range userIds {
+	updatedStatistics := make([]Statistic, len(memberIds))
+	for i := range memberIds {
 		stats := oldStatistics[i]
 
 		switch result {
@@ -69,7 +69,7 @@ func (s *service) UpdateStatisticsByUserIds(ctx context.Context, userIds []uint,
 			stats.Streak = 0
 		}
 
-		updatedStatistics[i] = *stats
+		updatedStatistics[i] = stats
 	}
 
 	if err := s.repo.UpdateStatistics(ctx, updatedStatistics); err != nil {
