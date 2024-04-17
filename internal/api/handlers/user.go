@@ -14,9 +14,7 @@ type updateUserRequest struct {
 }
 
 func (h *Handler) UpdateUser(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[updateUserRequest](c)
+	req, ctx, err := helpers.Bind[updateUserRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}

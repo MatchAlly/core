@@ -15,9 +15,7 @@ type createClubRequest struct {
 }
 
 func (h *Handler) CreateClub(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[createClubRequest](c)
+	req, ctx, err := helpers.Bind[createClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -42,9 +40,7 @@ type deleteClubRequest struct {
 }
 
 func (h *Handler) DeleteClub(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[deleteClubRequest](c)
+	req, ctx, err := helpers.Bind[deleteClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -63,9 +59,7 @@ type updateClubRequest struct {
 }
 
 func (h *Handler) UpdateClub(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[updateClubRequest](c)
+	req, ctx, err := helpers.Bind[updateClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -84,9 +78,7 @@ type updateMemberRoleRequest struct {
 }
 
 func (h *Handler) UpdateMemberRole(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[updateMemberRoleRequest](c)
+	req, ctx, err := helpers.Bind[updateMemberRoleRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -111,9 +103,7 @@ type membersInClub struct {
 }
 
 func (h *Handler) GetMembersInClub(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[getMembersInClubRequest](c)
+	req, ctx, err := helpers.Bind[getMembersInClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -153,9 +143,7 @@ type removeUserFromClubRequest struct {
 }
 
 func (h *Handler) RemoveUserFromClub(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[removeUserFromClubRequest](c)
+	req, ctx, err := helpers.Bind[removeUserFromClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}

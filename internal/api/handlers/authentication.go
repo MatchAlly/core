@@ -20,9 +20,7 @@ type loginResponse struct {
 }
 
 func (h *Handler) Login(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[loginRequest](c)
+	req, ctx, err := helpers.Bind[loginRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -55,9 +53,7 @@ type refreshResponse struct {
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[refreshRequest](c)
+	req, ctx, err := helpers.Bind[refreshRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}
@@ -95,9 +91,7 @@ type signupRequest struct {
 }
 
 func (h *Handler) Signup(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[signupRequest](c)
+	req, ctx, err := helpers.Bind[signupRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}

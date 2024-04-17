@@ -83,7 +83,7 @@ func (s *service) Signup(ctx context.Context, email string, username string, pas
 }
 
 func (s *service) VerifyAccessToken(ctx context.Context, token string) (bool, *AccessClaims, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &AccessClaims{}, func(token *jwt.Token) (any, error) {
 		return []byte(s.config.Secret), nil
 	})
 	if err != nil {
@@ -107,7 +107,7 @@ func (s *service) VerifyAccessToken(ctx context.Context, token string) (bool, *A
 }
 
 func (s *service) VerifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
-	parsedToken, err := jwt.ParseWithClaims(token, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.ParseWithClaims(token, &RefreshClaims{}, func(token *jwt.Token) (any, error) {
 		return []byte(s.config.Secret), nil
 	})
 	if err != nil {

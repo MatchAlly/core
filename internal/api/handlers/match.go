@@ -20,10 +20,7 @@ type postMatchRequest struct {
 }
 
 func (h *Handler) PostMatch(c helpers.AuthContext) error {
-
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[postMatchRequest](c)
+	req, ctx, err := helpers.Bind[postMatchRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}

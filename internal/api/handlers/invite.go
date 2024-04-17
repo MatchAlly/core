@@ -14,9 +14,7 @@ type inviteUsersToClubRequest struct {
 }
 
 func (h *Handler) InviteUsersToClub(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	req, err := helpers.Bind[inviteUsersToClubRequest](c)
+	req, ctx, err := helpers.Bind[inviteUsersToClubRequest](c)
 	if err != nil {
 		return echo.ErrBadRequest
 	}

@@ -94,7 +94,7 @@ func GetLogger(config LogConfig) *zap.SugaredLogger {
 	return l.Sugar()
 }
 
-func bindEnvs(iface interface{}, parts ...string) {
+func bindEnvs(iface any, parts ...string) {
 	ifv := reflect.ValueOf(iface)
 	ift := reflect.TypeOf(iface)
 	for i := 0; i < ift.NumField(); i++ {
