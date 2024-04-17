@@ -2,10 +2,12 @@ package club
 
 import (
 	"core/internal/game"
+	"core/internal/invite"
 	"core/internal/match"
 	"core/internal/rating"
 	"core/internal/statistic"
-	"time"
+
+	"gorm.io/gorm"
 )
 
 type Role string
@@ -17,19 +19,18 @@ const (
 )
 
 type Club struct {
-	Id uint `gorm:"primaryKey"`
+	gorm.Model
 
 	Name string `gorm:"not null"`
 
-	Members []Member      `gorm:"constraint:OnDelete:CASCADE"`
-	Games   []game.Game   `gorm:"constraint:OnDelete:CASCADE"`
-	Matches []match.Match `gorm:"constraint:OnDelete:CASCADE"`
-
-	CreatedAt time.Time
+	Members []Member        `gorm:"constraint:OnDelete:CASCADE"`
+	Games   []game.Game     `gorm:"constraint:OnDelete:CASCADE"`
+	Matches []match.Match   `gorm:"constraint:OnDelete:CASCADE"`
+	Invites []invite.Invite `gorm:"constraint:OnDelete:CASCADE"`
 }
 
 type Member struct {
-	Id uint `gorm:"primaryKey"`
+	gorm.Model
 
 	ClubId uint `gorm:"not null"`
 	Role   Role `gorm:"default:member"`
@@ -37,6 +38,4 @@ type Member struct {
 
 	Statistics []statistic.Statistic `gorm:"constraint:OnDelete:CASCADE"`
 	Ratings    []rating.Rating       `gorm:"constraint:OnDelete:CASCADE"`
-
-	CreatedAt time.Time
 }

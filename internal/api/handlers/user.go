@@ -98,8 +98,8 @@ func (h *Handler) GetUserInvites(c helpers.AuthContext) error {
 	responseInvites := make([]responseInvite, len(clubs))
 	for i, c := range clubs {
 		responseInvites[i] = responseInvite{
-			Id:     invites[i].Id,
-			ClubId: c.Id,
+			Id:     invites[i].Model.ID,
+			ClubId: c.Model.ID,
 			Name:   c.Name,
 		}
 	}

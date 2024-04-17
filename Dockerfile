@@ -1,4 +1,4 @@
-FROM golang:1.22.1-alpine3.19 AS builder
+FROM golang:1.22.2-alpine3.19 AS builder
 WORKDIR /build
 RUN apk add --no-cache build-base
 COPY ["go.mod", "go.sum", "./"]

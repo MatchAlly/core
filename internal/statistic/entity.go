@@ -1,6 +1,8 @@
 package statistic
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 type MatchResult int
 
@@ -18,7 +20,7 @@ const (
 )
 
 type Statistic struct {
-	Id uint `gorm:"primaryKey"`
+	gorm.Model
 
 	MemberId uint `gorm:"not null"`
 	GameId   uint `gorm:"not null"`
@@ -27,6 +29,4 @@ type Statistic struct {
 	Draws  int
 	Losses int
 	Streak int
-
-	CreatedAt time.Time
 }

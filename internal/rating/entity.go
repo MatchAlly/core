@@ -1,6 +1,8 @@
 package rating
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 const (
 	maxDeviation = 2.015
@@ -21,7 +23,7 @@ const (
 )
 
 type Rating struct {
-	Id uint `gorm:"primaryKey"`
+	gorm.Model
 
 	MemberId uint `gorm:"not null"`
 	GameId   uint `gorm:"not null"`
@@ -29,6 +31,4 @@ type Rating struct {
 	Value      float64 `gorm:"default:1000.0"`
 	Deviation  float64
 	Volatility float64 `gorm:"default:0.06"`
-
-	CreatedAt time.Time
 }

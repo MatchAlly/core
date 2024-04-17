@@ -2,18 +2,16 @@ package user
 
 import (
 	"core/internal/club"
-	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
-	Id uint `gorm:"primaryKey"`
+	gorm.Model
 
 	Email string `gorm:"uniqueIndex"`
 	Name  string `gorm:"index;not null"`
 	Hash  string `gorm:"not null"`
 
 	Memberships []club.Member `gorm:"constraint:OnDelete:CASCADE"`
-
-	UpdatedAt time.Time
-	CreatedAt time.Time
 }

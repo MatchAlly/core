@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type Service interface {
@@ -90,7 +91,9 @@ func (s *service) DeleteUser(ctx context.Context, id uint) error {
 
 func (s *service) UpdateUser(ctx context.Context, id uint, email, name string) error {
 	user := &User{
-		Id:    id,
+		Model: gorm.Model{
+			ID: id,
+		},
 		Email: email,
 		Name:  name,
 	}

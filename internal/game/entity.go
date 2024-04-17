@@ -1,5 +1,7 @@
 package game
 
+import "gorm.io/gorm"
+
 type GameType string
 
 const (
@@ -8,7 +10,8 @@ const (
 )
 
 type Game struct {
-	Id     uint     `gorm:"primaryKey"`
+	gorm.Model
+
 	ClubId uint     `gorm:"index;not null"`
 	Name   string   `gorm:"not null"`
 	Type   GameType `gorm:"not null"`

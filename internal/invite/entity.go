@@ -1,14 +1,12 @@
 package invite
 
 import (
-	"time"
+	"gorm.io/gorm"
 )
 
 type Invite struct {
-	Id uint `gorm:"primaryKey"`
+	gorm.Model
 
 	ClubId uint `gorm:"primaryKey"`
 	UserId uint `gorm:"primaryKey"`
-
-	CreatedAt time.Time
 }

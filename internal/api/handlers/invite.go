@@ -29,7 +29,7 @@ func (h *Handler) InviteUsersToClub(c helpers.AuthContext) error {
 
 	userIds := make([]uint, len(users))
 	for i, u := range users {
-		userIds[i] = u.Id
+		userIds[i] = u.Model.ID
 	}
 
 	if err := h.inviteService.CreateInvites(ctx, userIds, req.ClubId); err != nil {

@@ -1,7 +1,7 @@
 package match
 
 import (
-	"time"
+	"gorm.io/gorm"
 )
 
 type Result rune
@@ -13,13 +13,12 @@ const (
 )
 
 type Match struct {
-	Id     uint `gorm:"primaryKey"`
+	gorm.Model
+
 	ClubId uint `gorm:"not null"`
 
 	TeamA  []uint   `gorm:"serializer:json;not null"`
 	TeamB  []uint   `gorm:"serializer:json;not null"`
 	Sets   []string `gorm:"serializer:json;not null"`
 	Result Result   `gorm:"not null"`
-
-	CreatedAt time.Time
 }

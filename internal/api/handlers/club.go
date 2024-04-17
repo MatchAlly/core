@@ -138,7 +138,7 @@ func (h *Handler) GetMembersInClub(c helpers.AuthContext) error {
 	resp := make([]membersInClub, len(users))
 	for i, u := range users {
 		resp[i] = membersInClub{
-			Id:    members[i].Id,
+			Id:    members[i].Model.ID,
 			Name:  u.Name,
 			Email: u.Email,
 			Role:  string(members[i].Role),

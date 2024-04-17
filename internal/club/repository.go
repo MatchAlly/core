@@ -89,7 +89,7 @@ func (r *repository) CreateClub(ctx context.Context, c *Club) (uint, error) {
 		return 0, result.Error
 	}
 
-	return c.Id, nil
+	return c.ID, nil
 }
 
 func (r *repository) AddUserToClub(ctx context.Context, userId uint, clubId uint, role Role) error {

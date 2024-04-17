@@ -129,7 +129,7 @@ func (r *repository) DeleteUser(ctx context.Context, id uint) error {
 func (r *repository) UpdateUser(ctx context.Context, user *User) error {
 	result := r.db.WithContext(ctx).
 		Model(&User{}).
-		Where("id = ?", user.Id).
+		Where("id = ?", user.ID).
 		Updates(user)
 	if result.Error != nil {
 		return result.Error

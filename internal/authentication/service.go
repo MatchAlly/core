@@ -52,7 +52,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 		return false, "", "", nil
 	}
 
-	accessToken, refreshToken, err := s.generateTokenPair(user.Name, user.Id)
+	accessToken, refreshToken, err := s.generateTokenPair(user.Name, user.Model.ID)
 	if err != nil {
 		return false, "", "", errors.Wrap(err, "failed to generate jwts")
 	}

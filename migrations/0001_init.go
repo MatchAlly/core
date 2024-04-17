@@ -1,9 +1,8 @@
 package migrations
 
 import (
-	"time"
-
 	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -16,14 +15,15 @@ var Migration00001Init = &gormigrate.Migration{
 		type Result rune
 
 		type Game struct {
-			Id     uint     `gorm:"primaryKey"`
+			gorm.Model
+
 			ClubId uint     `gorm:"index;not null"`
 			Name   string   `gorm:"not null"`
 			Type   GameType `gorm:"not null"`
 		}
 
 		type Statistic struct {
-			Id uint `gorm:"primaryKey"`
+			gorm.Model
 
 			MemberId uint `gorm:"not null"`
 			GameId   uint `gorm:"not null"`
@@ -32,12 +32,10 @@ var Migration00001Init = &gormigrate.Migration{
 			Draws  int
 			Losses int
 			Streak int
-
-			CreatedAt time.Time
 		}
 
 		type Rating struct {
-			Id uint `gorm:"primaryKey"`
+			gorm.Model
 
 			MemberId uint `gorm:"not null"`
 			GameId   uint `gorm:"not null"`
@@ -45,12 +43,38 @@ var Migration00001Init = &gormigrate.Migration{
 			Value      float64 `gorm:"default:1000.0"`
 			Deviation  float64
 			Volatility float64 `gorm:"default:0.06"`
+		}
 
-			CreatedAt time.Time
+		type Invite struct {
+			gorm.Model
+
+			ClubId uint `gorm:"primaryKey"`
+			UserId uint `gorm:"primaryKey"`
+		}
+
+		type Match struct {
+			gorm.Model
+
+			ClubId uint `gorm:"not null"`
+
+			TeamA  []uint   `gorm:"serializer:json;not null"`
+			TeamB  []uint   `gorm:"serializer:json;not null"`
+			Sets   []string `gorm:"serializer:json;not null"`
+			Result Result   `gorm:"not null"`
+		}
+
+		if err := tx.AutoMigrate(
+			&Game{},
+			&Statistic{},
+			&Rating{},
+			&Invite{},
+			&Match{},
+		); err != nil {
+			return errors.Wrap(err, "failed to migrate tables with no foreign keys")
 		}
 
 		type Member struct {
-			Id uint `gorm:"primaryKey"`
+			gorm.Model
 
 			ClubId uint `gorm:"not null"`
 			Role   Role `gorm:"default:member"`
@@ -58,41 +82,31 @@ var Migration00001Init = &gormigrate.Migration{
 
 			Statistics []Statistic `gorm:"constraint:OnDelete:CASCADE"`
 			Ratings    []Rating    `gorm:"constraint:OnDelete:CASCADE"`
-
-			CreatedAt time.Time
 		}
 
-		type Match struct {
-			Id     uint `gorm:"primaryKey"`
-			ClubId uint `gorm:"not null"`
-
-			TeamA  []uint   `gorm:"serializer:json;not null"`
-			TeamB  []uint   `gorm:"serializer:json;not null"`
-			Sets   []string `gorm:"serializer:json;not null"`
-			Result Result   `gorm:"not null"`
-
-			CreatedAt time.Time
+		if err := tx.AutoMigrate(
+			&Member{},
+		); err != nil {
+			return errors.Wrap(err, "failed to migrate members")
 		}
 
 		type Club struct {
-			Id uint `gorm:"primaryKey"`
+			gorm.Model
 
 			Name string `gorm:"not null"`
 
 			Members []Member `gorm:"constraint:OnDelete:CASCADE"`
 			Games   []Game   `gorm:"constraint:OnDelete:CASCADE"`
 			Matches []Match  `gorm:"constraint:OnDelete:CASCADE"`
-
-			CreatedAt time.Time
+			Invites []Invite `gorm:"constraint:OnDelete:CASCADE"`
 		}
 
-		return tx.AutoMigrate(
-			&Game{},
-			&Statistic{},
-			&Rating{},
-			&Member{},
-			&Match{},
+		if err := tx.AutoMigrate(
 			&Club{},
-		)
+		); err != nil {
+			return errors.Wrap(err, "failed to migrate clubs")
+		}
+
+		return nil
 	},
 }
