@@ -10,8 +10,8 @@ import (
 )
 
 type loginRequest struct {
-	Email    string `json:"email" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
 type loginResponse struct {
@@ -85,9 +85,9 @@ func (h *Handler) Refresh(c echo.Context) error {
 }
 
 type signupRequest struct {
-	Email    string `json:"email" validate:"required"`
-	Name     string `json:"name" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Name     string `json:"name" validate:"required,min=1,max=64"`
+	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
 func (h *Handler) Signup(c echo.Context) error {
