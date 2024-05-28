@@ -1,6 +1,8 @@
 package migrations
 
 import (
+	"core/internal/club"
+
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -101,10 +103,21 @@ var Migration00001Init = &gormigrate.Migration{
 			Invites []Invite `gorm:"constraint:OnDelete:CASCADE"`
 		}
 
+		type User struct {
+			gorm.Model
+
+			Email string `gorm:"uniqueIndex"`
+			Name  string `gorm:"index;not null"`
+			Hash  string `gorm:"not null"`
+
+			Memberships []club.Member `gorm:"constraint:OnDelete:CASCADE"`
+		}
+
 		if err := tx.AutoMigrate(
 			&Club{},
+			&User{},
 		); err != nil {
-			return errors.Wrap(err, "failed to migrate clubs")
+			return errors.Wrap(err, "failed to migrate clubs and users")
 		}
 
 		return nil
