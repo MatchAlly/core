@@ -24,7 +24,7 @@ type Server struct {
 }
 
 func NewServer(
-	config Config,
+	port int,
 	l *zap.SugaredLogger,
 	handler *handlers.Handler,
 	authService authentication.Service,
@@ -55,7 +55,7 @@ func NewServer(
 
 	return &Server{
 		echo: e,
-		port: config.Port,
+		port: port,
 		l:    l,
 	}, nil
 }

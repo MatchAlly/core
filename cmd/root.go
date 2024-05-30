@@ -1,13 +1,6 @@
 package cmd
 
 import (
-	"core/internal/api"
-	"core/internal/authentication"
-	"core/internal/database"
-	"fmt"
-	"reflect"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -20,14 +13,12 @@ import (
 const shutdownPeriod = 15 * time.Second
 
 type Config struct {
-	Log            LogConfig             `mapstructure:"log"`
-	Database       database.Config       `mapstructure:"database"`
-	API            api.Config            `mapstructure:"api"`
-	Authentication authentication.Config `mapstructure:"authentication"`
-}
-
-type LogConfig struct {
-	Level string `mapstructure:"level" validate:"required"`
+	LogLevel           string        `mapstructure:"LOG_LEVEL" oneof:"debug info warn error" default:"info"`
+	DatabaseDSN        string        `mapstructure:"DATABASE_DSN" validate:"required"`
+	APIPort            int           `mapstructure:"API_PORT" default:"8080"`
+	AuthNSecret        string        `mapstructure:"AUTHN_SECRET" default:"secret" `
+	AuthNAccessExpiry  time.Duration `mapstructure:"AUTHN_ACCESS_EXPIRY" default:"3600"`
+	AuthNRefreshExpiry time.Duration `mapstructure:"AUTHN_REFRESH_EXPIRY" default:"3600"`
 }
 
 var rootCmd = &cobra.Command{
@@ -40,77 +31,36 @@ func Execute() {
 	}
 }
 
-func init() { //nolint:gochecknoinits
-	cobra.OnInitialize(initConfig)
-}
-
-func initConfig() {
+func loadConfig() (*Config, error) {
 	viper.AddConfigPath(".")
-	viper.SetConfigName("config")
+	viper.SetConfigType("env")
 
-	if err := viper.ReadInConfig(); err == nil {
-		zap.L().Info("Using config file", zap.String("file", viper.ConfigFileUsed()))
-	}
 	viper.AutomaticEnv()
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	fmt.Println("init config done")
-}
 
-func loadConfig(configs ...string) (*Config, error) {
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, err
+	}
+
 	var config Config
 	defaults.SetDefaults(&config)
-	bindEnvs(config)
-
-	err := viper.Unmarshal(&config)
-	if err != nil {
+	if err := viper.Unmarshal(&config); err != nil {
 		return nil, err
 	}
 
-	match := regexp.MustCompile(`.*`)
-	if len(configs) != 0 {
-		match = regexp.MustCompile(strings.ToLower(fmt.Sprintf("^Config.(%s)", strings.Join(configs, "|"))))
-	}
-
-	err = validator.New().StructFiltered(config, func(ns []byte) bool {
-		return !match.MatchString(strings.ToLower(string(ns)))
-	})
-	if err != nil {
-		fmt.Println(err)
+	if err := validator.New().Struct(&config); err != nil {
 		return nil, err
 	}
 
-	fmt.Println("load config done")
 	return &config, nil
 }
 
-func GetLogger(config LogConfig) *zap.SugaredLogger {
+func getLogger(level string) *zap.SugaredLogger {
 	l, err := zap.NewProduction()
 	if err != nil {
 		zap.L().Fatal("Failed to build logger", zap.Error(err))
 	}
 
-	l.Info("Logger initialized", zap.String("level", config.Level))
+	l.Info("Logger initialized", zap.String("level", level))
 
 	return l.Sugar()
-}
-
-func bindEnvs(iface any, parts ...string) {
-	ifv := reflect.ValueOf(iface)
-	ift := reflect.TypeOf(iface)
-	for i := 0; i < ift.NumField(); i++ {
-		fieldv := ifv.Field(i)
-		t := ift.Field(i)
-		name := strings.ToLower(t.Name)
-		tag, ok := t.Tag.Lookup("mapstructure")
-		if ok {
-			name = tag
-		}
-		parts := append(parts, name)
-		switch fieldv.Kind() { //nolint:exhaustive
-		case reflect.Struct:
-			bindEnvs(fieldv.Interface(), parts...)
-		default:
-			viper.BindEnv(strings.Join(parts, ".")) //nolint:errcheck
-		}
-	}
 }

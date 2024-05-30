@@ -39,10 +39,10 @@ func serve(cmd *cobra.Command, args []string) {
 		zap.L().Fatal("failed to read config", zap.Error(err))
 	}
 
-	l := GetLogger(config.Log)
+	l := getLogger(config.LogLevel)
 
 	// Initialize database connection
-	db, err := database.NewClient(ctx, config.Database)
+	db, err := database.NewClient(ctx, config.DatabaseDSN)
 	if err != nil {
 		l.Fatal("Failed to connect to database", zap.Error(err))
 	}
@@ -54,7 +54,12 @@ func serve(cmd *cobra.Command, args []string) {
 	clubRepository := club.NewRepository(db)
 	clubService := club.NewService(clubRepository)
 
-	authenticationService := authentication.NewService(config.Authentication, userService)
+	authenticationConfig := authentication.Config{
+		Secret:        config.AuthNSecret,
+		AccessExpiry:  config.AuthNAccessExpiry,
+		RefreshExpiry: config.AuthNRefreshExpiry,
+	}
+	authenticationService := authentication.NewService(authenticationConfig, userService)
 
 	matchRepository := match.NewRepository(db)
 	matchService := match.NewService(matchRepository)
@@ -70,7 +75,7 @@ func serve(cmd *cobra.Command, args []string) {
 
 	// Initialize API server
 	handler := handlers.NewHandler(l, authenticationService, userService, clubService, matchService, ratingService, statisticService, inviteService)
-	apiServer, err := api.NewServer(config.API, l, handler, authenticationService)
+	apiServer, err := api.NewServer(config.APIPort, l, handler, authenticationService)
 	if err != nil {
 		l.Fatal("Failed to create api server", zap.Error(err))
 	}
@@ -79,7 +84,7 @@ func serve(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	// Start the API server
-	l.Info("API server starting", zap.String("port", fmt.Sprint(config.API.Port)))
+	l.Info("API server starting", zap.String("port", fmt.Sprint(config.APIPort)))
 	go func() {
 		if err := apiServer.Start(); err != nil {
 			l.Fatal("Failed to start api server", zap.Error(err))

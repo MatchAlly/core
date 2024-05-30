@@ -34,9 +34,9 @@ func seed(cmd *cobra.Command, args []string) {
 		zap.L().Fatal("failed to read config", zap.Error(err))
 	}
 
-	l := GetLogger(config.Log)
+	l := getLogger(config.LogLevel)
 
-	db, err := database.NewClient(ctx, config.Database)
+	db, err := database.NewClient(ctx, config.DatabaseDSN)
 	if err != nil {
 		l.Fatal("failed to connect to database", zap.Error(err))
 	}
