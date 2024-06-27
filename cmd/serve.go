@@ -34,8 +34,11 @@ func init() { //nolint:gochecknoinits
 func serve(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 
+	fmt.Println("serve command called")
+
 	config, err := loadConfig()
 	if err != nil {
+		fmt.Println("failed to read config", err)
 		zap.L().Fatal("failed to read config", zap.Error(err))
 	}
 
@@ -44,6 +47,7 @@ func serve(cmd *cobra.Command, args []string) {
 	// Initialize database connection
 	db, err := database.NewClient(ctx, config.DatabaseDSN)
 	if err != nil {
+		fmt.Println("failed to connect to database", err)
 		l.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
@@ -77,6 +81,7 @@ func serve(cmd *cobra.Command, args []string) {
 	handler := handlers.NewHandler(l, authenticationService, userService, clubService, matchService, ratingService, statisticService, inviteService)
 	apiServer, err := api.NewServer(config.APIPort, l, handler, authenticationService)
 	if err != nil {
+		fmt.Println("failed to create api server", err)
 		l.Fatal("Failed to create api server", zap.Error(err))
 	}
 
@@ -87,6 +92,7 @@ func serve(cmd *cobra.Command, args []string) {
 	l.Info("API server starting", zap.String("port", fmt.Sprint(config.APIPort)))
 	go func() {
 		if err := apiServer.Start(); err != nil {
+			fmt.Println("failed to start api server", err)
 			l.Fatal("Failed to start api server", zap.Error(err))
 			cancel()
 		}
