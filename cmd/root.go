@@ -36,7 +36,7 @@ func loadConfig() (*Config, error) {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+		zap.L().Info("no .env file found, using strictly environment variables", zap.Error(err))
 	}
 
 	var config Config
