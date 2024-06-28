@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"reflect"
-	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -34,21 +32,20 @@ func Execute() {
 }
 
 func loadConfig() (*Config, error) {
-	v := viper.New()
+	viper.SetOptions(viper.ExperimentalBindStruct()) // This is required to bind env vars untill it releases fully in v1.20
 
-	v.SetConfigFile(".env")
-	if err := v.ReadInConfig(); err != nil {
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
 		zap.L().Info("no .env file found, using strictly environment variables", zap.Error(err))
 	}
 
-	v.AutomaticEnv()
+	viper.AutomaticEnv()
 
 	var config Config
 	defaults.SetDefaults(&config)
-	if err := v.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&config); err != nil {
 		return nil, err
 	}
-	bindEnvs(config)
 
 	if err := validator.New().Struct(&config); err != nil {
 		return nil, err
@@ -66,26 +63,4 @@ func getLogger(level string) *zap.SugaredLogger {
 	l.Info("Logger initialized", zap.String("level", level))
 
 	return l.Sugar()
-}
-
-// Adapted from https://github.com/spf13/viper/issues/188#issuecomment-401431526
-func bindEnvs(iface interface{}, parts ...string) {
-	ifv := reflect.ValueOf(iface)
-	ift := reflect.TypeOf(iface)
-	for i := 0; i < ift.NumField(); i++ {
-		fieldv := ifv.Field(i)
-		t := ift.Field(i)
-		name := strings.ToLower(t.Name)
-		tag, ok := t.Tag.Lookup("mapstructure")
-		if ok {
-			name = tag
-		}
-		parts := append(parts, name)
-		switch fieldv.Kind() { //nolint:exhaustive
-		case reflect.Struct:
-			bindEnvs(fieldv.Interface(), parts...)
-		default:
-			viper.BindEnv(strings.Join(parts, ".")) //nolint:errcheck
-		}
-	}
 }
