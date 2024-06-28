@@ -28,7 +28,7 @@ func migrate(cmd *cobra.Command, args []string) {
 		zap.L().Fatal("failed to read config", zap.Error(err))
 	}
 
-	l := getLogger(config.LogLevel)
+	l := getLogger()
 
 	db, err := database.NewClient(ctx, config.DatabaseDSN)
 	if err != nil {

@@ -13,7 +13,6 @@ import (
 const shutdownPeriod = 15 * time.Second
 
 type Config struct {
-	LogLevel           string        `mapstructure:"LOG_LEVEL" oneof:"debug info warn error" default:"info"`
 	DatabaseDSN        string        `mapstructure:"DATABASE_DSN" validate:"required"`
 	APIPort            int           `mapstructure:"API_PORT" default:"8080"`
 	AuthNSecret        string        `mapstructure:"AUTHN_SECRET" default:"secret" `
@@ -54,13 +53,14 @@ func loadConfig() (*Config, error) {
 	return &config, nil
 }
 
-func getLogger(level string) *zap.SugaredLogger {
-	l, err := zap.NewProduction()
+func getLogger() *zap.SugaredLogger {
+	config := zap.NewProductionConfig()
+	config.OutputPaths = []string{"stdout"}
+	config.Encoding = "console"
+	l, err := config.Build()
 	if err != nil {
 		zap.L().Fatal("Failed to build logger", zap.Error(err))
 	}
-
-	l.Info("Logger initialized", zap.String("level", level))
 
 	return l.Sugar()
 }
