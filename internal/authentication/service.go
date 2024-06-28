@@ -164,7 +164,7 @@ func (s *service) generateTokenPair(name string, userId uint) (string, string, e
 			Subject:   userIdString,
 			IssuedAt:  now.Unix(),
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(15 * time.Minute).Unix(),
+			ExpiresAt: now.Add(time.Hour).Unix(),
 			Issuer:    "MatchAlly",
 		},
 		Name: name,

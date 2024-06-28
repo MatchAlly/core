@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"core/internal/api/helpers"
+	"time"
 
 	"net/http"
 
@@ -12,11 +13,6 @@ import (
 type loginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8,max=64"`
-}
-
-type loginResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
 }
 
 func (h *Handler) Login(c echo.Context) error {
@@ -35,21 +31,29 @@ func (h *Handler) Login(c echo.Context) error {
 		return echo.ErrUnauthorized
 	}
 
-	resp := loginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}
+	c.SetCookie(&http.Cookie{
+		Name:     "accessToken",
+		Value:    accessToken,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour),
+		Secure:   true,
+		HttpOnly: true,
+	})
 
-	return c.JSON(http.StatusOK, resp)
+	c.SetCookie(&http.Cookie{
+		Name:     "refreshToken",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  time.Now().Add(12 * time.Hour),
+		Secure:   true,
+		HttpOnly: true,
+	})
+
+	return c.NoContent(http.StatusOK)
 }
 
 type refreshRequest struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
-}
-
-type refreshResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
@@ -76,12 +80,25 @@ func (h *Handler) Refresh(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	resp := refreshResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}
+	c.SetCookie(&http.Cookie{
+		Name:     "accessToken",
+		Value:    accessToken,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour),
+		Secure:   true,
+		HttpOnly: true,
+	})
 
-	return c.JSON(http.StatusOK, resp)
+	c.SetCookie(&http.Cookie{
+		Name:     "refreshToken",
+		Value:    refreshToken,
+		Path:     "/",
+		Expires:  time.Now().Add(12 * time.Hour),
+		Secure:   true,
+		HttpOnly: true,
+	})
+
+	return c.NoContent(http.StatusOK)
 }
 
 type signupRequest struct {
