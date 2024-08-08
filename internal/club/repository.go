@@ -18,6 +18,7 @@ var (
 type Repository interface {
 	GetClub(ctx context.Context, id uint) (*Club, error)
 	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
+	GetClubIDsWithUserID(ctx context.Context, userId uint) ([]uint, error)
 	GetMembers(ctx context.Context, id uint) ([]Member, error)
 	CreateClub(ctx context.Context, Club *Club) (clubId uint, err error)
 	AddUserToClub(ctx context.Context, userId uint, clubId uint, role Role) error
@@ -61,6 +62,19 @@ func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 	}
 
 	return clubs, nil
+}
+
+func (r *repository) GetClubIDsWithUserID(ctx context.Context, userId uint) ([]uint, error) {
+	var clubIds []uint
+	result := r.db.WithContext(ctx).
+		Model(&Member{}).
+		Where("user_id = ?", userId).
+		Pluck("club_id", &clubIds)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return clubIds, nil
 }
 
 func (r *repository) GetMembers(ctx context.Context, id uint) ([]Member, error) {

@@ -21,14 +21,15 @@ func Register(h *handlers.Handler, e *echo.Group, l *zap.SugaredLogger, authServ
 	auth.POST("/refresh", h.Refresh, authGuard)
 
 	// Users
-	users := e.Group("/user", authGuard)
+	users := e.Group("/users", authGuard)
 	users.DELETE("", authCtx(h.DeleteUser))
 	users.PUT("", authCtx(h.UpdateUser))
 	users.GET("/invites", authCtx(h.GetUserInvites))
 	users.POST("/invites/:inviteId", authCtx(h.RespondToInvite))
 
 	// Clubs
-	clubs := e.Group("/club", authGuard)
+	clubs := e.Group("/clubs", authGuard)
+	clubs.GET("", authCtx(h.GetClubs))
 	clubs.POST("", authCtx(h.CreateClub))
 	clubs.PUT("", authCtx(h.UpdateClub))
 	clubs.DELETE("", authCtx(h.DeleteClub))

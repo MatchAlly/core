@@ -10,6 +10,43 @@ import (
 	"go.uber.org/zap"
 )
 
+type getClubsResponse struct {
+	Id   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func (h *Handler) GetClubs(c helpers.AuthContext) error {
+	ctx := c.Request().Context()
+
+	userID, err := strconv.ParseUint(c.Claims.Subject, 10, 64)
+	if err != nil {
+		h.l.Error("failed to parse userId", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	clubIDs, err := h.clubService.GetClubIDsWithUserID(ctx, uint(userID))
+	if err != nil {
+		h.l.Error("failed to get club IDs", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	clubs, err := h.clubService.GetClubs(ctx, clubIDs)
+	if err != nil {
+		h.l.Error("failed to get clubs", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
+
+	mappedClubs := make([]getClubsResponse, len(clubs))
+	for i, c := range clubs {
+		mappedClubs[i] = getClubsResponse{
+			Id:   c.Model.ID,
+			Name: c.Name,
+		}
+	}
+
+	return c.JSON(http.StatusOK, mappedClubs)
+}
+
 type createClubRequest struct {
 	Name string `json:"name" validate:"required"`
 }

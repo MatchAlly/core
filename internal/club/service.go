@@ -9,6 +9,7 @@ import (
 type Service interface {
 	GetClub(ctx context.Context, id uint) (*Club, error)
 	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
+	GetClubIDsWithUserID(ctx context.Context, userId uint) ([]uint, error)
 	GetMembers(ctx context.Context, id uint) ([]Member, error)
 	CreateClub(ctx context.Context, name string, adminUserId uint) (clubId uint, err error)
 	DeleteMember(ctx context.Context, memberId uint) error
@@ -43,6 +44,15 @@ func (s *service) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 	}
 
 	return clubs, nil
+}
+
+func (s *service) GetClubIDsWithUserID(ctx context.Context, userId uint) ([]uint, error) {
+	clubIds, err := s.repo.GetClubIDsWithUserID(ctx, userId)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get clubIds with userId")
+	}
+
+	return clubIds, nil
 }
 
 func (s *service) GetMembers(ctx context.Context, id uint) ([]Member, error) {
