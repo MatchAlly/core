@@ -1,4 +1,3 @@
-//go:generate mockgen --source=service.go -destination=service_mock.go -package=authentication
 package authentication
 
 import (
@@ -52,7 +51,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 		return false, "", "", nil
 	}
 
-	accessToken, refreshToken, err := s.generateTokenPair(user.Name, user.Model.ID)
+	accessToken, refreshToken, err := s.generateTokenPair(user.Name, user.ID)
 	if err != nil {
 		return false, "", "", errors.Wrap(err, "failed to generate jwts")
 	}
@@ -75,7 +74,7 @@ func (s *service) Signup(ctx context.Context, email string, username string, pas
 		return false, errors.Wrap(err, "failed to hash password")
 	}
 
-	if err = s.userService.CreateUser(ctx, email, username, string(hashedPasswordBytes)); err != nil {
+	if _, err = s.userService.CreateUser(ctx, email, username, string(hashedPasswordBytes)); err != nil {
 		return false, errors.Wrap(err, "failed to create user")
 	}
 

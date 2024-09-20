@@ -1,9 +1,5 @@
 package rating
 
-import (
-	"gorm.io/gorm"
-)
-
 const (
 	maxDeviation = 2.015
 	minDeviation = 0.175
@@ -23,12 +19,10 @@ const (
 )
 
 type Rating struct {
-	gorm.Model
-
-	MemberId uint `gorm:"not null"`
-	GameId   uint `gorm:"not null"`
-
-	Value      float64 `gorm:"default:1000.0"`
+	ID         uint
+	MemberID   uint `db:"member_id"`
+	GameID     uint `db:"game_id"`
+	Value      float64
 	Deviation  float64
-	Volatility float64 `gorm:"default:0.06"`
+	Volatility float64
 }

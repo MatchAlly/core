@@ -1,9 +1,5 @@
 package match
 
-import (
-	"gorm.io/gorm"
-)
-
 type Result rune
 
 const (
@@ -13,12 +9,16 @@ const (
 )
 
 type Match struct {
-	gorm.Model
+	ID      uint
+	ClubID  uint   `db:"club_id"`
+	GameID  uint   `db:"game_id"`
+	TeamIDs []uint `db:"team_ids"`
+	Sets    []string
+	Result  Result
+}
 
-	ClubId uint `gorm:"not null"`
-
-	TeamA  []uint   `gorm:"serializer:json;not null"`
-	TeamB  []uint   `gorm:"serializer:json;not null"`
-	Sets   []string `gorm:"serializer:json;not null"`
-	Result Result   `gorm:"not null"`
+type Team struct {
+	ID         uint
+	ClubID     uint   `db:"club_id"`
+	MembersIds []uint `db:"members_ids"`
 }

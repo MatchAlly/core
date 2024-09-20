@@ -3,99 +3,97 @@ package rating
 import (
 	"context"
 
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
 )
 
 type Repository interface {
 	GetRatingByMemberId(ctx context.Context, memberId uint) (*Rating, error)
 	GetRatingsByMemberIds(ctx context.Context, memberIds []uint) ([]Rating, error)
-	GetTopMembersByRating(ctx context.Context, topX int, memberIds []uint) (topXMemberIds []uint, ratings []int, err error)
-	CreateRating(ctx context.Context, rating *Rating) error
+	CreateRating(ctx context.Context, rating *Rating) (uint, error)
 	UpdateRating(ctx context.Context, ratings *Rating) error
 	UpdateRatings(ctx context.Context, ratings []Rating) error
 }
 
 type repository struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
-func NewRepository(db *gorm.DB) Repository {
+func NewRepository(db *sqlx.DB) Repository {
 	return &repository{db: db}
 }
 
 func (r *repository) GetRatingByMemberId(ctx context.Context, memberId uint) (*Rating, error) {
-	var rating Rating
+	var rating *Rating
 
-	result := r.db.WithContext(ctx).
-		Where("member_id = ?", memberId).
-		First(&rating)
-	if result.Error != nil {
-		return nil, result.Error
+	err := r.db.GetContext(ctx, rating, "SELECT * FROM ratings WHERE member_id = $1", memberId)
+	if err != nil {
+		return nil, err
 	}
 
-	return &rating, nil
+	return rating, nil
 }
 
 func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []uint) ([]Rating, error) {
 	var ratings []Rating
-	result := r.db.WithContext(ctx).
-		Where("member_id IN ?", memberIds).
-		Find(&ratings)
-	if result.Error != nil {
-		return nil, result.Error
+
+	query, args, err := sqlx.In("SELECT * FROM ratings WHERE member_id IN (?)", memberIds)
+	if err != nil {
+		return nil, err
+	}
+
+	query = r.db.Rebind(query)
+	err = r.db.SelectContext(ctx, &ratings, query, args...)
+	if err != nil {
+		return nil, err
 	}
 
 	return ratings, nil
 }
 
-func (r *repository) GetTopMembersByRating(ctx context.Context, topX int, memberIds []uint) ([]uint, []int, error) {
-	var topMemberIds []uint
-	var ratings []int
-
-	result := r.db.WithContext(ctx).
-		Model(&Rating{}).
-		Order("rating desc").
-		Limit(topX).
-		Pluck("member_id", &topMemberIds).
-		Pluck("value", &ratings).
-		Where("member_id IN ?", memberIds)
-	if result.Error != nil {
-		return nil, nil, result.Error
+func (r *repository) CreateRating(ctx context.Context, rating *Rating) (uint, error) {
+	result, err := r.db.ExecContext(ctx,
+		"INSERT INTO ratings (member_id, game_id, value) VALUES ($1, $2)",
+		rating.MemberID, rating.GameID, rating.Value,
+	)
+	if err != nil {
+		return 0, err
 	}
 
-	return topMemberIds, ratings, nil
-}
-
-func (r *repository) CreateRating(ctx context.Context, rating *Rating) error {
-	result := r.db.WithContext(ctx).
-		Create(rating)
-	if result.Error != nil {
-		return result.Error
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	return uint(id), nil
 }
 
 func (r *repository) UpdateRatings(ctx context.Context, ratings []Rating) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		for _, rating := range ratings {
-			result := tx.WithContext(ctx).
-				Model(&rating).
-				Updates(rating)
-			if result.Error != nil {
-				return result.Error
-			}
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	for _, rating := range ratings {
+		_, err = tx.ExecContext(ctx,
+			"UPDATE ratings SET value = $1 WHERE member_id = $2 AND game_id = $3",
+			rating.Value, rating.MemberID, rating.GameID,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
 		}
-		return nil
-	})
+	}
+
+	return tx.Commit()
 }
 
 func (r *repository) UpdateRating(ctx context.Context, rating *Rating) error {
-	result := r.db.WithContext(ctx).
-		Model(&rating).
-		Updates(rating)
-	if result.Error != nil {
-		return result.Error
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE ratings SET value = $1 WHERE member_id = $2 AND game_id = $3",
+		rating.Value, rating.MemberID, rating.GameID,
+	)
+	if err != nil {
+		return err
 	}
 
 	return nil

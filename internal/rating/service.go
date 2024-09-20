@@ -1,4 +1,3 @@
-//go:generate mockgen --source=service.go -destination=service_mock.go -package=rating
 package rating
 
 import (
@@ -8,8 +7,7 @@ import (
 )
 
 type Service interface {
-	GetTopMembersByRating(ctx context.Context, topX int, bemberIds []uint) (topXMemberIds []uint, ratings []int, err error)
-	CreateRating(ctx context.Context, memberId uint) error
+	CreateRating(ctx context.Context, memberID, gameID uint) (uint, error)
 	UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []uint) error
 }
 
@@ -23,28 +21,21 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) GetTopMembersByRating(ctx context.Context, topX int, memberIds []uint) ([]uint, []int, error) {
-	topMemberIds, ratings, err := s.repo.GetTopMembersByRating(ctx, topX, memberIds)
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "failed to get top %d member ids by rating", topX)
-	}
-
-	return topMemberIds, ratings, nil
-}
-
-func (s *service) CreateRating(ctx context.Context, memberId uint) error {
+func (s *service) CreateRating(ctx context.Context, memberID, gameID uint) (uint, error) {
 	rating := &Rating{
-		MemberId:   memberId,
+		MemberID:   memberID,
+		GameID:     gameID,
 		Value:      startRating,
 		Deviation:  maxDeviation,
 		Volatility: startVolatility,
 	}
 
-	if err := s.repo.CreateRating(ctx, rating); err != nil {
-		return errors.Wrap(err, "failed to create rating")
+	id, err := s.repo.CreateRating(ctx, rating)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to create rating")
 	}
 
-	return nil
+	return uint(id), nil
 }
 
 func (s *service) UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []uint) error {

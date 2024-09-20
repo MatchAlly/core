@@ -23,8 +23,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	correct, accessToken, refreshToken, err := h.authService.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		h.l.Error("failed to login",
-			"error", err)
+		h.l.Error("failed to login", "error", err)
 		return echo.ErrInternalServerError
 	}
 	if !correct {
@@ -64,8 +63,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 
 	valid, _, err := h.authService.VerifyRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		h.l.Error("failed to verify refresh token",
-			"error", err)
+		h.l.Error("failed to verify refresh token", "error", err)
 		return echo.ErrInternalServerError
 	}
 
@@ -75,8 +73,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 
 	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
 	if err != nil {
-		h.l.Error("failed to generate new tokens",
-			"error", err)
+		h.l.Error("failed to generate new tokens", "error", err)
 		return echo.ErrInternalServerError
 	}
 
@@ -134,4 +131,23 @@ func (h *Handler) Signup(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusCreated)
+}
+
+type changePasswordRequest struct {
+	OldPassword string `json:"oldPassword" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required"`
+}
+
+func (h *Handler) ChangePassword(c helpers.AuthContext) error {
+	req, ctx, err := helpers.Bind[changePasswordRequest](c)
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	if err := h.userService.UpdatePassword(ctx, c.UserID, req.OldPassword, req.NewPassword); err != nil {
+		h.l.Error("failed to delete user", "error", err)
+		return echo.ErrInternalServerError
+	}
+
+	return c.NoContent(http.StatusOK)
 }

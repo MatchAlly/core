@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"core/internal/authentication"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -12,6 +13,7 @@ type AuthContext struct {
 	Log    *zap.SugaredLogger
 	Claims authentication.AccessClaims
 	JWT    string
+	UserID uint
 }
 
 type AuthenticatedContextFunc func(ctx AuthContext) error
@@ -33,6 +35,14 @@ func AuthenticatedContextFactory(l *zap.SugaredLogger) func(handler Authenticate
 				return echo.ErrUnauthorized
 			}
 
+			userId, err := strconv.ParseUint(claims.Subject, 10, 64)
+			if err != nil {
+				l.Debug("failed to parse userId",
+					"error", err,
+					"user_id", claims.Subject)
+				return echo.ErrInternalServerError
+			}
+
 			l = l.With(
 				"user_id", claims.Subject,
 				"name", claims.Name,
@@ -43,6 +53,7 @@ func AuthenticatedContextFactory(l *zap.SugaredLogger) func(handler Authenticate
 				Claims:  *claims,
 				Log:     l,
 				JWT:     jwt,
+				UserID:  uint(userId),
 			})
 		}
 	}

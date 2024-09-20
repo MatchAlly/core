@@ -7,10 +7,9 @@ import (
 	"core/internal/authentication"
 	"core/internal/club"
 	"core/internal/database"
-	"core/internal/invite"
 	"core/internal/match"
+	"core/internal/member"
 	"core/internal/rating"
-	"core/internal/statistic"
 	"core/internal/user"
 	"fmt"
 	"os"
@@ -32,7 +31,7 @@ func init() { //nolint:gochecknoinits
 }
 
 func serve(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	config, err := loadConfig()
 	if err != nil {
@@ -54,6 +53,9 @@ func serve(cmd *cobra.Command, args []string) {
 	clubRepository := club.NewRepository(db)
 	clubService := club.NewService(clubRepository)
 
+	memberRepository := member.NewRepository(db)
+	memberService := member.NewService(memberRepository)
+
 	authenticationConfig := authentication.Config{
 		Secret:        config.AuthNSecret,
 		AccessExpiry:  config.AuthNAccessExpiry,
@@ -67,20 +69,14 @@ func serve(cmd *cobra.Command, args []string) {
 	ratingRepository := rating.NewRepository(db)
 	ratingService := rating.NewService(ratingRepository)
 
-	statisticRepository := statistic.NewRepository(db)
-	statisticService := statistic.NewService(statisticRepository)
-
-	inviteRepository := invite.NewRepository(db)
-	inviteService := invite.NewService(inviteRepository)
-
 	// Initialize API server
-	handler := handlers.NewHandler(l, authenticationService, userService, clubService, matchService, ratingService, statisticService, inviteService)
+	handler := handlers.NewHandler(l, authenticationService, userService, clubService, memberService, matchService, ratingService)
 	apiServer, err := api.NewServer(config.APIPort, l, handler, authenticationService)
 	if err != nil {
 		l.Fatal("Failed to create api server", zap.Error(err))
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	// Start the API server

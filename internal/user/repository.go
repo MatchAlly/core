@@ -2,10 +2,11 @@ package user
 
 import (
 	"context"
+	"database/sql"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 )
 
 const UniqueViolationCode = pq.ErrorCode("23505")
@@ -18,19 +19,18 @@ var (
 type Repository interface {
 	GetUser(ctx context.Context, id uint) (*User, error)
 	GetUsers(ctx context.Context, ids []uint) ([]User, error)
-	GetUsersInClub(ctx context.Context, clubId uint) ([]User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
-	GetUsersByEmails(ctx context.Context, emails []string) ([]User, error)
-	CreateUser(ctx context.Context, user *User) error
+	CreateUser(ctx context.Context, user *User) (uint, error)
 	DeleteUser(ctx context.Context, id uint) error
 	UpdateUser(ctx context.Context, user *User) error
+	UpdatePassword(ctx context.Context, userID uint, hash string) error
 }
 
 type repository struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
-func NewRepository(db *gorm.DB) Repository {
+func NewRepository(db *sqlx.DB) Repository {
 	return &repository{
 		db: db,
 	}
@@ -38,11 +38,13 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) GetUser(ctx context.Context, id uint) (*User, error) {
 	var user *User
-	result := r.db.WithContext(ctx).
-		Where("id = ?", id).
-		First(&user)
-	if result.Error != nil {
-		return nil, result.Error
+
+	err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE id = $1", id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
 	}
 
 	return user, nil
@@ -50,89 +52,73 @@ func (r *repository) GetUser(ctx context.Context, id uint) (*User, error) {
 
 func (r *repository) GetUsers(ctx context.Context, ids []uint) ([]User, error) {
 	var users []User
-	result := r.db.WithContext(ctx).
-		Where("id IN ?", ids).
-		Find(&users)
-	if result.Error != nil {
-		return nil, result.Error
+
+	query, args, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", ids)
+	if err != nil {
+		return nil, err
+	}
+
+	query = r.db.Rebind(query)
+	if err = r.db.SelectContext(ctx, &users, query, args...); err != nil {
+		return nil, err
 	}
 
 	return users, nil
-}
-
-func (r *repository) GetUsersInClub(ctx context.Context, clubId uint) ([]User, error) {
-	var users []User
-	result := r.db.WithContext(ctx).
-		Where("club_id = ?", clubId).
-		Find(&users)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return users, nil
-}
-
-func (r *repository) CreateUser(ctx context.Context, user *User) error {
-	result := r.db.WithContext(ctx).
-		Create(&user)
-	if result.Error != nil {
-		pgErr, ok := result.Error.(*pq.Error)
-		if ok && pgErr.Code == UniqueViolationCode {
-			return ErrDuplicateEntry
-		}
-
-		return result.Error
-	}
-
-	return nil
 }
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	var user User
-	result := r.db.WithContext(ctx).
-		Where("email = ?", email).
-		First(&user)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	var user *User
+
+	err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE email = $1", email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-
-		return nil, result.Error
+		return nil, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
-func (r *repository) GetUsersByEmails(ctx context.Context, emails []string) ([]User, error) {
-	var users []User
-	result := r.db.WithContext(ctx).
-		Where("email IN ?", emails).
-		Find(&users)
-	if result.Error != nil {
-		return nil, result.Error
+func (r *repository) CreateUser(ctx context.Context, user *User) (uint, error) {
+	result, err := r.db.ExecContext(ctx, "INSERT INTO users (email, name, hash) VALUES ($1, $2, $3)", user.Email, user.Name, user.Hash)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == UniqueViolationCode {
+			return 0, ErrDuplicateEntry
+		}
+		return 0, err
 	}
 
-	return users, nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return uint(id), nil
 }
 
 func (r *repository) DeleteUser(ctx context.Context, id uint) error {
-	result := r.db.WithContext(ctx).
-		Where("id = ?", id).
-		Delete(&User{})
-	if result.Error != nil {
-		return result.Error
+	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (r *repository) UpdateUser(ctx context.Context, user *User) error {
-	result := r.db.WithContext(ctx).
-		Model(&User{}).
-		Where("id = ?", user.ID).
-		Updates(user)
-	if result.Error != nil {
-		return result.Error
+	_, err := r.db.ExecContext(ctx, "UPDATE users SET email = $1, name = $2 WHERE id = $3", user.Email, user.Name, user.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) UpdatePassword(ctx context.Context, userID uint, hash string) error {
+	_, err := r.db.ExecContext(ctx, "UPDATE users SET hash = $1 WHERE id = $2", hash, userID)
+	if err != nil {
+		return err
 	}
 
 	return nil

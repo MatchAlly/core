@@ -38,11 +38,15 @@ func NewServer(
 	e.Use(
 		middleware.Recover(),
 		middleware.Logger(),
-		middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowOrigins: []string{"*"},
-		}),
 		middleware.GzipWithConfig(middleware.GzipConfig{
 			Skipper: middleware.DefaultGzipConfig.Skipper,
+		}),
+		middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowCredentials: true,
+			AllowOrigins: []string{
+				"http://localhost:5173", // dev
+				"https://matchally.me/", // prod
+			},
 		}),
 	)
 

@@ -19,23 +19,21 @@ func Register(h *handlers.Handler, e *echo.Group, l *zap.SugaredLogger, authServ
 	auth.POST("/signup", h.Signup)
 	auth.POST("/login", h.Login)
 	auth.POST("/refresh", h.Refresh, authGuard)
+	auth.POST("/password", authCtx(h.ChangePassword))
 
 	// Users
 	users := e.Group("/users", authGuard)
 	users.DELETE("", authCtx(h.DeleteUser))
 	users.PUT("", authCtx(h.UpdateUser))
-	users.GET("/invites", authCtx(h.GetUserInvites))
-	users.POST("/invites/:inviteId", authCtx(h.RespondToInvite))
 
 	// Clubs
 	clubs := e.Group("/clubs", authGuard)
-	clubs.GET("", authCtx(h.GetClubs))
+	clubs.GET("", authCtx(h.GetMemberships))
 	clubs.POST("", authCtx(h.CreateClub))
-	clubs.PUT("", authCtx(h.UpdateClub))
-	clubs.DELETE("", authCtx(h.DeleteClub))
-	clubs.GET("/members", authCtx(h.GetMembersInClub))
-	clubs.DELETE("/members/:memberId", authCtx(h.RemoveUserFromClub))
-	clubs.PUT("/members/:memberId", authCtx(h.UpdateMemberRole))
-	clubs.POST("/invites", authCtx(h.InviteUsersToClub))
-	clubs.POST("/matches", authCtx(h.PostMatch))
+	clubs.PUT(":clubId", authCtx(h.UpdateClub))
+	clubs.DELETE(":clubId", authCtx(h.DeleteClub))
+	clubs.GET(":clubId/members", authCtx(h.GetMembersInClub))
+	clubs.DELETE(":clubId/members/:memberId", authCtx(h.RemoveMemberFromClub))
+	clubs.PUT(":clubId/members/:memberId", authCtx(h.UpdateMemberRole))
+	clubs.POST(":clubId/matches", authCtx(h.PostMatch))
 }
