@@ -45,6 +45,10 @@ func (h *Handler) GetMemberships(c helpers.AuthContext) error {
 	}
 
 	clubs, err := h.clubService.GetClubs(ctx, clubIDs)
+	if err != nil {
+		h.l.Error("failed to get clubs", zap.Error(err))
+		return echo.ErrInternalServerError
+	}
 
 	response := getMembershipsResponse{}
 	mappedMemberships := make([]getMembershipsResponseClub, len(memberships))
