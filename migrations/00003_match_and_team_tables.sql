@@ -41,6 +41,10 @@ CREATE INDEX idx_match_teams_team_id ON match_teams(team_id);
 CREATE INDEX idx_team_members_member_id ON team_members(member_id);
 
 -- +goose down
+DROP INDEX IF EXISTS idx_team_members_member_id;
+DROP INDEX IF EXISTS idx_match_teams_team_id;
+DROP INDEX IF EXISTS idx_match_teams_match_id;
+
 DROP TABLE match_teams;
 DROP TABLE team_members;
 DROP TABLE teams;
