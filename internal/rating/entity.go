@@ -30,5 +30,5 @@ type Rating struct {
 	Deviation  float64
 	Volatility float64
 
-	UpdatedAt time.Time
+	UpdatedAt time.Time `db:"updated_at"`
 }

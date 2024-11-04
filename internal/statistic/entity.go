@@ -13,5 +13,5 @@ type Statistic struct {
 	Losses int
 	Streak int
 
-	UpdatedAt time.Time
+	UpdatedAt time.Time `db:"updated_at"`
 }
