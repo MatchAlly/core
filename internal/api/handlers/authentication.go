@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type loginRequest struct {
@@ -23,7 +22,6 @@ func (h *Handler) Login(c echo.Context) error {
 
 	correct, accessToken, refreshToken, err := h.authService.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		h.l.Error("failed to login", "error", err)
 		return echo.ErrInternalServerError
 	}
 	if !correct {
@@ -63,7 +61,6 @@ func (h *Handler) Refresh(c echo.Context) error {
 
 	valid, _, err := h.authService.VerifyRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		h.l.Error("failed to verify refresh token", "error", err)
 		return echo.ErrInternalServerError
 	}
 
@@ -73,7 +70,6 @@ func (h *Handler) Refresh(c echo.Context) error {
 
 	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
 	if err != nil {
-		h.l.Error("failed to generate new tokens", "error", err)
 		return echo.ErrInternalServerError
 	}
 
@@ -112,21 +108,17 @@ func (h *Handler) Signup(c echo.Context) error {
 
 	success, err := h.authService.Signup(ctx, req.Email, req.Name, req.Password)
 	if err != nil {
-		h.l.Error("failed to signup", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 	if !success {
-		h.l.Debug("cant sign up, user already exists", zap.String("name", req.Name))
 		return echo.ErrBadRequest
 	}
 
 	exists, _, err := h.userService.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		h.l.Error("failed to get user by email", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 	if !exists {
-		h.l.Debug("signed up user not found", zap.String("name", req.Name))
 		return echo.ErrInternalServerError
 	}
 
@@ -145,7 +137,6 @@ func (h *Handler) ChangePassword(c helpers.AuthContext) error {
 	}
 
 	if err := h.userService.UpdatePassword(ctx, c.UserID, req.OldPassword, req.NewPassword); err != nil {
-		h.l.Error("failed to delete user", "error", err)
 		return echo.ErrInternalServerError
 	}
 

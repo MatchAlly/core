@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type getMembershipsResponse struct {
@@ -35,7 +34,6 @@ func (h *Handler) GetMemberships(c helpers.AuthContext) error {
 
 	memberships, err := h.memberService.GetUserMemberships(ctx, c.UserID)
 	if err != nil {
-		h.l.Error("failed to get memberships", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -46,7 +44,6 @@ func (h *Handler) GetMemberships(c helpers.AuthContext) error {
 
 	clubs, err := h.clubService.GetClubs(ctx, clubIDs)
 	if err != nil {
-		h.l.Error("failed to get clubs", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -79,7 +76,6 @@ func (h *Handler) CreateClub(c helpers.AuthContext) error {
 
 	clubID, err := h.clubService.CreateClub(ctx, req.Name, c.UserID)
 	if err != nil {
-		h.l.Error("failed to create Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -102,7 +98,6 @@ func (h *Handler) DeleteClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.DeleteClub(ctx, req.ClubID); err != nil {
-		h.l.Error("failed to delete Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -121,7 +116,6 @@ func (h *Handler) UpdateClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.clubService.UpdateClub(ctx, req.ClubID, req.Name); err != nil {
-		h.l.Error("failed to update Club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -140,7 +134,6 @@ func (h *Handler) UpdateMemberRole(c helpers.AuthContext) error {
 	}
 
 	if err := h.memberService.UpdateRole(ctx, req.MemberID, req.Role); err != nil {
-		h.l.Error("failed to update member role", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -165,7 +158,6 @@ func (h *Handler) GetMembersInClub(c helpers.AuthContext) error {
 
 	members, err := h.memberService.GetMembersInClub(ctx, req.ClubId)
 	if err != nil {
-		h.l.Error("failed to get members in club", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 
@@ -192,7 +184,6 @@ func (h *Handler) RemoveMemberFromClub(c helpers.AuthContext) error {
 	}
 
 	if err := h.memberService.DeleteMembership(ctx, req.MemberId); err != nil {
-		h.l.Error("failed to delete membersihp", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 

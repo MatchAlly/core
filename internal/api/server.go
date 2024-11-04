@@ -4,11 +4,12 @@ import (
 	"context"
 	"core/internal/api/handlers"
 	"core/internal/api/helpers"
+	"core/internal/api/middleware"
 	"core/internal/authentication"
 	"fmt"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -36,12 +37,12 @@ func NewServer(
 	e.Validator = helpers.NewValidator()
 
 	e.Use(
-		middleware.Recover(),
-		middleware.Logger(),
-		middleware.GzipWithConfig(middleware.GzipConfig{
-			Skipper: middleware.DefaultGzipConfig.Skipper,
+		middleware.CanonicalLogger(l),
+		echoMiddleware.Recover(),
+		echoMiddleware.GzipWithConfig(echoMiddleware.GzipConfig{
+			Skipper: echoMiddleware.DefaultGzipConfig.Skipper,
 		}),
-		middleware.CORSWithConfig(middleware.CORSConfig{
+		echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
 			AllowCredentials: true,
 			AllowOrigins: []string{
 				"http://localhost:5173", // dev

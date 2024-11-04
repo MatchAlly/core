@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type postMatchRequest struct {
@@ -23,7 +22,6 @@ func (h *Handler) PostMatch(c helpers.AuthContext) error {
 
 	_, err = h.matchService.CreateMatch(ctx, req.ClubID, req.GameID, req.TeamsIDs, req.Sets)
 	if err != nil {
-		h.l.Error("failed to create match", zap.Error(err))
 		return echo.ErrInternalServerError
 	}
 

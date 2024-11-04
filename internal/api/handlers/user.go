@@ -19,7 +19,6 @@ func (h *Handler) UpdateUser(c helpers.AuthContext) error {
 	}
 
 	if err := h.userService.UpdateUser(ctx, c.UserID, req.Email, req.Name); err != nil {
-		h.l.Error("failed to delete user", "error", err)
 		return echo.ErrInternalServerError
 	}
 
@@ -30,7 +29,6 @@ func (h *Handler) DeleteUser(c helpers.AuthContext) error {
 	ctx := c.Request().Context()
 
 	if err := h.userService.DeleteUser(ctx, c.UserID); err != nil {
-		h.l.Error("failed to delete user", "error", err)
 		return echo.ErrInternalServerError
 	}
 
