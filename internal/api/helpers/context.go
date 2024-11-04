@@ -13,7 +13,7 @@ type AuthContext struct {
 	Log    *zap.SugaredLogger
 	Claims authentication.AccessClaims
 	JWT    string
-	UserID uint
+	UserID int
 }
 
 type AuthenticatedContextFunc func(ctx AuthContext) error
@@ -35,7 +35,7 @@ func AuthenticatedContextFactory(l *zap.SugaredLogger) func(handler Authenticate
 				return echo.ErrUnauthorized
 			}
 
-			userId, err := strconv.ParseUint(claims.Subject, 10, 64)
+			userId, err := strconv.ParseInt(claims.Subject, 10, 64)
 			if err != nil {
 				l.Debug("failed to parse userId",
 					"error", err,
@@ -53,7 +53,7 @@ func AuthenticatedContextFactory(l *zap.SugaredLogger) func(handler Authenticate
 				Claims:  *claims,
 				Log:     l,
 				JWT:     jwt,
-				UserID:  uint(userId),
+				UserID:  int(userId),
 			})
 		}
 	}

@@ -1,18 +1,18 @@
 package club
 
 type Club struct {
-	ID   uint
+	ID   int
 	Name string
 }
 
 type Invite struct {
-	ID     uint
-	ClubId uint `db:"club_id"`
-	UserId uint `db:"user_id"`
+	ID     int
+	ClubId int `db:"club_id"`
+	UserId int `db:"user_id"`
 }
 
 type JoinRequest struct {
-	ID     uint
-	ClubId uint `db:"club_id"`
-	UserId uint `db:"user_id"`
+	ID     int
+	ClubId int `db:"club_id"`
+	UserId int `db:"user_id"`
 }

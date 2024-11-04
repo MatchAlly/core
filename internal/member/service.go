@@ -5,10 +5,10 @@ import (
 )
 
 type Service interface {
-	GetMembersInClub(ctx context.Context, clubId uint) ([]Member, error)
-	GetUserMemberships(ctx context.Context, userId uint) ([]Member, error)
-	UpdateRole(ctx context.Context, memberId uint, role Role) error
-	DeleteMembership(ctx context.Context, memberId uint) error
+	GetMembersInClub(ctx context.Context, clubId int) ([]Member, error)
+	GetUserMemberships(ctx context.Context, userId int) ([]Member, error)
+	UpdateRole(ctx context.Context, memberId int, role Role) error
+	DeleteMembership(ctx context.Context, memberId int) error
 }
 
 type service struct {
@@ -21,18 +21,18 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) GetMembersInClub(ctx context.Context, clubId uint) ([]Member, error) {
+func (s *service) GetMembersInClub(ctx context.Context, clubId int) ([]Member, error) {
 	return s.repo.GetMembersInClub(ctx, clubId)
 }
 
-func (s *service) GetUserMemberships(ctx context.Context, userId uint) ([]Member, error) {
+func (s *service) GetUserMemberships(ctx context.Context, userId int) ([]Member, error) {
 	return s.repo.GetUserMemberships(ctx, userId)
 }
 
-func (s *service) UpdateRole(ctx context.Context, memberId uint, role Role) error {
+func (s *service) UpdateRole(ctx context.Context, memberId int, role Role) error {
 	return s.repo.UpdateRole(ctx, memberId, role)
 }
 
-func (s *service) DeleteMembership(ctx context.Context, memberId uint) error {
+func (s *service) DeleteMembership(ctx context.Context, memberId int) error {
 	return s.repo.DeleteMembership(ctx, memberId)
 }

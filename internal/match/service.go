@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	CreateMatch(ctx context.Context, clubID, gameID uint, teamIDs []uint, sets []string) (uint, error)
+	CreateMatch(ctx context.Context, clubID, gameID int, teamIDs []int, sets []string) (int, error)
 }
 
 type service struct {
@@ -20,7 +20,7 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) CreateMatch(ctx context.Context, clubID, gameID uint, teamIDs []uint, sets []string) (uint, error) {
+func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teamIDs []int, sets []string) (int, error) {
 	match := &Match{
 		ClubID:  clubID,
 		GameID:  gameID,

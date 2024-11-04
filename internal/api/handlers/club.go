@@ -16,17 +16,17 @@ type getMembershipsResponse struct {
 }
 
 type getMembershipsResponseClub struct {
-	ID   uint   `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
 type getMembershipsResponseInvite struct {
-	ID   uint   `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
 type getMembershipsResponseRequest struct {
-	ID   uint   `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -39,7 +39,7 @@ func (h *Handler) GetMemberships(c helpers.AuthContext) error {
 		return echo.ErrInternalServerError
 	}
 
-	clubIDs := make([]uint, len(memberships))
+	clubIDs := make([]int, len(memberships))
 	for i, m := range memberships {
 		clubIDs[i] = m.ClubID
 	}
@@ -67,7 +67,7 @@ type createClubRequest struct {
 }
 
 type createClubResponse struct {
-	ID   uint   `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -92,7 +92,7 @@ func (h *Handler) CreateClub(c helpers.AuthContext) error {
 }
 
 type deleteClubRequest struct {
-	ClubID uint `json:"clubId" validate:"required,gt=0"`
+	ClubID int `json:"clubId" validate:"required,gt=0"`
 }
 
 func (h *Handler) DeleteClub(c helpers.AuthContext) error {
@@ -110,7 +110,7 @@ func (h *Handler) DeleteClub(c helpers.AuthContext) error {
 }
 
 type updateClubRequest struct {
-	ClubID uint   `json:"clubId" validate:"required,gt=0"`
+	ClubID int    `json:"clubId" validate:"required,gt=0"`
 	Name   string `json:"name" validate:"required"`
 }
 
@@ -129,7 +129,7 @@ func (h *Handler) UpdateClub(c helpers.AuthContext) error {
 }
 
 type updateMemberRoleRequest struct {
-	MemberID uint        `param:"clubId" validate:"required,gt=0"`
+	MemberID int         `param:"clubId" validate:"required,gt=0"`
 	Role     member.Role `json:"role" validate:"required"`
 }
 
@@ -148,11 +148,11 @@ func (h *Handler) UpdateMemberRole(c helpers.AuthContext) error {
 }
 
 type getMembersInClubRequest struct {
-	ClubId uint `query:"clubId" validate:"required,gt=0"`
+	ClubId int `query:"clubId" validate:"required,gt=0"`
 }
 
 type membersInClub struct {
-	Id   uint   `json:"id"`
+	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Role string `json:"role"`
 }
@@ -182,7 +182,7 @@ func (h *Handler) GetMembersInClub(c helpers.AuthContext) error {
 }
 
 type removeUserFromClubRequest struct {
-	MemberId uint `param:"memberId" validate:"required,gt=0"`
+	MemberId int `param:"memberId" validate:"required,gt=0"`
 }
 
 func (h *Handler) RemoveMemberFromClub(c helpers.AuthContext) error {

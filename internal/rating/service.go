@@ -7,8 +7,8 @@ import (
 )
 
 type Service interface {
-	CreateRating(ctx context.Context, memberID, gameID uint) (uint, error)
-	UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []uint) error
+	CreateRating(ctx context.Context, memberID, gameID int) (int, error)
+	UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []int) error
 }
 
 type service struct {
@@ -21,7 +21,7 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) CreateRating(ctx context.Context, memberID, gameID uint) (uint, error) {
+func (s *service) CreateRating(ctx context.Context, memberID, gameID int) (int, error) {
 	rating := &Rating{
 		MemberID:   memberID,
 		GameID:     gameID,
@@ -35,10 +35,10 @@ func (s *service) CreateRating(ctx context.Context, memberID, gameID uint) (uint
 		return 0, errors.Wrap(err, "failed to create rating")
 	}
 
-	return uint(id), nil
+	return id, nil
 }
 
-func (s *service) UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []uint) error {
+func (s *service) UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []int) error {
 	var updatedRatings []Rating
 
 	winnerRatings, err := s.repo.GetRatingsByMemberIds(ctx, winningMemberIds)

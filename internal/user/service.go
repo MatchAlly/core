@@ -8,13 +8,13 @@ import (
 )
 
 type Service interface {
-	GetUser(ctx context.Context, id uint) (*User, error)
-	GetUsers(ctx context.Context, ids []uint) ([]User, error)
+	GetUser(ctx context.Context, id int) (*User, error)
+	GetUsers(ctx context.Context, ids []int) ([]User, error)
 	GetUserByEmail(ctx context.Context, email string) (exists bool, user *User, err error)
-	CreateUser(ctx context.Context, email, name, hash string) (uint, error)
-	DeleteUser(ctx context.Context, id uint) error
-	UpdateUser(ctx context.Context, id uint, email, name string) error
-	UpdatePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error
+	CreateUser(ctx context.Context, email, name, hash string) (int, error)
+	DeleteUser(ctx context.Context, id int) error
+	UpdateUser(ctx context.Context, id int, email, name string) error
+	UpdatePassword(ctx context.Context, userID int, oldPassword, newPassword string) error
 }
 
 type service struct {
@@ -27,7 +27,7 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) GetUser(ctx context.Context, id uint) (*User, error) {
+func (s *service) GetUser(ctx context.Context, id int) (*User, error) {
 	user, err := s.repo.GetUser(ctx, id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user %d", id)
@@ -36,7 +36,7 @@ func (s *service) GetUser(ctx context.Context, id uint) (*User, error) {
 	return user, nil
 }
 
-func (s *service) GetUsers(ctx context.Context, ids []uint) ([]User, error) {
+func (s *service) GetUsers(ctx context.Context, ids []int) ([]User, error) {
 	users, err := s.repo.GetUsers(ctx, ids)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get users %v", ids)
@@ -45,7 +45,7 @@ func (s *service) GetUsers(ctx context.Context, ids []uint) ([]User, error) {
 	return users, nil
 }
 
-func (s *service) CreateUser(ctx context.Context, email, name, hash string) (uint, error) {
+func (s *service) CreateUser(ctx context.Context, email, name, hash string) (int, error) {
 	user := &User{
 		Email: email,
 		Name:  name,
@@ -73,7 +73,7 @@ func (s *service) GetUserByEmail(ctx context.Context, email string) (bool, *User
 	return true, user, nil
 }
 
-func (s *service) DeleteUser(ctx context.Context, id uint) error {
+func (s *service) DeleteUser(ctx context.Context, id int) error {
 	if err := s.repo.DeleteUser(ctx, id); err != nil {
 		return errors.Wrap(err, "failed to delete user by id")
 	}
@@ -81,7 +81,7 @@ func (s *service) DeleteUser(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (s *service) UpdateUser(ctx context.Context, id uint, email, name string) error {
+func (s *service) UpdateUser(ctx context.Context, id int, email, name string) error {
 	user := &User{
 		ID:    id,
 		Email: email,
@@ -95,7 +95,7 @@ func (s *service) UpdateUser(ctx context.Context, id uint, email, name string) e
 	return nil
 }
 
-func (s *service) UpdatePassword(ctx context.Context, userID uint, oldPassword, newPassword string) error {
+func (s *service) UpdatePassword(ctx context.Context, userID int, oldPassword, newPassword string) error {
 	u, err := s.GetUser(ctx, userID)
 	if err != nil {
 		return errors.Wrap(err, "failed to get user")

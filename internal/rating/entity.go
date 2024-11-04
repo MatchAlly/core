@@ -1,5 +1,7 @@
 package rating
 
+import "time"
+
 const (
 	maxDeviation = 2.015
 	minDeviation = 0.175
@@ -19,10 +21,14 @@ const (
 )
 
 type Rating struct {
-	ID         uint
-	MemberID   uint `db:"member_id"`
-	GameID     uint `db:"game_id"`
+	ID int
+
+	MemberID int `db:"member_id"`
+	GameID   int `db:"game_id"`
+
 	Value      float64
 	Deviation  float64
 	Volatility float64
+
+	UpdatedAt time.Time
 }

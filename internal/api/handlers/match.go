@@ -9,9 +9,9 @@ import (
 )
 
 type postMatchRequest struct {
-	ClubID   uint     `json:"clubId" validate:"required"`
-	GameID   uint     `json:"gameId" validate:"required"`
-	TeamsIDs []uint   `json:"teamsIds" validate:"required"`
+	ClubID   int      `json:"clubId" validate:"required"`
+	GameID   int      `json:"gameId" validate:"required"`
+	TeamsIDs []int    `json:"teamsIds" validate:"required"`
 	Sets     []string `json:"sets" validate:"required"`
 }
 

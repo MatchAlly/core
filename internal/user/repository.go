@@ -17,13 +17,13 @@ var (
 )
 
 type Repository interface {
-	GetUser(ctx context.Context, id uint) (*User, error)
-	GetUsers(ctx context.Context, ids []uint) ([]User, error)
+	GetUser(ctx context.Context, id int) (*User, error)
+	GetUsers(ctx context.Context, ids []int) ([]User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
-	CreateUser(ctx context.Context, user *User) (uint, error)
-	DeleteUser(ctx context.Context, id uint) error
+	CreateUser(ctx context.Context, user *User) (int, error)
+	DeleteUser(ctx context.Context, id int) error
 	UpdateUser(ctx context.Context, user *User) error
-	UpdatePassword(ctx context.Context, userID uint, hash string) error
+	UpdatePassword(ctx context.Context, userID int, hash string) error
 }
 
 type repository struct {
@@ -36,7 +36,7 @@ func NewRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (r *repository) GetUser(ctx context.Context, id uint) (*User, error) {
+func (r *repository) GetUser(ctx context.Context, id int) (*User, error) {
 	var user *User
 
 	err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE id = $1", id)
@@ -50,7 +50,7 @@ func (r *repository) GetUser(ctx context.Context, id uint) (*User, error) {
 	return user, nil
 }
 
-func (r *repository) GetUsers(ctx context.Context, ids []uint) ([]User, error) {
+func (r *repository) GetUsers(ctx context.Context, ids []int) ([]User, error) {
 	var users []User
 
 	query, args, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", ids)
@@ -80,7 +80,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 	return user, nil
 }
 
-func (r *repository) CreateUser(ctx context.Context, user *User) (uint, error) {
+func (r *repository) CreateUser(ctx context.Context, user *User) (int, error) {
 	result, err := r.db.ExecContext(ctx, "INSERT INTO users (email, name, hash) VALUES ($1, $2, $3)", user.Email, user.Name, user.Hash)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == UniqueViolationCode {
@@ -94,10 +94,10 @@ func (r *repository) CreateUser(ctx context.Context, user *User) (uint, error) {
 		return 0, err
 	}
 
-	return uint(id), nil
+	return int(id), nil
 }
 
-func (r *repository) DeleteUser(ctx context.Context, id uint) error {
+func (r *repository) DeleteUser(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id)
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (r *repository) UpdateUser(ctx context.Context, user *User) error {
 	return nil
 }
 
-func (r *repository) UpdatePassword(ctx context.Context, userID uint, hash string) error {
+func (r *repository) UpdatePassword(ctx context.Context, userID int, hash string) error {
 	_, err := r.db.ExecContext(ctx, "UPDATE users SET hash = $1 WHERE id = $2", hash, userID)
 	if err != nil {
 		return err

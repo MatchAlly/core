@@ -7,9 +7,9 @@ import (
 )
 
 type Repository interface {
-	GetRatingByMemberId(ctx context.Context, memberId uint) (*Rating, error)
-	GetRatingsByMemberIds(ctx context.Context, memberIds []uint) ([]Rating, error)
-	CreateRating(ctx context.Context, rating *Rating) (uint, error)
+	GetRatingByMemberId(ctx context.Context, memberId int) (*Rating, error)
+	GetRatingsByMemberIds(ctx context.Context, memberIds []int) ([]Rating, error)
+	CreateRating(ctx context.Context, rating *Rating) (int, error)
 	UpdateRating(ctx context.Context, ratings *Rating) error
 	UpdateRatings(ctx context.Context, ratings []Rating) error
 }
@@ -22,7 +22,7 @@ func NewRepository(db *sqlx.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetRatingByMemberId(ctx context.Context, memberId uint) (*Rating, error) {
+func (r *repository) GetRatingByMemberId(ctx context.Context, memberId int) (*Rating, error) {
 	var rating *Rating
 
 	err := r.db.GetContext(ctx, rating, "SELECT * FROM ratings WHERE member_id = $1", memberId)
@@ -33,7 +33,7 @@ func (r *repository) GetRatingByMemberId(ctx context.Context, memberId uint) (*R
 	return rating, nil
 }
 
-func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []uint) ([]Rating, error) {
+func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []int) ([]Rating, error) {
 	var ratings []Rating
 
 	query, args, err := sqlx.In("SELECT * FROM ratings WHERE member_id IN (?)", memberIds)
@@ -50,7 +50,7 @@ func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []uint
 	return ratings, nil
 }
 
-func (r *repository) CreateRating(ctx context.Context, rating *Rating) (uint, error) {
+func (r *repository) CreateRating(ctx context.Context, rating *Rating) (int, error) {
 	result, err := r.db.ExecContext(ctx,
 		"INSERT INTO ratings (member_id, game_id, value) VALUES ($1, $2)",
 		rating.MemberID, rating.GameID, rating.Value,
@@ -64,7 +64,7 @@ func (r *repository) CreateRating(ctx context.Context, rating *Rating) (uint, er
 		return 0, err
 	}
 
-	return uint(id), nil
+	return int(id), nil
 }
 
 func (r *repository) UpdateRatings(ctx context.Context, ratings []Rating) error {

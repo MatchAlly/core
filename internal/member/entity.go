@@ -9,9 +9,9 @@ const (
 )
 
 type Member struct {
-	ID          uint
-	ClubID      uint   `db:"club_id"`
-	UserID      uint   `db:"user_id"`
+	ID          int
+	ClubID      int    `db:"club_id"`
+	UserID      int    `db:"user_id"`
 	DisplayName string `db:"display_name"`
 	Role        Role
 }

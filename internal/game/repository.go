@@ -7,11 +7,11 @@ import (
 )
 
 type Repository interface {
-	GetGame(ctx context.Context, id uint) (*Game, error)
-	GetGames(ctx context.Context, ids []uint) ([]Game, error)
-	CreateGame(ctx context.Context, game *Game) (uint, error)
+	GetGame(ctx context.Context, id int) (*Game, error)
+	GetGames(ctx context.Context, ids []int) ([]Game, error)
+	CreateGame(ctx context.Context, game *Game) (int, error)
 	UpdateGame(ctx context.Context, game *Game) error
-	DeleteGame(ctx context.Context, id uint) error
+	DeleteGame(ctx context.Context, id int) error
 }
 
 type repository struct {
@@ -22,7 +22,7 @@ func NewRepository(db *sqlx.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetGame(ctx context.Context, id uint) (*Game, error) {
+func (r *repository) GetGame(ctx context.Context, id int) (*Game, error) {
 	var game *Game
 
 	err := r.db.GetContext(ctx, game, "SELECT * FROM games WHERE id = $1", id)
@@ -33,7 +33,7 @@ func (r *repository) GetGame(ctx context.Context, id uint) (*Game, error) {
 	return game, nil
 }
 
-func (r *repository) GetGames(ctx context.Context, ids []uint) ([]Game, error) {
+func (r *repository) GetGames(ctx context.Context, ids []int) ([]Game, error) {
 	var games []Game
 
 	query, args, err := sqlx.In("SELECT * FROM games WHERE id IN (?)", ids)
@@ -50,7 +50,7 @@ func (r *repository) GetGames(ctx context.Context, ids []uint) ([]Game, error) {
 	return games, nil
 }
 
-func (r *repository) CreateGame(ctx context.Context, game *Game) (uint, error) {
+func (r *repository) CreateGame(ctx context.Context, game *Game) (int, error) {
 	result, err := r.db.ExecContext(ctx,
 		"INSERT INTO games (club_id, name) VALUES ($1, $2)",
 		game.ClubID, game.Name,
@@ -64,7 +64,7 @@ func (r *repository) CreateGame(ctx context.Context, game *Game) (uint, error) {
 		return 0, err
 	}
 
-	return uint(id), nil
+	return int(id), nil
 }
 
 func (r *repository) UpdateGame(ctx context.Context, game *Game) error {
@@ -79,7 +79,7 @@ func (r *repository) UpdateGame(ctx context.Context, game *Game) error {
 	return nil
 }
 
-func (r *repository) DeleteGame(ctx context.Context, id uint) error {
+func (r *repository) DeleteGame(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM games WHERE id = $1", id)
 	if err != nil {
 		return err

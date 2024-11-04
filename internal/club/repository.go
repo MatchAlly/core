@@ -14,11 +14,11 @@ var (
 )
 
 type Repository interface {
-	GetClub(ctx context.Context, id uint) (*Club, error)
-	GetClubs(ctx context.Context, ids []uint) ([]Club, error)
-	CreateClub(ctx context.Context, Club *Club) (clubId uint, err error)
-	DeleteClub(ctx context.Context, id uint) error
-	UpdateClub(ctx context.Context, id uint, name string) error
+	GetClub(ctx context.Context, id int) (*Club, error)
+	GetClubs(ctx context.Context, ids []int) ([]Club, error)
+	CreateClub(ctx context.Context, Club *Club) (clubId int, err error)
+	DeleteClub(ctx context.Context, id int) error
+	UpdateClub(ctx context.Context, id int, name string) error
 }
 
 type repository struct {
@@ -31,7 +31,7 @@ func NewRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (r *repository) GetClub(ctx context.Context, id uint) (*Club, error) {
+func (r *repository) GetClub(ctx context.Context, id int) (*Club, error) {
 	var c *Club
 
 	err := r.db.GetContext(ctx, c, "SELECT * FROM clubs WHERE id = $1", id)
@@ -45,7 +45,7 @@ func (r *repository) GetClub(ctx context.Context, id uint) (*Club, error) {
 	return c, nil
 }
 
-func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
+func (r *repository) GetClubs(ctx context.Context, ids []int) ([]Club, error) {
 	var clubs []Club
 
 	query, args, err := sqlx.In("SELECT * FROM clubs WHERE id IN (?)", ids)
@@ -62,7 +62,7 @@ func (r *repository) GetClubs(ctx context.Context, ids []uint) ([]Club, error) {
 	return clubs, nil
 }
 
-func (r *repository) CreateClub(ctx context.Context, c *Club) (uint, error) {
+func (r *repository) CreateClub(ctx context.Context, c *Club) (int, error) {
 	result, err := r.db.ExecContext(ctx, "INSERT INTO clubs (name) VALUES ($1) RETURNING id", c.Name)
 	if err != nil {
 		return 0, err
@@ -73,10 +73,10 @@ func (r *repository) CreateClub(ctx context.Context, c *Club) (uint, error) {
 		return 0, err
 	}
 
-	return uint(id), nil
+	return int(id), nil
 }
 
-func (r *repository) DeleteClub(ctx context.Context, id uint) error {
+func (r *repository) DeleteClub(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM clubs WHERE id = $1", id)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (r *repository) DeleteClub(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (r *repository) UpdateClub(ctx context.Context, id uint, name string) error {
+func (r *repository) UpdateClub(ctx context.Context, id int, name string) error {
 	_, err := r.db.ExecContext(ctx, "UPDATE clubs SET name = $1 WHERE id = $2", name, id)
 	if err != nil {
 		return err

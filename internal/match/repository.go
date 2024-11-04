@@ -12,7 +12,7 @@ var (
 )
 
 type Repository interface {
-	CreateMatch(ctx context.Context, match *Match) (uint, error)
+	CreateMatch(ctx context.Context, match *Match) (int, error)
 }
 
 type repository struct {
@@ -25,7 +25,7 @@ func NewRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (r *repository) CreateMatch(ctx context.Context, match *Match) (uint, error) {
+func (r *repository) CreateMatch(ctx context.Context, match *Match) (int, error) {
 	result, err := r.db.ExecContext(ctx,
 		"INSERT INTO matches (club_id, game_id, team_ids, sets) VALUES ($1, $2, $3, $4) RETURNING id",
 		match.ClubID, match.GameID, match.TeamIDs, match.Sets,
@@ -39,5 +39,5 @@ func (r *repository) CreateMatch(ctx context.Context, match *Match) (uint, error
 		return 0, err
 	}
 
-	return uint(id), nil
+	return int(id), nil
 }

@@ -135,17 +135,17 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 		return "", "", errors.Wrap(err, "failed to verify refresh token")
 	}
 
-	userId, err := strconv.ParseUint(claims.Subject, 10, 64)
+	userId, err := strconv.ParseInt(claims.Subject, 10, 64)
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to parse user id")
 	}
 
-	u, err := s.userService.GetUser(ctx, uint(userId))
+	u, err := s.userService.GetUser(ctx, int(userId))
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to get user by id")
 	}
 
-	accessToken, newRefreshToken, err := s.generateTokenPair(u.Name, uint(userId))
+	accessToken, newRefreshToken, err := s.generateTokenPair(u.Name, int(userId))
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to generate jwts")
 	}
@@ -153,14 +153,12 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 	return accessToken, newRefreshToken, nil
 }
 
-func (s *service) generateTokenPair(name string, userId uint) (string, string, error) {
+func (s *service) generateTokenPair(name string, userId int) (string, string, error) {
 	now := time.Now()
-
-	userIdString := strconv.FormatUint(uint64(userId), 10)
 
 	accessclaims := AccessClaims{
 		StandardClaims: jwt.StandardClaims{
-			Subject:   userIdString,
+			Subject:   strconv.Itoa(userId),
 			IssuedAt:  now.Unix(),
 			NotBefore: now.Unix(),
 			ExpiresAt: now.Add(time.Hour).Unix(),
@@ -177,7 +175,7 @@ func (s *service) generateTokenPair(name string, userId uint) (string, string, e
 
 	refreshClaims := RefreshClaims{
 		StandardClaims: jwt.StandardClaims{
-			Subject:   userIdString,
+			Subject:   strconv.Itoa(userId),
 			IssuedAt:  now.Unix(),
 			NotBefore: now.Unix(),
 			ExpiresAt: now.Add(12 * time.Hour).Unix(),
