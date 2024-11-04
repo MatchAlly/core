@@ -1,5 +1,5 @@
 -- +goose up
-CREATE DATABASE core;
+CREATE DATABASE IF NOT EXISTS core;
 
 -- +goose down
 DROP DATABASE IF EXISTS core;

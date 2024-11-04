@@ -1,5 +1,5 @@
 -- +goose up
-CREATE TABLE member_statistics (
+CREATE TABLE IF NOT EXISTS member_statistics (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     member_id BIGINT NOT NULL UNIQUE,
     game_id BIGINT NOT NULL UNIQUE,
@@ -12,7 +12,7 @@ CREATE TABLE member_statistics (
     FOREIGN KEY (game_id) REFERENCES games(id)
 );
 
-CREATE TABLE member_ratings (
+CREATE TABLE IF NOT EXISTS member_ratings (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     member_id BIGINT NOT NULL UNIQUE,
     game_id BIGINT NOT NULL UNIQUE,
@@ -24,11 +24,11 @@ CREATE TABLE member_ratings (
     FOREIGN KEY (game_id) REFERENCES games(id)
 );
 
-CREATE INDEX idx_member_ratings_member_id ON members(member_id);
-CREATE INDEX idx_member_ratings_game_id ON games(game_id);
+CREATE INDEX IF NOT EXISTS idx_member_ratings_member_id ON members(member_id);
+CREATE INDEX IF NOT EXISTS idx_member_ratings_game_id ON games(game_id);
 
-CREATE INDEX idx_member_statistics_member_id ON members(member_id);
-CREATE INDEX idx_member_statistics_game_id ON games(game_id);
+CREATE INDEX IF NOT EXISTS idx_member_statistics_member_id ON members(member_id);
+CREATE INDEX IF NOT EXISTS idx_member_statistics_game_id ON games(game_id);
 
 -- +goose down
 DROP INDEX IF EXISTS idx_member_ratings_member_id;

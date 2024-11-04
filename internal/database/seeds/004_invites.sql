@@ -1,0 +1,18 @@
+INSERT INTO invites (club_id, user_id, initiator)
+VALUES
+(1, 20, "CLUB"),
+(1, 21, "CLUB"),
+(1, 22, "CLUB"),
+(1, 23, "CLUB"),
+(2, 22, "USER"),
+(2, 23, "USER"),
+(2, 24, "USER"),
+(2, 1, "CLUB"),
+(2, 2, "CLUB"),
+(2, 3, "CLUB"),
+(2, 11, "USER"),
+(2, 12, "USER"),
+(2, 13, "USER"),
+(4, 14, "CLUB"),
+(4, 15, "CLUB"),
+(4, 16, "USER"),

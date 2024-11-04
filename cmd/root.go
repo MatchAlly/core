@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		zap.L().Fatal("Failed to execute root command", zap.Error(err))
+		zap.L().Fatal("failed to execute root command", zap.Error(err))
 	}
 }
 
@@ -59,7 +59,7 @@ func getLogger() *zap.SugaredLogger {
 	config.Encoding = "console"
 	l, err := config.Build()
 	if err != nil {
-		zap.L().Fatal("Failed to build logger", zap.Error(err))
+		zap.L().Fatal("failed to build logger", zap.Error(err))
 	}
 
 	return l.Sugar()

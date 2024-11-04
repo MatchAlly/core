@@ -3,9 +3,9 @@ package member
 type Role string
 
 const (
-	AdminRole   Role = "admin"
-	ManagerRole Role = "manager"
-	MemberRole  Role = "member"
+	AdminRole   Role = "ADMIN"
+	ManagerRole Role = "MANAGER"
+	MemberRole  Role = "MEMBER"
 )
 
 type Member struct {

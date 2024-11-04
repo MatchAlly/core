@@ -1,5 +1,5 @@
 -- +goose up
-CREATE TABLE matches (
+CREATE TABLE IF NOT EXISTS matches (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     club_id BIGINT NOT NULL,
     game_id BIGINT NOT NULL,
@@ -10,14 +10,14 @@ CREATE TABLE matches (
     FOREIGN KEY (game_id) REFERENCES games(id)
 );
 
-CREATE TABLE teams (
+CREATE TABLE IF NOT EXISTS teams (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     club_id BIGINT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (club_id) REFERENCES clubs(id)
 );
 
-CREATE TABLE team_members (
+CREATE TABLE IF NOT EXISTS team_members (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     team_id BIGINT NOT NULL,
     member_id BIGINT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE team_members (
     UNIQUE (team_id, member_id)
 );
 
-CREATE TABLE match_teams (
+CREATE TABLE IF NOT EXISTS match_teams (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     match_id BIGINT NOT NULL,
     team_id BIGINT NOT NULL,
@@ -36,9 +36,9 @@ CREATE TABLE match_teams (
     UNIQUE (match_id, team_id)
 );
 
-CREATE INDEX idx_match_teams_match_id ON match_teams(match_id);
-CREATE INDEX idx_match_teams_team_id ON match_teams(team_id);
-CREATE INDEX idx_team_members_member_id ON team_members(member_id);
+CREATE INDEX IF NOT EXISTS idx_match_teams_match_id ON match_teams(match_id);
+CREATE INDEX IF NOT EXISTS idx_match_teams_team_id ON match_teams(team_id);
+CREATE INDEX IF NOT EXISTS idx_team_members_member_id ON team_members(member_id);
 
 -- +goose down
 DROP INDEX IF EXISTS idx_team_members_member_id;

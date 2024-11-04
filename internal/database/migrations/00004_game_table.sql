@@ -1,5 +1,5 @@
 -- +goose up
-CREATE TABLE games (
+CREATE TABLE IF NOT EXISTS games (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     club_id BIGINT NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE games (
     FOREIGN KEY (club_id) REFERENCES clubs(id)
 );
 
-CREATE INDEX idx_games_club_id ON games(club_id);
+CREATE INDEX IF NOT EXISTS idx_games_club_id ON games(club_id);
 
 -- +goose down
 DROP INDEX IF EXISTS idx_games_club_id;

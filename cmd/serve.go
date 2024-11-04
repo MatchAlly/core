@@ -43,7 +43,7 @@ func serve(cmd *cobra.Command, args []string) {
 	// Initialize database connection
 	db, err := database.NewClient(ctx, config.DatabaseDSN)
 	if err != nil {
-		l.Fatal("Failed to connect to database", zap.Error(err))
+		l.Fatal("failed to connect to database", zap.Error(err))
 	}
 
 	// Initialize Services
@@ -73,33 +73,33 @@ func serve(cmd *cobra.Command, args []string) {
 	handler := handlers.NewHandler(l, authenticationService, userService, clubService, memberService, matchService, ratingService)
 	apiServer, err := api.NewServer(config.APIPort, l, handler, authenticationService)
 	if err != nil {
-		l.Fatal("Failed to create api server", zap.Error(err))
+		l.Fatal("failed to create api server", zap.Error(err))
 	}
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	// Start the API server
-	l.Info("API server starting", zap.String("port", fmt.Sprint(config.APIPort)))
+	l.Info("api server starting", zap.String("port", fmt.Sprint(config.APIPort)))
 	go func() {
 		if err := apiServer.Start(); err != nil {
-			l.Fatal("Failed to start api server", zap.Error(err))
+			l.Fatal("failed to start api server", zap.Error(err))
 			cancel()
 		}
 	}()
 
-	l.Info("Ready")
+	l.Info("ready")
 
 	// Wait for shutdown signal
 	<-ctx.Done()
 
 	// Stop the servers
-	l.Info("Shutting down")
+	l.Info("shutting down")
 
 	shutdownctx, stop := context.WithTimeout(context.Background(), shutdownPeriod)
 	defer stop()
 
 	if err := apiServer.Shutdown(shutdownctx); err != nil {
-		l.Error("Failed to shutdown api server", zap.Error(err))
+		l.Error("failed to shutdown api server", zap.Error(err))
 	}
 }
