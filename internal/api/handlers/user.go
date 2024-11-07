@@ -1,36 +1,48 @@
 package handlers
 
 import (
-	"core/internal/api/helpers"
-	"net/http"
+	"context"
 
-	"github.com/labstack/echo/v4"
+	"github.com/danielgtaylor/huma/v2"
 )
 
 type updateUserRequest struct {
 	Email string `json:"userId" validate:"required,email"`
-	Name  string `json:"clubId" validate:"required,min=1,max=255"`
+	Name  string `json:"name" validate:"required,min=1,max=255"`
 }
 
-func (h *Handler) UpdateUser(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[updateUserRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
-	if err := h.userService.UpdateUser(ctx, c.UserID, req.Email, req.Name); err != nil {
-		return echo.ErrInternalServerError
-	}
-
-	return c.NoContent(http.StatusOK)
+type updateUserResponse struct {
+	Email string `json:"userId"`
+	Name  string `json:"name"`
 }
 
-func (h *Handler) DeleteUser(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
-
-	if err := h.userService.DeleteUser(ctx, c.UserID); err != nil {
-		return echo.ErrInternalServerError
+func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*updateUserResponse, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	return c.NoContent(http.StatusOK)
+	if err := h.userService.UpdateUser(ctx, userID, req.Email, req.Name); err != nil {
+		return nil, huma.Error500InternalServerError("failed to update user, try again later")
+	}
+
+	resp := &updateUserResponse{
+		Email: req.Email,
+		Name:  req.Name,
+	}
+
+	return resp, nil
+}
+
+func (h *Handler) DeleteUser(ctx context.Context, req *struct{}) (*struct{}, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
+	}
+
+	if err := h.userService.DeleteUser(ctx, userID); err != nil {
+		return nil, huma.Error500InternalServerError("failed to delete user, try again later")
+	}
+
+	return nil, nil
 }

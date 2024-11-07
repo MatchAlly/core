@@ -3,81 +3,64 @@ package api
 import (
 	"context"
 	"core/internal/api/handlers"
-	"core/internal/api/helpers"
 	"core/internal/api/middleware"
 	"core/internal/authentication"
 	"fmt"
+	"net/http"
 
-	"github.com/labstack/echo/v4"
-	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humachi"
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type Config struct {
-	Port int `mapstructure:"port" default:"8080"`
-}
-
 type Server struct {
-	echo *echo.Echo
-	port int
-	l    *zap.SugaredLogger
+	port   int
+	router *chi.Mux
+	api    huma.API
+	l      *zap.SugaredLogger
 }
 
-func NewServer(
-	port int,
-	l *zap.SugaredLogger,
-	handler *handlers.Handler,
-	authService authentication.Service,
-) (*Server, error) {
-	e := echo.New()
+func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service) *Server {
+	var api huma.API
 
-	e.HideBanner = true
-	e.HidePort = true
-	e.Validator = helpers.NewValidator()
+	router := chi.NewMux()
+	router.Use(chiMiddleware.RequestID)
+	router.Use(chiMiddleware.Logger)
+	router.Use(chiMiddleware.Recoverer)
+	router.Use(middleware.Authorization(authService))
 
-	e.Use(
-		middleware.CanonicalLogger(l),
-		echoMiddleware.Recover(),
-		echoMiddleware.GzipWithConfig(echoMiddleware.GzipConfig{
-			Skipper: echoMiddleware.DefaultGzipConfig.Skipper,
-		}),
-		echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-			AllowCredentials: true,
-			AllowOrigins: []string{
-				"http://localhost:5173", // dev
-				"https://matchally.me/", // prod
-			},
-		}),
-	)
+	router.Route("/api", func(r chi.Router) {
+		config := huma.DefaultConfig("MatchAlly", version)
+		config.Servers = []*huma.Server{
+			{URL: "https://matchally.me/api"},
+		}
+		api = humachi.New(r, config)
 
-	Register(
-		handler,
-		e.Group(""),
-		l.With("module", "api"),
-		authService,
-	)
+		addRoutes(api, handler)
+	})
 
 	return &Server{
-		echo: e,
-		port: port,
-		l:    l,
-	}, nil
+		port:   port,
+		router: router,
+		api:    api,
+		l:      l,
+	}
 }
 
 func (s *Server) Start() error {
 	address := fmt.Sprintf("0.0.0.0:%d", s.port)
-	if err := s.echo.Start(address); err != nil {
-		return errors.Wrap(err, "Failed to start server")
+	if err := http.ListenAndServe(address, s.router); err != nil {
+		return errors.Wrap(err, "failed to start api server")
 	}
 
 	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	if err := s.echo.Shutdown(ctx); err != nil {
-		return errors.Wrap(err, "Failed to shutdown server")
-	}
-
+	// TODO implement gracefull shutdown
 	return nil
 }

@@ -21,17 +21,6 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teamIDs []int, sets []string) (int, error) {
-	match := &Match{
-		ClubID:  clubID,
-		GameID:  gameID,
-		TeamIDs: teamIDs,
-		Sets:    sets,
-	}
-
-	id, err := s.repo.CreateMatch(ctx, match)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to create match")
-	}
-
-	return id, nil
+	// TODO: Implement¨
+	return 0, errors.New("not implemented")
 }

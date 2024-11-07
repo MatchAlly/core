@@ -2,38 +2,28 @@ package api
 
 import (
 	"core/internal/api/handlers"
-	"core/internal/api/helpers"
-	"core/internal/api/middleware"
-	"core/internal/authentication"
 
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
+	"github.com/danielgtaylor/huma/v2"
 )
 
-func Register(h *handlers.Handler, e *echo.Group, l *zap.SugaredLogger, authService authentication.Service) {
-	authCtx := helpers.AuthenticatedContextFactory(l)
-	authGuard := middleware.AuthGuard(authService)
-
+func addRoutes(api huma.API, h *handlers.Handler) {
 	// Authentication
-	auth := e.Group("/auth")
-	auth.POST("/signup", h.Signup)
-	auth.POST("/login", h.Login)
-	auth.POST("/refresh", h.Refresh, authGuard)
-	auth.POST("/password", authCtx(h.ChangePassword))
+	huma.Post(api, "/auth/signup", h.Signup) // Needs no auth middleware
+	huma.Post(api, "/auth/login", h.Login)   // Needs no auth middleware
+	huma.Post(api, "/auth/refresh", h.Refresh)
+	huma.Post(api, "/auth/password", h.ChangePassword)
 
 	// Users
-	users := e.Group("/users", authGuard)
-	users.DELETE("", authCtx(h.DeleteUser))
-	users.PUT("", authCtx(h.UpdateUser))
+	huma.Delete(api, "/users", h.DeleteUser)
+	huma.Put(api, "/users", h.UpdateUser)
 
 	// Clubs
-	clubs := e.Group("/clubs", authGuard)
-	clubs.GET("", authCtx(h.GetMemberships))
-	clubs.POST("", authCtx(h.CreateClub))
-	clubs.PUT(":clubId", authCtx(h.UpdateClub))
-	clubs.DELETE(":clubId", authCtx(h.DeleteClub))
-	clubs.GET(":clubId/members", authCtx(h.GetMembersInClub))
-	clubs.DELETE(":clubId/members/:memberId", authCtx(h.RemoveMemberFromClub))
-	clubs.PUT(":clubId/members/:memberId", authCtx(h.UpdateMemberRole))
-	clubs.POST(":clubId/matches", authCtx(h.PostMatch))
+	huma.Get(api, "/clubs", h.GetMemberships)
+	huma.Post(api, "/clubs", h.CreateClub)
+	huma.Put(api, "/clubs/:clubId", h.UpdateClub)
+	huma.Delete(api, "/clubs/:clubId", h.DeleteClub)
+	huma.Get(api, "/clubs/:clubId/members", h.GetMembersInClub)
+	huma.Delete(api, "/clubs/:clubId/members/:memberId", h.RemoveMemberFromClub)
+	huma.Put(api, "/clubs/:clubId/members/:memberId", h.UpdateMemberRole)
+	huma.Post(api, "/clubs/:clubId/matches", h.PostMatch)
 }

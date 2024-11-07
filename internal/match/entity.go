@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+type Result rune
+
+const (
+	ResultWin  Result = 'W'
+	ResultLoss Result = 'L'
+	ResultDraw Result = 'D'
+)
+
 type Match struct {
 	ID        int       `json:"id" db:"id"`
 	ClubID    int       `json:"club_id" db:"club_id"`

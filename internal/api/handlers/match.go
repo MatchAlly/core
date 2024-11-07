@@ -1,10 +1,9 @@
 package handlers
 
 import (
-	"core/internal/api/helpers"
-	"net/http"
+	"context"
 
-	"github.com/labstack/echo/v4"
+	"github.com/danielgtaylor/huma/v2"
 )
 
 type postMatchRequest struct {
@@ -14,16 +13,15 @@ type postMatchRequest struct {
 	Sets     []string `json:"sets" validate:"required"`
 }
 
-func (h *Handler) PostMatch(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[postMatchRequest](c)
+type postMatchResponse struct {
+	MatchID int `json:"matchId"`
+}
+
+func (h *Handler) PostMatch(ctx context.Context, req *postMatchRequest) (*postMatchResponse, error) {
+	matchID, err := h.matchService.CreateMatch(ctx, req.ClubID, req.GameID, req.TeamsIDs, req.Sets)
 	if err != nil {
-		return echo.ErrBadRequest
+		return nil, huma.Error500InternalServerError("failed to create match, try again later")
 	}
 
-	_, err = h.matchService.CreateMatch(ctx, req.ClubID, req.GameID, req.TeamsIDs, req.Sets)
-	if err != nil {
-		return echo.ErrInternalServerError
-	}
-
-	return c.NoContent(http.StatusCreated)
+	return &postMatchResponse{MatchID: matchID}, nil
 }

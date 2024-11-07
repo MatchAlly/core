@@ -15,6 +15,7 @@ const shutdownPeriod = 15 * time.Second
 type Config struct {
 	DatabaseDSN        string        `mapstructure:"DATABASE_DSN" validate:"required"`
 	APIPort            int           `mapstructure:"API_PORT" default:"8080"`
+	APIVersion         string        `mapstructure:"API_VERSION" default:"0.0.1"`
 	AuthNSecret        string        `mapstructure:"AUTHN_SECRET" default:"secret" `
 	AuthNAccessExpiry  time.Duration `mapstructure:"AUTHN_ACCESS_EXPIRY" default:"3600"`
 	AuthNRefreshExpiry time.Duration `mapstructure:"AUTHN_REFRESH_EXPIRY" default:"3600"`

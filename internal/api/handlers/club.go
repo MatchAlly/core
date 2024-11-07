@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"core/internal/api/helpers"
+	"context"
 	"core/internal/member"
-	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/danielgtaylor/huma/v2"
 )
 
 type getMembershipsResponse struct {
@@ -29,12 +28,15 @@ type getMembershipsResponseRequest struct {
 	Name string `json:"name"`
 }
 
-func (h *Handler) GetMemberships(c helpers.AuthContext) error {
-	ctx := c.Request().Context()
+func (h *Handler) GetMemberships(ctx context.Context, req *struct{}) (*getMembershipsResponse, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
+	}
 
-	memberships, err := h.memberService.GetUserMemberships(ctx, c.UserID)
+	memberships, err := h.memberService.GetUserMemberships(ctx, userID)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to get memberships, try again later")
 	}
 
 	clubIDs := make([]int, len(memberships))
@@ -44,10 +46,10 @@ func (h *Handler) GetMemberships(c helpers.AuthContext) error {
 
 	clubs, err := h.clubService.GetClubs(ctx, clubIDs)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to get clubs, try again later")
 	}
 
-	response := getMembershipsResponse{}
+	resp := &getMembershipsResponse{}
 	mappedMemberships := make([]getMembershipsResponseClub, len(memberships))
 	for i, m := range memberships {
 		mappedMemberships[i] = getMembershipsResponseClub{
@@ -56,7 +58,7 @@ func (h *Handler) GetMemberships(c helpers.AuthContext) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return resp, nil
 }
 
 type createClubRequest struct {
@@ -68,40 +70,35 @@ type createClubResponse struct {
 	Name string `json:"name"`
 }
 
-func (h *Handler) CreateClub(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[createClubRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
+func (h *Handler) CreateClub(ctx context.Context, req *createClubRequest) (*createClubResponse, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	clubID, err := h.clubService.CreateClub(ctx, req.Name, c.UserID)
+	clubID, err := h.clubService.CreateClub(ctx, req.Name, userID)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to create club, try again later")
 	}
 
-	response := createClubResponse{
+	resp := &createClubResponse{
 		ID:   clubID,
 		Name: req.Name,
 	}
 
-	return c.JSON(http.StatusCreated, response)
+	return resp, nil
 }
 
 type deleteClubRequest struct {
 	ClubID int `json:"clubId" validate:"required,gt=0"`
 }
 
-func (h *Handler) DeleteClub(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[deleteClubRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
+func (h *Handler) DeleteClub(ctx context.Context, req *deleteClubRequest) (*struct{}, error) {
 	if err := h.clubService.DeleteClub(ctx, req.ClubID); err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to delete club, try again later")
 	}
 
-	return c.NoContent(http.StatusOK)
+	return nil, nil
 }
 
 type updateClubRequest struct {
@@ -109,17 +106,22 @@ type updateClubRequest struct {
 	Name   string `json:"name" validate:"required"`
 }
 
-func (h *Handler) UpdateClub(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[updateClubRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
+type updateClubResponse struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
 
+func (h *Handler) UpdateClub(ctx context.Context, req *updateClubRequest) (*updateClubResponse, error) {
 	if err := h.clubService.UpdateClub(ctx, req.ClubID, req.Name); err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to update club, try again later")
 	}
 
-	return c.NoContent(http.StatusOK)
+	resp := &updateClubResponse{
+		ID:   req.ClubID,
+		Name: req.Name,
+	}
+
+	return resp, nil
 }
 
 type updateMemberRoleRequest struct {
@@ -127,21 +129,20 @@ type updateMemberRoleRequest struct {
 	Role     member.Role `json:"role" validate:"required"`
 }
 
-func (h *Handler) UpdateMemberRole(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[updateMemberRoleRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
+func (h *Handler) UpdateMemberRole(ctx context.Context, req *updateMemberRoleRequest) (*struct{}, error) {
 	if err := h.memberService.UpdateRole(ctx, req.MemberID, req.Role); err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to update role, try again later")
 	}
 
-	return c.NoContent(http.StatusOK)
+	return nil, nil
 }
 
 type getMembersInClubRequest struct {
 	ClubId int `query:"clubId" validate:"required,gt=0"`
+}
+
+type getMembersInClubResponse struct {
+	Members []membersInClub `json:"members"`
 }
 
 type membersInClub struct {
@@ -150,42 +151,36 @@ type membersInClub struct {
 	Role string `json:"role"`
 }
 
-func (h *Handler) GetMembersInClub(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[getMembersInClubRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
+func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubRequest) (*getMembersInClubResponse, error) {
 	members, err := h.memberService.GetMembersInClub(ctx, req.ClubId)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to get members, try again later")
 	}
 
-	response := make([]membersInClub, len(members))
+	membersResponse := make([]membersInClub, len(members))
 	for i, m := range members {
-		response[i] = membersInClub{
+		membersResponse[i] = membersInClub{
 			Id:   m.ID,
 			Name: m.DisplayName,
 			Role: string(m.Role),
 		}
 	}
 
-	return c.JSON(http.StatusOK, response)
+	resp := &getMembersInClubResponse{
+		Members: membersResponse,
+	}
+
+	return resp, nil
 }
 
 type removeUserFromClubRequest struct {
 	MemberId int `param:"memberId" validate:"required,gt=0"`
 }
 
-func (h *Handler) RemoveMemberFromClub(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[removeUserFromClubRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
+func (h *Handler) RemoveMemberFromClub(ctx context.Context, req *removeUserFromClubRequest) (*struct{}, error) {
 	if err := h.memberService.DeleteMembership(ctx, req.MemberId); err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to remove member from club, try again later")
 	}
 
-	return c.NoContent(http.StatusOK)
+	return nil, nil
 }

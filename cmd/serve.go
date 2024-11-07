@@ -71,7 +71,7 @@ func serve(cmd *cobra.Command, args []string) {
 
 	// Initialize API server
 	handler := handlers.NewHandler(l, authenticationService, userService, clubService, memberService, matchService, ratingService)
-	apiServer, err := api.NewServer(config.APIPort, l, handler, authenticationService)
+	apiServer := api.NewServer(config.APIPort, config.APIVersion, l, handler, authenticationService)
 	if err != nil {
 		l.Fatal("failed to create api server", zap.Error(err))
 	}

@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"core/internal/api/helpers"
+	"context"
 	"time"
 
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/danielgtaylor/huma/v2"
 )
 
 type loginRequest struct {
@@ -14,84 +14,88 @@ type loginRequest struct {
 	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
-func (h *Handler) Login(c echo.Context) error {
-	req, ctx, err := helpers.Bind[loginRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
+type loginResponse struct {
+	SetCookie []http.Cookie `header:"Set-Cookie"`
+}
 
+func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse, error) {
 	correct, accessToken, refreshToken, err := h.authService.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to login, try again later")
 	}
 	if !correct {
-		return echo.ErrUnauthorized
+		return nil, huma.Error400BadRequest("invalid email or password")
 	}
 
-	c.SetCookie(&http.Cookie{
-		Name:     "accessToken",
-		Value:    accessToken,
-		Path:     "/",
-		Expires:  time.Now().Add(time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-	})
+	resp := &loginResponse{
+		SetCookie: []http.Cookie{
+			{
+				Name:     "accessToken",
+				Value:    accessToken,
+				Path:     "/",
+				Expires:  time.Now().Add(time.Hour),
+				Secure:   true,
+				HttpOnly: true,
+			},
+			{
+				Name:     "refreshToken",
+				Value:    refreshToken,
+				Path:     "/",
+				Expires:  time.Now().Add(12 * time.Hour),
+				Secure:   true,
+				HttpOnly: true,
+			},
+		},
+	}
 
-	c.SetCookie(&http.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshToken,
-		Path:     "/",
-		Expires:  time.Now().Add(12 * time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-	})
-
-	return c.NoContent(http.StatusOK)
+	return resp, nil
 }
 
 type refreshRequest struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
-func (h *Handler) Refresh(c echo.Context) error {
-	req, ctx, err := helpers.Bind[refreshRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
+type refreshResponse struct {
+	SetCookie []http.Cookie `header:"Set-Cookie"`
+}
 
+// TODO: Could this just check cookies instead of requiring a request body?
+func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshResponse, error) {
 	valid, _, err := h.authService.VerifyRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to verify refresh token")
 	}
 
 	if !valid {
-		return echo.ErrUnauthorized
+		return nil, huma.Error401Unauthorized("invalid refresh token")
 	}
 
 	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to refresh tokens")
 	}
 
-	c.SetCookie(&http.Cookie{
-		Name:     "accessToken",
-		Value:    accessToken,
-		Path:     "/",
-		Expires:  time.Now().Add(time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-	})
+	resp := &refreshResponse{
+		SetCookie: []http.Cookie{
+			{
+				Name:     "accessToken",
+				Value:    accessToken,
+				Path:     "/",
+				Expires:  time.Now().Add(time.Hour),
+				Secure:   true,
+				HttpOnly: true,
+			}, {
+				Name:     "refreshToken",
+				Value:    refreshToken,
+				Path:     "/",
+				Expires:  time.Now().Add(12 * time.Hour),
+				Secure:   true,
+				HttpOnly: true,
+			},
+		},
+	}
 
-	c.SetCookie(&http.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshToken,
-		Path:     "/",
-		Expires:  time.Now().Add(12 * time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-	})
-
-	return c.NoContent(http.StatusOK)
+	return resp, nil
 }
 
 type signupRequest struct {
@@ -100,29 +104,24 @@ type signupRequest struct {
 	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
-func (h *Handler) Signup(c echo.Context) error {
-	req, ctx, err := helpers.Bind[signupRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
-	}
-
+func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, error) {
 	success, err := h.authService.Signup(ctx, req.Email, req.Name, req.Password)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 	if !success {
-		return echo.ErrBadRequest
+		return nil, huma.Error400BadRequest("user with the given email already exists")
 	}
 
 	exists, _, err := h.userService.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 	if !exists {
-		return echo.ErrInternalServerError
+		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 
-	return c.NoContent(http.StatusCreated)
+	return nil, nil
 }
 
 type changePasswordRequest struct {
@@ -130,15 +129,15 @@ type changePasswordRequest struct {
 	NewPassword string `json:"newPassword" validate:"required"`
 }
 
-func (h *Handler) ChangePassword(c helpers.AuthContext) error {
-	req, ctx, err := helpers.Bind[changePasswordRequest](c)
-	if err != nil {
-		return echo.ErrBadRequest
+func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest) (*struct{}, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	if err := h.userService.UpdatePassword(ctx, c.UserID, req.OldPassword, req.NewPassword); err != nil {
-		return echo.ErrInternalServerError
+	if err := h.userService.UpdatePassword(ctx, userID, req.OldPassword, req.NewPassword); err != nil {
+		return nil, huma.Error500InternalServerError("failed to change password, try again later")
 	}
 
-	return c.NoContent(http.StatusOK)
+	return nil, nil
 }
