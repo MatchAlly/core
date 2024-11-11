@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"core/internal/authentication"
 	"time"
 
 	"net/http"
@@ -33,17 +34,19 @@ func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse,
 				Name:     "accessToken",
 				Value:    accessToken,
 				Path:     "/",
-				Expires:  time.Now().Add(time.Hour),
 				Secure:   true,
 				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+				MaxAge:   int(authentication.AccessTokenDuration.Seconds()),
 			},
 			{
 				Name:     "refreshToken",
 				Value:    refreshToken,
 				Path:     "/",
-				Expires:  time.Now().Add(12 * time.Hour),
 				Secure:   true,
 				HttpOnly: true,
+				SameSite: http.SameSiteStrictMode,
+				MaxAge:   int(authentication.RefreshTokenDuration.Seconds()),
 			},
 		},
 	}
@@ -140,4 +143,35 @@ func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest
 	}
 
 	return nil, nil
+}
+
+type logoutresponse struct {
+	SetCookie []http.Cookie `header:"Set-Cookie"`
+}
+
+func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutresponse, error) {
+	resp := &logoutresponse{
+		SetCookie: []http.Cookie{
+			{
+				Name:     "accessToken",
+				Value:    "",
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteStrictMode,
+				MaxAge:   -1,
+			},
+			{
+				Name:     "refreshToken",
+				Value:    "",
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteStrictMode,
+				MaxAge:   -1,
+			},
+		},
+	}
+
+	return resp, nil
 }

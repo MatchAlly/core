@@ -6,10 +6,15 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-func addRoutes(api huma.API, h *handlers.Handler) {
+func addPublicRoutes(api huma.API, h *handlers.Handler) {
 	// Authentication
-	huma.Post(api, "/auth/signup", h.Signup) // Needs no auth middleware
-	huma.Post(api, "/auth/login", h.Login)   // Needs no auth middleware
+	huma.Post(api, "/auth/signup", h.Signup)
+	huma.Post(api, "/auth/login", h.Login)
+}
+
+func addAuthenticatedRoutes(api huma.API, h *handlers.Handler) {
+	// Authentication
+	huma.Post(api, "/auth/logout", h.Logout)
 	huma.Post(api, "/auth/refresh", h.Refresh)
 	huma.Post(api, "/auth/password", h.ChangePassword)
 

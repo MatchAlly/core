@@ -20,7 +20,7 @@ var seedCmd = &cobra.Command{
 	Run:  seed,
 }
 
-func init() { //nolint:gochecknoinits
+func init() {
 	rootCmd.AddCommand(seedCmd)
 }
 
@@ -70,12 +70,13 @@ func seedDatabase(ctx context.Context, db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
-	defer tx.Rollback()
 
 	for _, fileName := range fileNames {
 		filePath := filepath.Join("seeds", fileName)
 		content, err := os.ReadFile(filePath)
 		if err != nil {
+			tx.Rollback()
+
 			return fmt.Errorf("failed to read file %s: %w", fileName, err)
 		}
 
@@ -88,6 +89,8 @@ func seedDatabase(ctx context.Context, db *sqlx.DB) error {
 			}
 
 			if _, err := tx.ExecContext(ctx, statement); err != nil {
+				tx.Rollback()
+
 				return fmt.Errorf("failed to execute statement from %s: %w", fileName, err)
 			}
 		}
@@ -96,6 +99,8 @@ func seedDatabase(ctx context.Context, db *sqlx.DB) error {
 	}
 
 	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

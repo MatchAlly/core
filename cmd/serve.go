@@ -26,7 +26,7 @@ var serveCmd = &cobra.Command{
 	Run:  serve,
 }
 
-func init() { //nolint:gochecknoinits
+func init() {
 	rootCmd.AddCommand(serveCmd)
 }
 

@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS member_ratings (
     FOREIGN KEY (game_id) REFERENCES games(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_member_ratings_member_id ON members(member_id);
-CREATE INDEX IF NOT EXISTS idx_member_ratings_game_id ON games(game_id);
+CREATE INDEX IF NOT EXISTS idx_member_ratings_member_id ON member_ratings(member_id);
+CREATE INDEX IF NOT EXISTS idx_member_ratings_game_id ON member_ratings(game_id);
 
-CREATE INDEX IF NOT EXISTS idx_member_statistics_member_id ON members(member_id);
-CREATE INDEX IF NOT EXISTS idx_member_statistics_game_id ON games(game_id);
+CREATE INDEX IF NOT EXISTS idx_member_statistics_member_id ON member_statistics(member_id);
+CREATE INDEX IF NOT EXISTS idx_member_statistics_game_id ON member_statistics(game_id);
 
 -- +goose down
 DROP INDEX IF EXISTS idx_member_ratings_member_id;

@@ -29,9 +29,18 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 
 	router := chi.NewMux()
 	router.Use(chiMiddleware.RequestID)
-	router.Use(chiMiddleware.Logger)
 	router.Use(chiMiddleware.Recoverer)
-	router.Use(middleware.Authorization(authService))
+
+	router.Route("/public", func(r chi.Router) {
+		config := huma.DefaultConfig("MatchAlly", version)
+		config.Servers = []*huma.Server{
+			{URL: "https://matchally.me/public"},
+		}
+		api = humachi.New(r, config)
+		api.UseMiddleware(middleware.CanonicalLogger(l))
+
+		addPublicRoutes(api, handler)
+	})
 
 	router.Route("/api", func(r chi.Router) {
 		config := huma.DefaultConfig("MatchAlly", version)
@@ -39,8 +48,12 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 			{URL: "https://matchally.me/api"},
 		}
 		api = humachi.New(r, config)
+		api.UseMiddleware(
+			middleware.Authenticated(authService),
+			middleware.CanonicalLogger(l),
+		)
 
-		addRoutes(api, handler)
+		addAuthenticatedRoutes(api, handler)
 	})
 
 	return &Server{
