@@ -1,0 +1,40 @@
+name: Lint
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - master
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.23"
+          cache: false
+      - uses: actions/checkout@v3
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.62.0
+          args: --verbose
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.23"
+      - run: go install github.com/becheran/go-testreport@latest
+      - run: |
+          go test ./... -json | tee report.json
+          cat report.json | go-testreport $GITHUB_STEP_SUMMARY
+      - uses: guyarb/golang-test-annotations@v0.8.0
+        with:
+          test-results: report.json

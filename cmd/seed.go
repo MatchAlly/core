@@ -75,7 +75,9 @@ func seedDatabase(ctx context.Context, db *sqlx.DB) error {
 		filePath := filepath.Join("seeds", fileName)
 		content, err := os.ReadFile(filePath)
 		if err != nil {
-			tx.Rollback()
+			if errRollback := tx.Rollback(); errRollback != nil {
+				return fmt.Errorf("failed to rollback transaction: %w", errRollback)
+			}
 
 			return fmt.Errorf("failed to read file %s: %w", fileName, err)
 		}
@@ -89,7 +91,9 @@ func seedDatabase(ctx context.Context, db *sqlx.DB) error {
 			}
 
 			if _, err := tx.ExecContext(ctx, statement); err != nil {
-				tx.Rollback()
+				if errRollback := tx.Rollback(); errRollback != nil {
+					return fmt.Errorf("failed to rollback transaction: %w", errRollback)
+				}
 
 				return fmt.Errorf("failed to execute statement from %s: %w", fileName, err)
 			}
@@ -99,7 +103,9 @@ func seedDatabase(ctx context.Context, db *sqlx.DB) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
+		if errRollback := tx.Rollback(); errRollback != nil {
+			return fmt.Errorf("failed to rollback transaction: %w", errRollback)
+		}
 
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}

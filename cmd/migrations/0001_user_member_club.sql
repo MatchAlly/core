@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS members (
     club_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     display_name VARCHAR(255),
-    role VARCHAR(50) NOT NULL CHECK (initiator IN ('ADMIN', 'MANAGER', 'MEMBER')),
+    role VARCHAR(50) NOT NULL CHECK (role IN ('ADMIN', 'MANAGER', 'MEMBER')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (club_id) REFERENCES clubs(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
