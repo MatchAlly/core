@@ -1,11 +1,11 @@
 name: Lint
 on:
   push:
-    tags:
-      - v*
     branches:
       - master
-  pull_request:
+  release:
+    types: [published]
+  pull_request: {}
 permissions:
   contents: read
 jobs:
