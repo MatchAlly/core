@@ -7,8 +7,8 @@ import (
 )
 
 type updateUserRequest struct {
-	Email string `json:"userId" validate:"required,email"`
-	Name  string `json:"name" validate:"required,min=1,max=255"`
+	Email string `json:"userId" format:"email"`
+	Name  string `json:"name" minLength:"1" maxLength:"50"`
 }
 
 type updateUserResponse struct {

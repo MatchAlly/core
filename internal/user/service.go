@@ -9,7 +9,6 @@ import (
 
 type Service interface {
 	GetUser(ctx context.Context, id int) (*User, error)
-	GetUsers(ctx context.Context, ids []int) ([]User, error)
 	GetUserByEmail(ctx context.Context, email string) (exists bool, user *User, err error)
 	CreateUser(ctx context.Context, email, name, hash string) (int, error)
 	DeleteUser(ctx context.Context, id int) error
@@ -34,15 +33,6 @@ func (s *service) GetUser(ctx context.Context, id int) (*User, error) {
 	}
 
 	return user, nil
-}
-
-func (s *service) GetUsers(ctx context.Context, ids []int) ([]User, error) {
-	users, err := s.repo.GetUsers(ctx, ids)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get users %v", ids)
-	}
-
-	return users, nil
 }
 
 func (s *service) CreateUser(ctx context.Context, email, name, hash string) (int, error) {

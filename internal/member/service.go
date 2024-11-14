@@ -8,7 +8,7 @@ type Service interface {
 	GetMembersInClub(ctx context.Context, clubId int) ([]Member, error)
 	GetUserMemberships(ctx context.Context, userId int) ([]Member, error)
 	UpdateRole(ctx context.Context, memberId int, role Role) error
-	DeleteMembership(ctx context.Context, memberId int) error
+	DeleteMember(ctx context.Context, memberId int) error
 }
 
 type service struct {
@@ -33,6 +33,6 @@ func (s *service) UpdateRole(ctx context.Context, memberId int, role Role) error
 	return s.repo.UpdateRole(ctx, memberId, role)
 }
 
-func (s *service) DeleteMembership(ctx context.Context, memberId int) error {
-	return s.repo.DeleteMembership(ctx, memberId)
+func (s *service) DeleteMember(ctx context.Context, memberId int) error {
+	return s.repo.DeleteMember(ctx, memberId)
 }

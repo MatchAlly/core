@@ -2,6 +2,7 @@ package club
 
 import (
 	"context"
+	"core/internal/game"
 
 	"github.com/pkg/errors"
 )
@@ -12,6 +13,7 @@ type Service interface {
 	CreateClub(ctx context.Context, name string, adminUserId int) (clubId int, err error)
 	DeleteClub(ctx context.Context, id int) error
 	UpdateClub(ctx context.Context, id int, name string) error
+	GetGames(ctx context.Context, clubID int) ([]game.Game, error)
 }
 
 type service struct {
@@ -69,4 +71,13 @@ func (s *service) UpdateClub(ctx context.Context, id int, name string) error {
 	}
 
 	return nil
+}
+
+func (s *service) GetGames(ctx context.Context, clubID int) ([]game.Game, error) {
+	games, err := s.repo.GetGames(ctx, clubID)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get games")
+	}
+
+	return games, nil
 }

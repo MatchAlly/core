@@ -11,8 +11,8 @@ import (
 )
 
 type loginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8,max=64"`
+	Email    string `json:"email" format:"email"`
+	Password string `json:"password" minLength:"8" maxLength:"50"`
 }
 
 type loginResponse struct {
@@ -20,7 +20,7 @@ type loginResponse struct {
 }
 
 func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse, error) {
-	correct, accessToken, refreshToken, err := h.authService.Login(ctx, req.Email, req.Password)
+	correct, accessToken, refreshToken, err := h.authNService.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to login, try again later")
 	}
@@ -55,16 +55,16 @@ func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse,
 }
 
 type refreshRequest struct {
-	RefreshToken string `json:"refreshToken" validate:"required"`
+	RefreshToken http.Cookie `json:"refreshToken"`
 }
 
 type refreshResponse struct {
 	SetCookie []http.Cookie `header:"Set-Cookie"`
 }
 
-// TODO: Could this just check cookies instead of requiring a request body?
 func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshResponse, error) {
-	valid, _, err := h.authService.VerifyRefreshToken(ctx, req.RefreshToken)
+
+	valid, _, err := h.authNService.VerifyRefreshToken(ctx, req.RefreshToken.Value)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to verify refresh token")
 	}
@@ -73,7 +73,7 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 		return nil, huma.Error401Unauthorized("invalid refresh token")
 	}
 
-	accessToken, refreshToken, err := h.authService.RefreshTokens(ctx, req.RefreshToken)
+	accessToken, refreshToken, err := h.authNService.RefreshTokens(ctx, req.RefreshToken.Value)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to refresh tokens")
 	}
@@ -102,13 +102,13 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 }
 
 type signupRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Name     string `json:"name" validate:"required,min=1,max=64"`
-	Password string `json:"password" validate:"required,min=8,max=64"`
+	Email    string `json:"email" format:"email"`
+	Name     string `json:"name" minLength:"2" maxLength:"20"`
+	Password string `json:"password" minLength:"8" maxLength:"50"`
 }
 
 func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, error) {
-	success, err := h.authService.Signup(ctx, req.Email, req.Name, req.Password)
+	success, err := h.authNService.Signup(ctx, req.Email, req.Name, req.Password)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
@@ -128,8 +128,8 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 }
 
 type changePasswordRequest struct {
-	OldPassword string `json:"oldPassword" validate:"required"`
-	NewPassword string `json:"newPassword" validate:"required"`
+	OldPassword string `json:"oldPassword" minLength:"8" maxLength:"50"`
+	NewPassword string `json:"newPassword" minLength:"8" maxLength:"50"`
 }
 
 func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest) (*struct{}, error) {

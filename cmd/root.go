@@ -3,7 +3,6 @@ package cmd
 import (
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,7 +12,7 @@ import (
 const shutdownPeriod = 15 * time.Second
 
 type Config struct {
-	DatabaseDSN        string        `mapstructure:"DATABASE_DSN" validate:"required"`
+	DatabaseDSN        string        `mapstructure:"DATABASE_DSN" default:"postgresql://core:secret@localhost:5432/core"`
 	APIPort            int           `mapstructure:"API_PORT" default:"8080"`
 	APIVersion         string        `mapstructure:"API_VERSION" default:"0.0.1"`
 	AuthNSecret        string        `mapstructure:"AUTHN_SECRET" default:"secret" `
@@ -44,10 +43,6 @@ func loadConfig() (*Config, error) {
 	var config Config
 	defaults.SetDefaults(&config)
 	if err := viper.Unmarshal(&config); err != nil {
-		return nil, err
-	}
-
-	if err := validator.New().Struct(&config); err != nil {
 		return nil, err
 	}
 

@@ -18,7 +18,6 @@ var (
 
 type Repository interface {
 	GetUser(ctx context.Context, id int) (*User, error)
-	GetUsers(ctx context.Context, ids []int) ([]User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	CreateUser(ctx context.Context, user *User) (int, error)
 	DeleteUser(ctx context.Context, id int) error
@@ -48,22 +47,6 @@ func (r *repository) GetUser(ctx context.Context, id int) (*User, error) {
 	}
 
 	return user, nil
-}
-
-func (r *repository) GetUsers(ctx context.Context, ids []int) ([]User, error) {
-	var users []User
-
-	query, args, err := sqlx.In("SELECT * FROM users WHERE id IN (?)", ids)
-	if err != nil {
-		return nil, err
-	}
-
-	query = r.db.Rebind(query)
-	if err = r.db.SelectContext(ctx, &users, query, args...); err != nil {
-		return nil, err
-	}
-
-	return users, nil
 }
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {

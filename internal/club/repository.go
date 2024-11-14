@@ -2,6 +2,7 @@ package club
 
 import (
 	"context"
+	"core/internal/game"
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
@@ -19,6 +20,7 @@ type Repository interface {
 	CreateClub(ctx context.Context, Club *Club) (clubId int, err error)
 	DeleteClub(ctx context.Context, id int) error
 	UpdateClub(ctx context.Context, id int, name string) error
+	GetGames(ctx context.Context, clubID int) ([]game.Game, error)
 }
 
 type repository struct {
@@ -92,4 +94,15 @@ func (r *repository) UpdateClub(ctx context.Context, id int, name string) error 
 	}
 
 	return nil
+}
+
+func (r *repository) GetGames(ctx context.Context, clubID int) ([]game.Game, error) {
+	var games []game.Game
+
+	err := r.db.SelectContext(ctx, &games, "SELECT * FROM games WHERE club_id = $1", clubID)
+	if err != nil {
+		return nil, err
+	}
+
+	return games, nil
 }

@@ -21,9 +21,9 @@ func addAuthenticatedRoutes(api huma.API, h *handlers.Handler) {
 	// Users
 	huma.Delete(api, "/users", h.DeleteUser)
 	huma.Put(api, "/users", h.UpdateUser)
+	huma.Get(api, "/users/:userId/clubs", h.GetMemberships)
 
 	// Clubs
-	huma.Get(api, "/clubs", h.GetMemberships)
 	huma.Post(api, "/clubs", h.CreateClub)
 	huma.Put(api, "/clubs/:clubId", h.UpdateClub)
 	huma.Delete(api, "/clubs/:clubId", h.DeleteClub)
@@ -31,4 +31,6 @@ func addAuthenticatedRoutes(api huma.API, h *handlers.Handler) {
 	huma.Delete(api, "/clubs/:clubId/members/:memberId", h.RemoveMemberFromClub)
 	huma.Put(api, "/clubs/:clubId/members/:memberId", h.UpdateMemberRole)
 	huma.Post(api, "/clubs/:clubId/matches", h.PostMatch)
+	huma.Get(api, "/clubs/:clubId/matches", h.GetClubMatches)
+	huma.Get(api, "/clubs/:clubId/games", h.GetClubGames)
 }

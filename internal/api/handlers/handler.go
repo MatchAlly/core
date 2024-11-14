@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"core/internal/authentication"
+	"core/internal/authorization"
 	"core/internal/club"
 	"core/internal/match"
 	"core/internal/member"
@@ -13,7 +14,8 @@ import (
 
 type Handler struct {
 	l             *zap.SugaredLogger
-	authService   authentication.Service
+	authNService  authentication.Service
+	authZService  authorization.Service
 	userService   user.Service
 	clubService   club.Service
 	memberService member.Service
@@ -24,6 +26,7 @@ type Handler struct {
 func NewHandler(
 	l *zap.SugaredLogger,
 	authService authentication.Service,
+	authZService authorization.Service,
 	userService user.Service,
 	clubService club.Service,
 	memberService member.Service,
@@ -32,7 +35,8 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		l:             l,
-		authService:   authService,
+		authNService:  authService,
+		authZService:  authZService,
 		userService:   userService,
 		clubService:   clubService,
 		memberService: memberService,

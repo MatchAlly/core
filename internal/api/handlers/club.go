@@ -7,6 +7,10 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
+type getMembershipsRequest struct {
+	UserID int `path:"userId" minimum:"1"`
+}
+
 type getMembershipsResponse struct {
 	Clubs    []getMembershipsResponseClub    `json:"clubs"`
 	Invites  []getMembershipsResponseInvite  `json:"invites"`
@@ -28,13 +32,8 @@ type getMembershipsResponseRequest struct {
 	Name string `json:"name"`
 }
 
-func (h *Handler) GetMemberships(ctx context.Context, req *struct{}) (*getMembershipsResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
-	if !ok {
-		return nil, huma.Error500InternalServerError("failed to get user id from context")
-	}
-
-	memberships, err := h.memberService.GetUserMemberships(ctx, userID)
+func (h *Handler) GetMemberships(ctx context.Context, req *getMembershipsRequest) (*getMembershipsResponse, error) {
+	memberships, err := h.memberService.GetUserMemberships(ctx, req.UserID)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to get memberships, try again later")
 	}
@@ -62,7 +61,7 @@ func (h *Handler) GetMemberships(ctx context.Context, req *struct{}) (*getMember
 }
 
 type createClubRequest struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name" minLength:"2" maxLength:"64"`
 }
 
 type createClubResponse struct {
@@ -90,7 +89,7 @@ func (h *Handler) CreateClub(ctx context.Context, req *createClubRequest) (*crea
 }
 
 type deleteClubRequest struct {
-	ClubID int `json:"clubId" validate:"required,gt=0"`
+	ClubID int `json:"clubId"  minimum:"1"`
 }
 
 func (h *Handler) DeleteClub(ctx context.Context, req *deleteClubRequest) (*struct{}, error) {
@@ -102,8 +101,8 @@ func (h *Handler) DeleteClub(ctx context.Context, req *deleteClubRequest) (*stru
 }
 
 type updateClubRequest struct {
-	ClubID int    `json:"clubId" validate:"required,gt=0"`
-	Name   string `json:"name" validate:"required"`
+	ClubID int    `json:"clubId" minimum:"1"`
+	Name   string `json:"name" minLength:"2" maxLength:"64"`
 }
 
 type updateClubResponse struct {
@@ -112,8 +111,21 @@ type updateClubResponse struct {
 }
 
 func (h *Handler) UpdateClub(ctx context.Context, req *updateClubRequest) (*updateClubResponse, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
+	}
+
+	ok, err := h.authZService.IsAdmin(ctx, userID, req.ClubID)
+	if err != nil {
+		return nil, huma.Error500InternalServerError("failed to check authorization")
+	}
+	if !ok {
+		return nil, huma.Error403Forbidden("user not authorized to update this club")
+	}
+
 	if err := h.clubService.UpdateClub(ctx, req.ClubID, req.Name); err != nil {
-		return nil, huma.Error500InternalServerError("failed to update club, try again later")
+		return nil, huma.Error500InternalServerError("failed to update club")
 	}
 
 	resp := &updateClubResponse{
@@ -125,11 +137,24 @@ func (h *Handler) UpdateClub(ctx context.Context, req *updateClubRequest) (*upda
 }
 
 type updateMemberRoleRequest struct {
-	MemberID int         `param:"clubId" validate:"required,gt=0"`
-	Role     member.Role `json:"role" validate:"required"`
+	MemberID int         `param:"clubId" minimum:"1"`
+	Role     member.Role `json:"role" enum:"ADMIN,MANAGER,MEMBER"`
 }
 
 func (h *Handler) UpdateMemberRole(ctx context.Context, req *updateMemberRoleRequest) (*struct{}, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
+	}
+
+	ok, err := h.authZService.IsAdmin(ctx, userID, req.MemberID)
+	if err != nil {
+		return nil, huma.Error500InternalServerError("failed to check authorization")
+	}
+	if !ok {
+		return nil, huma.Error403Forbidden("user not authorized to update member role")
+	}
+
 	if err := h.memberService.UpdateRole(ctx, req.MemberID, req.Role); err != nil {
 		return nil, huma.Error500InternalServerError("failed to update role, try again later")
 	}
@@ -138,7 +163,7 @@ func (h *Handler) UpdateMemberRole(ctx context.Context, req *updateMemberRoleReq
 }
 
 type getMembersInClubRequest struct {
-	ClubId int `query:"clubId" validate:"required,gt=0"`
+	ClubId int `path:"clubId" minimum:"1"`
 }
 
 type getMembersInClubResponse struct {
@@ -152,6 +177,19 @@ type membersInClub struct {
 }
 
 func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubRequest) (*getMembersInClubResponse, error) {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
+	}
+
+	ok, err := h.authZService.IsMember(ctx, userID, req.ClubId)
+	if err != nil {
+		return nil, huma.Error500InternalServerError("failed to check authorization")
+	}
+	if !ok {
+		return nil, huma.Error403Forbidden("user not authorized to get members in this club")
+	}
+
 	members, err := h.memberService.GetMembersInClub(ctx, req.ClubId)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to get members, try again later")
@@ -174,11 +212,24 @@ func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubReq
 }
 
 type removeUserFromClubRequest struct {
-	MemberId int `param:"memberId" validate:"required,gt=0"`
+	MemberId int `param:"memberId" minimum:"1"`
 }
 
 func (h *Handler) RemoveMemberFromClub(ctx context.Context, req *removeUserFromClubRequest) (*struct{}, error) {
-	if err := h.memberService.DeleteMembership(ctx, req.MemberId); err != nil {
+	userID, ok := ctx.Value("user_id").(int)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get user id from context")
+	}
+
+	ok, err := h.authZService.IsAdmin(ctx, userID, req.MemberId)
+	if err != nil {
+		return nil, huma.Error500InternalServerError("failed to check authorization")
+	}
+	if !ok {
+		return nil, huma.Error403Forbidden("user not authorized to remove member from club")
+	}
+
+	if err := h.memberService.DeleteMember(ctx, req.MemberId); err != nil {
 		return nil, huma.Error500InternalServerError("failed to remove member from club, try again later")
 	}
 

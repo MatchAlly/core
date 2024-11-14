@@ -10,7 +10,7 @@ type Repository interface {
 	GetMembersInClub(ctx context.Context, clubId int) ([]Member, error)
 	GetUserMemberships(ctx context.Context, userId int) ([]Member, error)
 	UpdateRole(ctx context.Context, memberId int, role Role) error
-	DeleteMembership(ctx context.Context, memberId int) error
+	DeleteMember(ctx context.Context, memberId int) error
 }
 
 type repository struct {
@@ -52,7 +52,7 @@ func (r *repository) UpdateRole(ctx context.Context, memberId int, role Role) er
 	return nil
 }
 
-func (r *repository) DeleteMembership(ctx context.Context, memberId int) error {
+func (r *repository) DeleteMember(ctx context.Context, memberId int) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM members WHERE id = $1", memberId)
 	if err != nil {
 		return err
