@@ -7,22 +7,22 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-type postMatchRequest struct {
-	ClubID int                    `json:"clubId" minimum:"1"`
-	GameID int                    `json:"gameId" minimum:"1"`
-	Teams  []postMatchRequestTeam `json:"teams" minItems:"1"`
-	Sets   []string               `json:"sets,omitempty"`
+type postClubMatchRequest struct {
+	ClubID int                        `json:"clubId" minimum:"1"`
+	GameID int                        `json:"gameId" minimum:"1"`
+	Teams  []postClubMatchRequestTeam `json:"teams" minItems:"1"`
+	Sets   []string                   `json:"sets,omitempty"`
 }
 
-type postMatchRequestTeam struct {
+type postClubMatchRequestTeam struct {
 	Members []int `json:"members" minItems:"1"`
 }
 
-type postMatchResponse struct {
+type postClubMatchResponse struct {
 	MatchID int `json:"matchId"`
 }
 
-func (h *Handler) PostMatch(ctx context.Context, req *postMatchRequest) (*postMatchResponse, error) {
+func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) (*postClubMatchResponse, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -53,7 +53,7 @@ func (h *Handler) PostMatch(ctx context.Context, req *postMatchRequest) (*postMa
 
 	// TODO update statistics and rankings
 
-	return &postMatchResponse{MatchID: matchID}, nil
+	return &postClubMatchResponse{MatchID: matchID}, nil
 }
 
 type getClubMatchesRequest struct {

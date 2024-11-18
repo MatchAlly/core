@@ -5,7 +5,7 @@ import "context"
 type Service interface {
 	GetGame(ctx context.Context, id int) (*Game, error)
 	GetGames(ctx context.Context, ids []int) ([]Game, error)
-	CreateGame(ctx context.Context, game *Game) (int, error)
+	CreateGame(ctx context.Context, clubID int, name string) (int, error)
 	UpdateGame(ctx context.Context, game *Game) error
 	DeleteGame(ctx context.Context, id int) error
 }
@@ -26,7 +26,12 @@ func (s *service) GetGames(ctx context.Context, ids []int) ([]Game, error) {
 	return s.repo.GetGames(ctx, ids)
 }
 
-func (s *service) CreateGame(ctx context.Context, game *Game) (int, error) {
+func (s *service) CreateGame(ctx context.Context, clubID int, name string) (int, error) {
+	game := &Game{
+		ClubID: clubID,
+		Name:   name,
+	}
+
 	return s.repo.CreateGame(ctx, game)
 }
 

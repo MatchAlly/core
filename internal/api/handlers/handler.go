@@ -4,6 +4,7 @@ import (
 	"core/internal/authentication"
 	"core/internal/authorization"
 	"core/internal/club"
+	"core/internal/game"
 	"core/internal/match"
 	"core/internal/member"
 	"core/internal/rating"
@@ -21,6 +22,7 @@ type Handler struct {
 	memberService member.Service
 	matchService  match.Service
 	ratingService rating.Service
+	gameService   game.Service
 }
 
 func NewHandler(
@@ -32,6 +34,7 @@ func NewHandler(
 	memberService member.Service,
 	matchService match.Service,
 	ratingService rating.Service,
+	gameService game.Service,
 ) *Handler {
 	return &Handler{
 		l:             l,
@@ -42,5 +45,6 @@ func NewHandler(
 		memberService: memberService,
 		matchService:  matchService,
 		ratingService: ratingService,
+		gameService:   gameService,
 	}
 }

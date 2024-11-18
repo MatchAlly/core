@@ -1,15 +1,16 @@
 -- +goose up
 CREATE TABLE IF NOT EXISTS member_statistics (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    member_id BIGINT NOT NULL UNIQUE,
-    game_id BIGINT NOT NULL UNIQUE,
+    member_id BIGINT NOT NULL,
+    game_id BIGINT NOT NULL,
     wins INT NOT NULL DEFAULT 0,
     losses INT NOT NULL DEFAULT 0,
     draws INT NOT NULL DEFAULT 0,
     streak INT NOT NULL DEFAULT 0,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id),
-    FOREIGN KEY (game_id) REFERENCES games(id)
+    FOREIGN KEY (game_id) REFERENCES games(id),
+    UNIQUE (member_id, game_id)
 );
 
 CREATE TABLE IF NOT EXISTS member_ratings (
@@ -21,7 +22,8 @@ CREATE TABLE IF NOT EXISTS member_ratings (
     volatility NUMERIC(5, 2) NOT NULL DEFAULT 0,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id),
-    FOREIGN KEY (game_id) REFERENCES games(id)
+    FOREIGN KEY (game_id) REFERENCES games(id),
+    UNIQUE (member_id, game_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_member_ratings_member_id ON member_ratings(member_id);
