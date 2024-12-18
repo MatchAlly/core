@@ -12,7 +12,7 @@ import (
 
 type loginRequest struct {
 	Email    string `json:"email" format:"email"`
-	Password string `json:"password" minLength:"8" maxLength:"50"`
+	Password string `json:"password" minLength:"8" maxLength:"256"`
 }
 
 type loginResponse struct {
@@ -104,7 +104,7 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 type signupRequest struct {
 	Email    string `json:"email" format:"email"`
 	Name     string `json:"name" minLength:"2" maxLength:"20"`
-	Password string `json:"password" minLength:"8" maxLength:"50"`
+	Password string `json:"password" minLength:"8" maxLength:"256"`
 }
 
 func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, error) {
@@ -117,10 +117,7 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 	}
 
 	exists, _, err := h.userService.GetUserByEmail(ctx, req.Email)
-	if err != nil {
-		return nil, huma.Error500InternalServerError("failed to signup, try again later")
-	}
-	if !exists {
+	if err != nil || !exists {
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 
@@ -128,8 +125,8 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 }
 
 type changePasswordRequest struct {
-	OldPassword string `json:"oldPassword" minLength:"8" maxLength:"50"`
-	NewPassword string `json:"newPassword" minLength:"8" maxLength:"50"`
+	OldPassword string `json:"oldPassword" minLength:"8" maxLength:"256"`
+	NewPassword string `json:"newPassword" minLength:"8" maxLength:"256"`
 }
 
 func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest) (*struct{}, error) {

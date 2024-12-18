@@ -40,36 +40,161 @@ func (r *repository) CreateMatch(ctx context.Context, m *Match) (int, error) {
 }
 
 func (r *repository) GetMatches(ctx context.Context, clubID int) ([]Match, error) {
-	var matches []Match
+	matchesMap := make(map[int]*Match)
 
-	// TODO add teams
-	query, args, err := sqlx.In("SELECT * FROM matches WHERE club_id = ?", clubID)
+	rows, err := r.db.QueryxContext(ctx, `
+			SELECT
+					m.id AS match_id,
+					m.club_id AS match_club_id,
+					m.game_id AS match_game_id,
+					m.mode AS match_mode,
+					m.ranked AS match_ranked,
+					m.sets AS match_sets,
+					m.created_at AS match_created_at,
+					t.id AS team_id,
+					t.club_id AS team_club_id,
+					mem.id AS member_id,
+					mem.club_id AS member_club_id,
+					mem.user_id AS member_user_id,
+					mem.display_name AS member_display_name,
+					mem.role AS member_role
+			FROM matches m
+			LEFT JOIN match_teams mt ON m.id = mt.match_id
+			LEFT JOIN teams t ON mt.team_id = t.id
+			LEFT JOIN team_members tm ON t.id = tm.team_id
+			LEFT JOIN members mem ON tm.member_id = mem.id
+			WHERE m.club_id = $1
+			ORDER BY m.id, t.id, mem.id; -- Crucial for correct grouping
+	`, clubID)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	query = r.db.Rebind(query)
-	err = r.db.SelectContext(ctx, &matches, query, args...)
-	if err != nil {
+	for rows.Next() {
+		var m Match
+		var t Team
+		var mem member.Member
+
+		err = rows.Scan(
+			&m.ID, &m.ClubID, &m.GameID, &m.Gamemode, &m.Ranked, &m.Sets, &m.CreatedAt,
+			&t.ID, &t.ClubID,
+			&mem.ID, &mem.ClubID, &mem.UserID, &mem.DisplayName, &mem.Role,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		match, ok := matchesMap[m.ID]
+		if !ok {
+			match = &m
+			match.Teams = make([]Team, 0)
+			matchesMap[m.ID] = match
+		}
+
+		if t.ID != 0 {
+			teamExists := false
+			for i := range match.Teams {
+				if match.Teams[i].ID == t.ID {
+					match.Teams[i].Members = append(match.Teams[i].Members, mem)
+					teamExists = true
+					break
+				}
+			}
+			if !teamExists {
+				t.Members = []member.Member{mem}
+				match.Teams = append(match.Teams, t)
+			}
+		}
+	}
+	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	matches := make([]Match, 0, len(matchesMap))
+	for _, matchPtr := range matchesMap {
+		matches = append(matches, *matchPtr)
 	}
 
 	return matches, nil
 }
 
-func (r *repository) GetMatchesByGame(ctx context.Context, clubID, gameID int) ([]Match, error) {
-	var matches []Match
+func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID int) ([]Match, error) {
+	matchesMap := make(map[int]*Match)
 
-	// TODO add teams
-	query, args, err := sqlx.In("SELECT * FROM matches WHERE club_id = ? AND game_id = ?", clubID, gameID)
+	rows, err := r.db.QueryxContext(ctx, `
+        SELECT
+            m.id AS match_id,
+            m.club_id AS match_club_id,
+            m.game_id AS match_game_id,
+            m.mode AS match_mode,
+            m.ranked AS match_ranked,
+            m.sets AS match_sets,
+            m.created_at AS match_created_at,
+            t.id AS team_id,
+            t.club_id AS team_club_id,
+            mem.id AS member_id,
+            mem.club_id AS member_club_id,
+            mem.user_id AS member_user_id,
+            mem.display_name AS member_display_name,
+            mem.role AS member_role
+        FROM matches m
+        LEFT JOIN match_teams mt ON m.id = mt.match_id
+        LEFT JOIN teams t ON mt.team_id = t.id
+        LEFT JOIN team_members tm ON t.id = tm.team_id
+        LEFT JOIN members mem ON tm.member_id = mem.id
+        WHERE m.club_id = $1 AND m.game_id = $2
+        ORDER BY m.id, t.id, mem.id; -- Crucial for correct grouping
+    `, clubID, gameID)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	query = r.db.Rebind(query)
-	err = r.db.SelectContext(ctx, &matches, query, args...)
-	if err != nil {
+	for rows.Next() {
+		var m Match
+		var t Team
+		var mem member.Member
+
+		err = rows.Scan(
+			&m.ID, &m.ClubID, &m.GameID, &m.Gamemode, &m.Ranked, &m.Sets, &m.CreatedAt,
+			&t.ID, &t.ClubID,
+			&mem.ID, &mem.ClubID, &mem.UserID, &mem.DisplayName, &mem.Role,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		match, ok := matchesMap[m.ID]
+		if !ok {
+			match = &m
+			match.Teams = make([]Team, 0)
+			matchesMap[m.ID] = match
+		}
+
+		if t.ID != 0 {
+			teamExists := false
+			for i := range match.Teams {
+				if match.Teams[i].ID == t.ID {
+					match.Teams[i].Members = append(match.Teams[i].Members, mem)
+					teamExists = true
+					break
+				}
+			}
+			if !teamExists {
+				t.Members = []member.Member{mem}
+				match.Teams = append(match.Teams, t)
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	matches := make([]Match, 0, len(matchesMap))
+	for _, matchPtr := range matchesMap {
+		matches = append(matches, *matchPtr)
 	}
 
 	return matches, nil
