@@ -52,8 +52,8 @@ func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []int)
 
 func (r *repository) CreateRating(ctx context.Context, rating *Rating) (int, error) {
 	result, err := r.db.ExecContext(ctx,
-		"INSERT INTO ratings (member_id, game_id, value) VALUES ($1, $2)",
-		rating.MemberID, rating.GameID, rating.Value,
+		"INSERT INTO ratings (member_id, game_id, mu, sigma) VALUES ($1, $2, $3, $4)",
+		rating.MemberID, rating.GameID, rating.Mu, rating.Sigma,
 	)
 	if err != nil {
 		return 0, err
@@ -75,8 +75,8 @@ func (r *repository) UpdateRatings(ctx context.Context, ratings []Rating) error 
 
 	for _, rating := range ratings {
 		_, err = tx.ExecContext(ctx,
-			"UPDATE ratings SET value = $1 WHERE member_id = $2 AND game_id = $3",
-			rating.Value, rating.MemberID, rating.GameID,
+			"UPDATE ratings SET mu = $1, sigma = $2 WHERE member_id = $3 AND game_id = $4",
+			rating.Mu, rating.Sigma, rating.MemberID, rating.GameID,
 		)
 		if err != nil {
 			if errRollback := tx.Rollback(); errRollback != nil {
@@ -92,8 +92,8 @@ func (r *repository) UpdateRatings(ctx context.Context, ratings []Rating) error 
 
 func (r *repository) UpdateRating(ctx context.Context, rating *Rating) error {
 	_, err := r.db.ExecContext(ctx,
-		"UPDATE ratings SET value = $1 WHERE member_id = $2 AND game_id = $3",
-		rating.Value, rating.MemberID, rating.GameID,
+		"UPDATE ratings SET mu = $1, sigma = $2 WHERE member_id = $3 AND game_id = $4",
+		rating.Mu, rating.Sigma, rating.MemberID, rating.GameID,
 	)
 	if err != nil {
 		return err

@@ -2,32 +2,35 @@ package rating
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/Sebsh1/openskill.go"
 	"github.com/pkg/errors"
 )
 
 type Service interface {
 	CreateRating(ctx context.Context, memberID, gameID int) (int, error)
-	UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []int) error
+	UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][]int, ranks []int) error
 }
 
 type service struct {
-	repo Repository
+	repo  Repository
+	rater openskill.Rater
 }
 
 func NewService(repo Repository) Service {
 	return &service{
-		repo: repo,
+		repo:  repo,
+		rater: openskill.DefaultPlackettLuceModel(),
 	}
 }
 
 func (s *service) CreateRating(ctx context.Context, memberID, gameID int) (int, error) {
 	rating := &Rating{
-		MemberID:   memberID,
-		GameID:     gameID,
-		Value:      startRating,
-		Deviation:  maxDeviation,
-		Volatility: startVolatility,
+		MemberID: memberID,
+		GameID:   gameID,
+		Mu:       startMu,
+		Sigma:    startSigma,
 	}
 
 	id, err := s.repo.CreateRating(ctx, rating)
@@ -38,74 +41,77 @@ func (s *service) CreateRating(ctx context.Context, memberID, gameID int) (int, 
 	return id, nil
 }
 
-func (s *service) UpdateRatings(ctx context.Context, draw bool, winningMemberIds, losingMemberIds []int) error {
-	var updatedRatings []Rating
-
-	winnerRatings, err := s.repo.GetRatingsByMemberIds(ctx, winningMemberIds)
+func (s *service) UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][]int, ranks []int) error {
+	ids, shape := flatten(teamsByMemberIDs)
+	ratings, err := s.repo.GetRatingsByMemberIds(ctx, ids)
 	if err != nil {
-		return errors.Wrap(err, "failed to get winning members")
+		return errors.Wrap(err, "failed to get ratings")
 	}
 
-	loserRatings, err := s.repo.GetRatingsByMemberIds(ctx, losingMemberIds)
+	openSkillRatings := make([]openskill.Rating, len(ratings))
+	for i, rating := range ratings {
+		openSkillRatings[i] = openskill.Rating{
+			Mu:    rating.Mu,
+			Sigma: rating.Sigma,
+		}
+	}
+
+	teams, err := unflatten(openSkillRatings, shape)
 	if err != nil {
-		return errors.Wrap(err, "failed to get losing members")
+		return errors.Wrap(err, "failed to unflatten ratings")
 	}
 
-	winnerAverageRating, winnerAverageDeviation := s.getAverageRatingAndDeviation(winnerRatings)
-	loserAverageRating, loserAverageDeviation := s.getAverageRatingAndDeviation(loserRatings)
-
-	var winnerResult, loserResult MatchResult
-
-	if draw {
-		winnerResult = MatchResult{
-			OpponentRating:    loserAverageRating,
-			OpponentDeviation: loserAverageDeviation,
-			Result:            resultMultiplierDraw,
-		}
-
-		loserResult = MatchResult{
-			OpponentRating:    winnerAverageRating,
-			OpponentDeviation: winnerAverageDeviation,
-			Result:            resultMultiplierDraw,
-		}
-	} else {
-		winnerResult = MatchResult{
-			OpponentRating:    loserAverageRating,
-			OpponentDeviation: loserAverageDeviation,
-			Result:            resultMultiplierWin,
-		}
-
-		loserResult = MatchResult{
-			OpponentRating:    winnerAverageRating,
-			OpponentDeviation: winnerAverageDeviation,
-			Result:            resultMultiplierLoss,
-		}
+	updatedRatings, err := s.rater.Rate(teams, ranks, nil, nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to calculate new ratings")
 	}
 
-	for _, winnerRating := range winnerRatings {
-		updatedRating := ApplyActiveRatingPeriod(winnerRating, []MatchResult{winnerResult, loserResult})
-		updatedRatings = append(updatedRatings, updatedRating)
+	newRatings, _ := flatten(updatedRatings)
+	for i := range ratings {
+		ratings[i].Mu = newRatings[i].Mu
+		ratings[i].Sigma = newRatings[i].Sigma
 	}
 
-	for _, loserRating := range loserRatings {
-		updatedRating := ApplyActiveRatingPeriod(loserRating, []MatchResult{loserResult, winnerResult})
-		updatedRatings = append(updatedRatings, updatedRating)
-	}
-
-	if err := s.repo.UpdateRatings(ctx, updatedRatings); err != nil {
+	if err := s.repo.UpdateRatings(ctx, ratings); err != nil {
 		return errors.Wrap(err, "failed to update ratings")
 	}
 
 	return nil
 }
 
-func (s *service) getAverageRatingAndDeviation(ratings []Rating) (float64, float64) {
-	var totalRating, totalDeviation float64
+func flatten[T any](matrix [][]T) ([]T, []int) {
+	shape := make([]int, len(matrix))
+	totalLen := 0
+	flattened := make([]T, 0, totalLen)
 
-	for _, rating := range ratings {
-		totalRating += rating.Value
-		totalDeviation += rating.Deviation
+	for i, row := range matrix {
+		shape[i] = len(row)
+		totalLen += len(row)
+		flattened = append(flattened, row...)
 	}
 
-	return totalRating / float64(len(ratings)), totalDeviation / float64(len(ratings))
+	return flattened, shape
+}
+
+func unflatten[T any](flattened []T, shape []int) ([][]T, error) {
+	total := 0
+	for _, v := range shape {
+		total += v
+	}
+	if len(flattened) != total {
+		return nil, fmt.Errorf("total length of shape does not match length of flattened list")
+	}
+
+	var matrix [][]T
+	start := 0
+	for _, rowLen := range shape {
+		if rowLen < 0 {
+			return nil, fmt.Errorf("invalid row length: %d", rowLen)
+		}
+		end := start + rowLen
+		matrix = append(matrix, flattened[start:end])
+		start = end
+	}
+
+	return matrix, nil
 }

@@ -3,22 +3,23 @@ module core
 go 1.23
 
 require (
-	github.com/danielgtaylor/huma/v2 v2.25.0
-	github.com/go-chi/chi/v5 v5.1.0
+	github.com/danielgtaylor/huma/v2 v2.28.0
+	github.com/go-chi/chi/v5 v5.2.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/labstack/echo/v4 v4.12.0
+	github.com/labstack/echo/v4 v4.13.3
 	github.com/lib/pq v1.10.9
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/pkg/errors v0.9.1
-	github.com/pressly/goose/v3 v3.22.1
+	github.com/pressly/goose/v3 v3.24.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.20.0-alpha.6
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.29.0
+	golang.org/x/crypto v0.32.0
 )
 
 require (
+	github.com/Sebsh1/openskill.go v0.0.0-20250103115416-4f6fe287ccb0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.1.0 // indirect
@@ -39,11 +40,11 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
-	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/time v0.8.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
