@@ -12,7 +12,7 @@ func addPublicRoutes(api huma.API, h *handlers.Handler) {
 	huma.Post(api, "/auth/login", h.Login)
 }
 
-func addAuthenticatedRoutes(api huma.API, h *handlers.Handler) {
+func addAuthRoutes(api huma.API, h *handlers.Handler) {
 	// Authentication
 	huma.Post(api, "/auth/logout", h.Logout)
 	huma.Post(api, "/auth/refresh", h.Refresh)

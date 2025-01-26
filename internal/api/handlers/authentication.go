@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"core/internal/authentication"
+	"core/internal/subscription"
 	"time"
 
 	"net/http"
@@ -116,9 +117,18 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 		return nil, huma.Error400BadRequest("user with the given email already exists")
 	}
 
-	exists, _, err := h.userService.GetUserByEmail(ctx, req.Email)
+	exists, u, err := h.userService.GetUserByEmail(ctx, req.Email)
 	if err != nil || !exists {
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
+	}
+
+	sub := subscription.Subscription{
+		UserID:    u.ID,
+		Tier:      subscription.TierFree,
+		CreatedAt: time.Now(),
+	}
+	if err := h.subscriptionService.CreateSubscription(ctx, sub); err != nil {
+		return nil, huma.Error500InternalServerError("failed to create subscription")
 	}
 
 	return nil, nil

@@ -1,21 +1,22 @@
 package club
 
-type Initiator string
+type Initiator int
 
 const (
-	ClubInitiator Initiator = "CLUB"
-	UserInitiator Initiator = "USER"
+	InitiatorNone Initiator = iota
+	IniatorClub
+	InitiatorUser
 )
 
 type Club struct {
-	ID        int
-	Name      string
+	ID        int    `db:"id"`
+	Name      string `db:"name"`
 	CreatedAt string `db:"created_at"`
 }
 
 type Invite struct {
-	ID        int
-	ClubId    int `db:"club_id"`
-	UserId    int `db:"user_id"`
-	Initiator Initiator
+	ID        int       `db:"id"`
+	ClubId    int       `db:"club_id"`
+	UserId    int       `db:"user_id"`
+	Initiator Initiator `db:"initiator"`
 }

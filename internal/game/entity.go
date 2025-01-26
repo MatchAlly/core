@@ -1,21 +1,22 @@
 package game
 
-type Mode string
+type Mode int
 
 const (
-	ModeFreeForAll Mode = "FFA"
-	ModeTeam       Mode = "TEAM"
-	ModeCoop       Mode = "COOP"
+	ModeNone Mode = iota
+	ModeFreeForAll
+	ModeTeam
+	ModeCoop
 )
 
 type Game struct {
-	ID     int
-	ClubID int `db:"club_id"`
-	Name   string
+	ID     int    `db:"id"`
+	ClubID int    `db:"club_id"`
+	Name   string `db:"name"`
 }
 
 type Gamemode struct {
-	ID     int
-	GameID int `db:"game_id"`
-	Mode   Mode
+	ID     int  `db:"id"`
+	GameID int  `db:"game_id"`
+	Mode   Mode `db:"mode"`
 }

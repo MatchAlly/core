@@ -31,24 +31,39 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 	e.HidePort = true
 	e.Use(echoMiddleware.Recover())
 
-	// Public API setup
-	publicConfig := huma.DefaultConfig("MatchAlly", version)
-	publicConfig.Servers = []*huma.Server{{URL: "https://matchally.me/public"}}
-	publicGroup := e.Group("/public")
-	publicAPI := humaecho.NewWithGroup(e, publicGroup, publicConfig)
+	config := huma.Config{
+		OpenAPI: &huma.OpenAPI{
+			Info: &huma.Info{
+				Title:   "MatchAlly",
+				Version: "1.0.0",
+			},
+			Servers: []*huma.Server{{URL: "https://matchally.me/api"}},
+			Components: &huma.Components{
+				SecuritySchemes: map[string]*huma.SecurityScheme{
+					"bearerAuth": {
+						Type:         "http",
+						Scheme:       "bearer",
+						BearerFormat: "JWT",
+					},
+				},
+			},
+		},
+	}
+
+	baseAPI := humaecho.NewWithGroup(e, e.Group("/api"), config)
+
+	publicAPI := baseAPI
 	publicAPI.UseMiddleware(middleware.CanonicalLogger(l))
 	addPublicRoutes(publicAPI, handler)
 
-	// Authenticated API setup
-	authenticatedConfig := huma.DefaultConfig("MatchAlly", version)
-	authenticatedConfig.Servers = []*huma.Server{{URL: "https://matchally.me/api"}}
-	authenticatedGroup := e.Group("/api")
-	authenticatedAPI := humaecho.NewWithGroup(e, authenticatedGroup, authenticatedConfig)
-	authenticatedAPI.UseMiddleware(
+	authAPI := baseAPI
+	openapi := authAPI.OpenAPI()
+	openapi.Security = append(openapi.Security, map[string][]string{"bearerAuth": {}})
+	authAPI.UseMiddleware(
 		middleware.CanonicalLogger(l),
 		middleware.Authenticated(authService),
 	)
-	addAuthenticatedRoutes(authenticatedAPI, handler)
+	addAuthRoutes(authAPI, handler)
 
 	return &Server{
 		port: port,

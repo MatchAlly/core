@@ -3,9 +3,8 @@ CREATE TABLE IF NOT EXISTS invites (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     club_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    initiator TEXT NOT NULL,
+    initiator SMALLINT DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT valid_initiator CHECK (initiator IN ('CLUB', 'USER')),
     FOREIGN KEY (club_id) REFERENCES clubs(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     UNIQUE (club_id, user_id)

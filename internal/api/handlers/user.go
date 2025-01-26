@@ -40,6 +40,10 @@ func (h *Handler) DeleteUser(ctx context.Context, req *struct{}) (*struct{}, err
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
+	if err := h.subscriptionService.DeleteSubscription(ctx, userID); err != nil {
+		return nil, huma.Error500InternalServerError("failed to delete subscription, try again later")
+	}
+
 	if err := h.userService.DeleteUser(ctx, userID); err != nil {
 		return nil, huma.Error500InternalServerError("failed to delete user, try again later")
 	}

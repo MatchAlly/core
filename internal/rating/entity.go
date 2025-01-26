@@ -10,10 +10,11 @@ const (
 )
 
 type Rating struct {
-	ID        int
-	MemberID  int `db:"member_id"`
-	GameID    int `db:"game_id"`
-	Mu        float64
-	Sigma     float64
+	ID        int       `db:"id"`
+	MemberID  int       `db:"member_id"`
+	GameID    int       `db:"game_id"`
+	Mu        float64   `db:"mu"`
+	Sigma     float64   `db:"sigma"`
+	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }

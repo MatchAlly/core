@@ -10,9 +10,8 @@ CREATE TABLE IF NOT EXISTS games (
 CREATE TABLE IF NOT EXISTS gamemode (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     game_id BIGINT NOT NULL,
-    mode TEXT NOT NULL,
+    mode SMALLINT DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT valid_mode CHECK (mode IN ('FFA', 'TEAM', 'COOP')),
     CONSTRAINT unique_game_mode UNIQUE (game_id, mode),
     FOREIGN KEY (game_id) REFERENCES games(id)
 );
@@ -21,11 +20,10 @@ CREATE TABLE IF NOT EXISTS matches (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     club_id BIGINT NOT NULL,
     game_id BIGINT NOT NULL,
-    mode TEXT NOT NULL,
+    mode SMALLINT DEFAULT 0,
     ranked BOOLEAN NOT NULL DEFAULT FALSE,
     sets TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT valid_mode CHECK (mode IN ('FFA', 'TEAM', 'COOP'))
     FOREIGN KEY (club_id) REFERENCES clubs(id),
     FOREIGN KEY (game_id) REFERENCES games(id),
     FOREIGN KEY (game_id, mode) REFERENCES gamemode(game_id, mode)

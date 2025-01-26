@@ -51,7 +51,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 		return false, "", "", nil
 	}
 
-	accessToken, refreshToken, err := s.generateTokenPair(user.Name, user.ID)
+	accessToken, refreshToken, err := s.generateTokenPair(user.ID)
 	if err != nil {
 		return false, "", "", errors.Wrap(err, "failed to generate jwts")
 	}
@@ -140,12 +140,7 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 		return "", "", errors.Wrap(err, "failed to parse user id")
 	}
 
-	u, err := s.userService.GetUser(ctx, int(userId))
-	if err != nil {
-		return "", "", errors.Wrap(err, "failed to get user by id")
-	}
-
-	accessToken, newRefreshToken, err := s.generateTokenPair(u.Name, int(userId))
+	accessToken, newRefreshToken, err := s.generateTokenPair(int(userId))
 	if err != nil {
 		return "", "", errors.Wrap(err, "failed to generate jwts")
 	}
@@ -153,18 +148,15 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 	return accessToken, newRefreshToken, nil
 }
 
-func (s *service) generateTokenPair(name string, userId int) (string, string, error) {
+func (s *service) generateTokenPair(userId int) (string, string, error) {
 	now := time.Now()
 
 	accessclaims := AccessClaims{
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.Itoa(userId),
 			IssuedAt:  now.Unix(),
-			NotBefore: now.Unix(),
 			ExpiresAt: now.Add(time.Hour).Unix(),
-			Issuer:    "MatchAlly",
 		},
-		Name: name,
 	}
 
 	accessTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, accessclaims)
@@ -177,9 +169,7 @@ func (s *service) generateTokenPair(name string, userId int) (string, string, er
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.Itoa(userId),
 			IssuedAt:  now.Unix(),
-			NotBefore: now.Unix(),
 			ExpiresAt: now.Add(12 * time.Hour).Unix(),
-			Issuer:    "MatchAlly",
 		},
 	}
 

@@ -3,17 +3,9 @@ package middleware
 import (
 	"core/internal/authentication"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
-)
-
-type contextKey string
-
-const (
-	userIDKey contextKey = "user_id"
-	nameKey   contextKey = "name"
 )
 
 func Authenticated(authenticationService authentication.Service) func(ctx huma.Context, next func(huma.Context)) {
@@ -36,14 +28,7 @@ func Authenticated(authenticationService authentication.Service) func(ctx huma.C
 			return
 		}
 
-		userID, err := strconv.Atoi(claims.Subject)
-		if err != nil {
-			ctx.SetStatus(http.StatusUnauthorized)
-			return
-		}
-
-		ctx = huma.WithValue(ctx, userIDKey, userID)
-		ctx = huma.WithValue(ctx, nameKey, claims.Name)
+		ctx = huma.WithValue(ctx, "claims", claims)
 
 		next(ctx)
 	}

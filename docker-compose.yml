@@ -1,13 +1,17 @@
 services:
   db:
     image: postgres:17
-    restart: always
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: core
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: core
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - local-network
     ports:
       - 5432:5432
-    environment:
-      - POSTGRES_USER=core
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=core
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d core -U core" ]
       interval: 10s
@@ -15,18 +19,42 @@ services:
       retries: 5
       start_period: 10s
 
+  valkey:
+    image: valkey/valkey:8
+    restart: unless-stopped
+    command: valkey-server --save 60 1 --loglevel notice
+    volumes:
+      - valkey-data:/data
+    networks:
+      - local-network
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
   core:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8080:8080
+      - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
-    links:
-      - db
+      valkey:
+        condition: service_healthy
+    networks:
+      - local-network
+    restart: unless-stopped
 
 volumes:
-  db:
+  postgres-data:
     driver: local
+  valkey-data:
+    driver: local
+
+networks:
+  local-network:
+    driver: bridge
