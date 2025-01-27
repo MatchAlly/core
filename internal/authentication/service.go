@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"context"
+	"core/internal/cache"
 	"core/internal/user"
 	"strconv"
 	"time"
@@ -19,6 +20,7 @@ type Config struct {
 
 type Service interface {
 	Login(ctx context.Context, email, password string) (valid bool, accessToken, refreshToken string, err error)
+	Logout(ctx context.Context, token string) error
 	Signup(ctx context.Context, email, username, password string) (success bool, err error)
 	VerifyAccessToken(ctx context.Context, token string) (valid bool, claims *AccessClaims, err error)
 	VerifyRefreshToken(ctx context.Context, token string) (valid bool, claims *RefreshClaims, err error)
@@ -28,12 +30,14 @@ type Service interface {
 type service struct {
 	config      Config
 	userService user.Service
+	cache       cache.Service
 }
 
-func NewService(config Config, userService user.Service) Service {
+func NewService(config Config, userService user.Service, cache cache.Service) Service {
 	return &service{
 		config:      config,
 		userService: userService,
+		cache:       cache,
 	}
 }
 
@@ -57,6 +61,14 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 	}
 
 	return true, accessToken, refreshToken, nil
+}
+
+func (s *service) Logout(ctx context.Context, token string) error {
+	if err := s.cache.SetTokenUsed(ctx, token); err != nil {
+		return errors.Wrap(err, "failed to set token as used")
+	}
+
+	return nil
 }
 
 func (s *service) Signup(ctx context.Context, email string, username string, password string) (bool, error) {

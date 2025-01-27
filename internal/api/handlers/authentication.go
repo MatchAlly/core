@@ -157,6 +157,15 @@ type logoutresponse struct {
 }
 
 func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutresponse, error) {
+	token, ok := ctx.Value("token").(string)
+	if !ok {
+		return nil, huma.Error500InternalServerError("failed to get token from context")
+	}
+
+	if err := h.authNService.Logout(ctx, token); err != nil {
+		return nil, huma.Error500InternalServerError("failed to logout, try again later")
+	}
+
 	resp := &logoutresponse{
 		SetCookie: []http.Cookie{
 			{

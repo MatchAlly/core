@@ -5,6 +5,7 @@ import (
 	"core/internal/api/handlers"
 	"core/internal/api/middleware"
 	"core/internal/authentication"
+	"core/internal/cache"
 	"fmt"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -23,7 +24,7 @@ type Server struct {
 	l    *zap.SugaredLogger
 }
 
-func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service) *Server {
+func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service, cacheService cache.Service) *Server {
 	var api huma.API
 
 	e := echo.New()
@@ -61,7 +62,7 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 	openapi.Security = append(openapi.Security, map[string][]string{"bearerAuth": {}})
 	authAPI.UseMiddleware(
 		middleware.CanonicalLogger(l),
-		middleware.Authenticated(authService),
+		middleware.Authenticated(authService, cacheService),
 	)
 	addAuthRoutes(authAPI, handler)
 

@@ -6,6 +6,7 @@ import (
 	"core/internal/api/handlers"
 	"core/internal/authentication"
 	"core/internal/authorization"
+	"core/internal/cache"
 	"core/internal/club"
 	"core/internal/database"
 	"core/internal/game"
@@ -17,7 +18,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+
+	"github.com/valkey-io/valkey-go"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -49,6 +53,13 @@ func serve(cmd *cobra.Command, args []string) {
 		l.Fatal("failed to connect to database", zap.Error(err))
 	}
 
+	valkeyClient, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{"127.0.0.1:" + strconv.Itoa(config.ValkeyPort)}})
+	if err != nil {
+		l.Fatal("failed to connect to valkey", zap.Error(err))
+	}
+
+	cacheService := cache.NewService(valkeyClient, config.DenylistExpiry)
+
 	// Initialize Services
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
@@ -64,7 +75,7 @@ func serve(cmd *cobra.Command, args []string) {
 		AccessExpiry:  config.AuthNAccessExpiry,
 		RefreshExpiry: config.AuthNRefreshExpiry,
 	}
-	authenticationService := authentication.NewService(authenticationConfig, userService)
+	authenticationService := authentication.NewService(authenticationConfig, userService, cacheService)
 
 	authorizationService := authorization.NewService(memberService)
 
@@ -82,7 +93,7 @@ func serve(cmd *cobra.Command, args []string) {
 
 	// Initialize API server
 	handler := handlers.NewHandler(l, authenticationService, authorizationService, userService, clubService, memberService, matchService, ratingService, gameService, subscriptionService)
-	apiServer := api.NewServer(config.APIPort, config.APIVersion, l, handler, authenticationService)
+	apiServer := api.NewServer(config.APIPort, config.APIVersion, l, handler, authenticationService, cacheService)
 	if err != nil {
 		l.Fatal("failed to create api server", zap.Error(err))
 	}

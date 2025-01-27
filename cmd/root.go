@@ -13,6 +13,8 @@ const shutdownPeriod = 15 * time.Second
 
 type Config struct {
 	DatabaseDSN        string        `mapstructure:"DATABASE_DSN" default:"postgresql://core:secret@localhost:5432/core"`
+	ValkeyPort         int           `mapstructure:"VALKEY_DSN" default:"6379"`
+	DenylistExpiry     time.Duration `mapstructure:"DENYLIST_EXPIRY" default:"15m"`
 	APIPort            int           `mapstructure:"API_PORT" default:"8080"`
 	APIVersion         string        `mapstructure:"API_VERSION" default:"0.0.1"`
 	AuthNSecret        string        `mapstructure:"AUTHN_SECRET" default:"secret" `
