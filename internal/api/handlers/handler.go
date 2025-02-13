@@ -10,12 +10,18 @@ import (
 	"core/internal/rating"
 	"core/internal/subscription"
 	"core/internal/user"
+	"time"
 
 	"go.uber.org/zap"
 )
 
+type Config struct {
+	AccessTokenDuration  time.Duration
+	RefreshTokenDuration time.Duration
+}
 type Handler struct {
 	l                   *zap.SugaredLogger
+	config              Config
 	authNService        authentication.Service
 	authZService        authorization.Service
 	userService         user.Service
@@ -29,6 +35,7 @@ type Handler struct {
 
 func NewHandler(
 	l *zap.SugaredLogger,
+	config Config,
 	authService authentication.Service,
 	authZService authorization.Service,
 	userService user.Service,
@@ -41,6 +48,7 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		l:                   l,
+		config:              config,
 		authNService:        authService,
 		authZService:        authZService,
 		userService:         userService,

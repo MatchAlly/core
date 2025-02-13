@@ -25,15 +25,11 @@ func NewService(client valkey.Client, denylistExpiry time.Duration) Service {
 }
 
 func (s *service) SetTokenUsed(ctx context.Context, token string) error {
-	key := s.denylistTokenKey(token)
+	key := denylistTokenKey(token)
 	return s.client.Do(ctx, s.client.B().Set().Key(key).Value("1").Nx().Ex(s.denylistExpiry).Build()).Error()
 }
 
 func (s *service) GetTokenUsed(ctx context.Context, token string) (bool, error) {
-	key := s.denylistTokenKey(token)
+	key := denylistTokenKey(token)
 	return s.client.Do(ctx, s.client.B().Get().Key(key).Build()).AsBool()
-}
-
-func (s *service) denylistTokenKey(tokenID string) string {
-	return "denylist:" + tokenID
 }

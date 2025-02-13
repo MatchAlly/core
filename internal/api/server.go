@@ -17,14 +17,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type Server struct {
-	port int
-	e    *echo.Echo
-	api  huma.API
-	l    *zap.SugaredLogger
+type Config struct {
+	Port    int
+	Version string
 }
 
-func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service, cacheService cache.Service) *Server {
+type Server struct {
+	config Config
+	e      *echo.Echo
+	api    huma.API
+	l      *zap.SugaredLogger
+}
+
+func NewServer(config Config, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service, cacheService cache.Service) *Server {
 	var api huma.API
 
 	e := echo.New()
@@ -32,11 +37,11 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 	e.HidePort = true
 	e.Use(echoMiddleware.Recover())
 
-	config := huma.Config{
+	humaConfig := huma.Config{
 		OpenAPI: &huma.OpenAPI{
 			Info: &huma.Info{
 				Title:   "MatchAlly",
-				Version: "1.0.0",
+				Version: config.Version,
 			},
 			Servers: []*huma.Server{{URL: "https://matchally.me/api"}},
 			Components: &huma.Components{
@@ -51,7 +56,7 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 		},
 	}
 
-	baseAPI := humaecho.NewWithGroup(e, e.Group("/api"), config)
+	baseAPI := humaecho.NewWithGroup(e, e.Group("/api"), humaConfig)
 
 	publicAPI := baseAPI
 	publicAPI.UseMiddleware(middleware.CanonicalLogger(l))
@@ -67,15 +72,15 @@ func NewServer(port int, version string, l *zap.SugaredLogger, handler *handlers
 	addAuthRoutes(authAPI, handler)
 
 	return &Server{
-		port: port,
-		e:    e,
-		api:  api,
-		l:    l,
+		config: config,
+		e:      e,
+		api:    api,
+		l:      l,
 	}
 }
 
 func (s *Server) Start() error {
-	address := fmt.Sprintf("0.0.0.0:%d", s.port)
+	address := fmt.Sprintf("0.0.0.0:%d", s.config.Port)
 	if err := s.e.Start(address); err != nil {
 		return errors.Wrap(err, "failed to start server")
 	}

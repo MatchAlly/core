@@ -2,15 +2,10 @@ package cmd
 
 import (
 	"core/internal/database"
-	"embed"
 
-	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
-
-//go:embed migrations/*.sql
-var migrations embed.FS
 
 var migrateCmd = &cobra.Command{
 	Use:  "migrate",
@@ -39,13 +34,7 @@ func migrate(cmd *cobra.Command, args []string) {
 		l.Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	goose.SetBaseFS(migrations)
-
-	if err := goose.SetDialect("postgres"); err != nil {
-		l.Fatal("failed to set dialect", zap.Error(err))
-	}
-
-	if err := goose.Up(db.DB, "migrations"); err != nil {
+	if err := database.Migrate(ctx, db); err != nil {
 		l.Fatal("failed to migrate database", zap.Error(err))
 	}
 

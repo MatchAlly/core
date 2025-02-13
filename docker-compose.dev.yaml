@@ -1,0 +1,25 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  valkey:
+    ports:
+      - "6379:6379"
+
+  core:
+    build:
+      target: dev
+    volumes:
+      - .:/app
+      - go-modules:/go/pkg/mod
+    environment:
+      - GO_ENV=dev
+      - DEBUG=true
+      - DB_HOST=db
+      - VALKEY_HOST=valkey
+    ports:
+      - "8080:8080"
+
+volumes:
+  go-modules:

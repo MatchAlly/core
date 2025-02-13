@@ -1,0 +1,28 @@
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+
+  valkey:
+    volumes:
+      - /var/lib/valkey:/data
+
+  core:
+    build:
+      target: prod
+    environment:
+      - GO_ENV=prod
+      - DB_HOST=db
+      - DB_PASSWORD=${DB_PASSWORD}
+      - VALKEY_HOST=valkey
+    ports:
+      - "8080:8080"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s

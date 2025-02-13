@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"core/internal/authentication"
 	"core/internal/subscription"
 	"time"
 
@@ -38,7 +37,7 @@ func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse,
 				Secure:   true,
 				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
-				MaxAge:   int(authentication.AccessTokenDuration.Seconds()),
+				MaxAge:   int(h.config.AccessTokenDuration.Seconds()),
 			},
 			{
 				Name:     "refreshToken",
@@ -47,7 +46,7 @@ func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse,
 				Secure:   true,
 				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
-				MaxAge:   int(authentication.RefreshTokenDuration.Seconds()),
+				MaxAge:   int(h.config.RefreshTokenDuration.Seconds()),
 			},
 		},
 	}

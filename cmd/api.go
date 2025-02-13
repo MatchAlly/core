@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	"core/internal/api"
+	xapi "core/internal/api"
 	"core/internal/api/handlers"
 	"core/internal/authentication"
 	"core/internal/authorization"
@@ -27,17 +27,17 @@ import (
 	"go.uber.org/zap"
 )
 
-var serveCmd = &cobra.Command{
-	Use:  "serve",
-	Long: "Start the service",
-	Run:  serve,
+var apiCmd = &cobra.Command{
+	Use:  "api",
+	Long: "Start the api server",
+	Run:  api,
 }
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(apiCmd)
 }
 
-func serve(cmd *cobra.Command, args []string) {
+func api(cmd *cobra.Command, args []string) {
 	ctx := cmd.Context()
 
 	config, err := loadConfig()
@@ -92,8 +92,15 @@ func serve(cmd *cobra.Command, args []string) {
 	subscriptionService := subscription.NewService(subscriptionRepository)
 
 	// Initialize API server
-	handler := handlers.NewHandler(l, authenticationService, authorizationService, userService, clubService, memberService, matchService, ratingService, gameService, subscriptionService)
-	apiServer := api.NewServer(config.APIPort, config.APIVersion, l, handler, authenticationService, cacheService)
+	handlerConfig := handlers.Config{}
+
+	apiConfig := xapi.Config{
+		Port:    config.APIPort,
+		Version: config.APIVersion,
+	}
+
+	handler := handlers.NewHandler(l, handlerConfig, authenticationService, authorizationService, userService, clubService, memberService, matchService, ratingService, gameService, subscriptionService)
+	apiServer := xapi.NewServer(apiConfig, config.APIVersion, l, handler, authenticationService, cacheService)
 	if err != nil {
 		l.Fatal("failed to create api server", zap.Error(err))
 	}

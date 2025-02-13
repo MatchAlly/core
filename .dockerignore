@@ -5,7 +5,7 @@
 !pkg
 !.dockerignore
 !.env
-!Dockerfile
+!dockerfile
 !go.mod
 !go.sum
 !main.go
