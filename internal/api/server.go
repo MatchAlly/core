@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -82,7 +81,7 @@ func NewServer(config Config, version string, l *zap.SugaredLogger, handler *han
 func (s *Server) Start() error {
 	address := fmt.Sprintf("0.0.0.0:%d", s.config.Port)
 	if err := s.e.Start(address); err != nil {
-		return errors.Wrap(err, "failed to start server")
+		return fmt.Errorf("failed to start server: %w", err)
 	}
 
 	return nil
@@ -90,7 +89,7 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	if err := s.e.Shutdown(ctx); err != nil {
-		return errors.Wrap(err, "failed to shutdown server")
+		return fmt.Errorf("failed to shutdown server: %w", err)
 	}
 
 	return nil

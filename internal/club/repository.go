@@ -4,14 +4,15 @@ import (
 	"context"
 	"core/internal/game"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 )
 
 var (
-	ErrDuplicateEntry = errors.New("already exists")
-	ErrNotFound       = errors.New("not found")
+	ErrDuplicateEntry = fmt.Errorf("duplicate entry")
+	ErrNotFound       = fmt.Errorf("not found")
 )
 
 type Repository interface {

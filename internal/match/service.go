@@ -2,8 +2,7 @@ package match
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 type Service interface {
@@ -32,7 +31,7 @@ func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teams []T
 
 	matchID, err := s.repo.CreateMatch(ctx, m)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to create match")
+		return 0, fmt.Errorf("failed to create match: %w", err)
 	}
 
 	return matchID, nil
@@ -45,12 +44,12 @@ func (s *service) GetMatches(ctx context.Context, clubID int, gameID *int) ([]Ma
 	if gameID == nil {
 		matches, err = s.repo.GetMatches(ctx, clubID)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get matches")
+			return nil, fmt.Errorf("failed to get matches: %w", err)
 		}
 	} else {
 		matches, err = s.repo.GetMatchesByGame(ctx, clubID, *gameID)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get matches by game")
+			return nil, fmt.Errorf("failed to get matches by game: %w", err)
 		}
 	}
 
@@ -63,25 +62,25 @@ func (s *service) GetOrCreateTeams(ctx context.Context, clubID int, memberIDTeam
 	for _, memberIDTeam := range memberIDTeams {
 		exists, teamID, err := s.repo.TeamOfMembersExists(ctx, clubID, memberIDTeam)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to check if team exists")
+			return nil, fmt.Errorf("failed to check if team exists: %w", err)
 		}
 
 		if exists {
 			team, err := s.repo.GetTeam(ctx, teamID)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to get team")
+				return nil, fmt.Errorf("failed to get team: %w", err)
 			}
 
 			teams = append(teams, *team)
 		} else {
 			teamID, err := s.repo.CreateTeam(ctx, clubID, memberIDTeam)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to create team")
+				return nil, fmt.Errorf("failed to create team: %w", err)
 			}
 
 			team, err := s.repo.GetTeam(ctx, teamID)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to get team after creating it")
+				return nil, fmt.Errorf("failed to get team: %w", err)
 			}
 
 			teams = append(teams, *team)

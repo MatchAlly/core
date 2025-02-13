@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +18,6 @@ func CanonicalLogger(log *zap.SugaredLogger) func(ctx huma.Context, next func(hu
 		duration := time.Since(start)
 
 		log.Infow("request",
-			"request_id", middleware.GetReqID(ctx.Context()),
 			"method", ctx.Method(),
 			"path", ctx.URL().Path,
 			"status", ctx.Status(),

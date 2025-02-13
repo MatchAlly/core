@@ -4,11 +4,11 @@ import (
 	"context"
 	"core/internal/cache"
 	"core/internal/user"
+	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/golang-jwt/jwt"
-	"github.com/pkg/errors"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -44,9 +44,8 @@ func NewService(config Config, userService user.Service, cache cache.Service) Se
 func (s *service) Login(ctx context.Context, email string, password string) (bool, string, string, error) {
 	exists, user, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
-		return false, "", "", errors.Wrap(err, "failed to get user by email")
+		return false, "", "", fmt.Errorf("failed to check for existing user with email: %w", err)
 	}
-
 	if !exists {
 		return false, "", "", nil
 	}
@@ -57,7 +56,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 
 	accessToken, refreshToken, err := s.generateTokenPair(user.ID)
 	if err != nil {
-		return false, "", "", errors.Wrap(err, "failed to generate jwts")
+		return false, "", "", fmt.Errorf("failed to generate jwts: %w", err)
 	}
 
 	return true, accessToken, refreshToken, nil
@@ -65,7 +64,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 
 func (s *service) Logout(ctx context.Context, token string) error {
 	if err := s.cache.SetTokenUsed(ctx, token); err != nil {
-		return errors.Wrap(err, "failed to set token as used")
+		return fmt.Errorf("failed to set token as used: %w", err)
 	}
 
 	return nil
@@ -74,20 +73,19 @@ func (s *service) Logout(ctx context.Context, token string) error {
 func (s *service) Signup(ctx context.Context, email string, username string, password string) (bool, error) {
 	exists, _, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to check for existing user with email")
+		return false, fmt.Errorf("failed to check for existing user with email: %w", err)
 	}
-
 	if exists {
 		return false, nil
 	}
 
 	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to hash password")
+		return false, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	if _, err = s.userService.CreateUser(ctx, email, username, string(hashedPasswordBytes)); err != nil {
-		return false, errors.Wrap(err, "failed to create user")
+		return false, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return true, nil
@@ -95,23 +93,21 @@ func (s *service) Signup(ctx context.Context, email string, username string, pas
 
 func (s *service) VerifyAccessToken(ctx context.Context, token string) (bool, *AccessClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &AccessClaims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return []byte(s.config.Secret), nil
 	})
 	if err != nil {
 		return false, nil, err
 	}
-
-	if _, ok := parsedToken.Method.(*jwt.SigningMethodHMAC); !ok {
-		return false, nil, errors.New("unexpected signing method")
-	}
-
 	if !parsedToken.Valid {
-		return false, nil, errors.New("jwt is invalid")
+		return false, nil, fmt.Errorf("jwt is invalid")
 	}
 
 	claims, ok := parsedToken.Claims.(*AccessClaims)
 	if !ok {
-		return false, nil, errors.New("failed to parse claims")
+		return false, nil, fmt.Errorf("failed to parse claims")
 	}
 
 	return true, claims, nil
@@ -119,23 +115,21 @@ func (s *service) VerifyAccessToken(ctx context.Context, token string) (bool, *A
 
 func (s *service) VerifyRefreshToken(ctx context.Context, token string) (bool, *RefreshClaims, error) {
 	parsedToken, err := jwt.ParseWithClaims(token, &RefreshClaims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return []byte(s.config.Secret), nil
 	})
 	if err != nil {
 		return false, nil, err
 	}
-
-	if _, ok := parsedToken.Method.(*jwt.SigningMethodHMAC); !ok {
-		return false, nil, errors.New("unexpected signing method")
-	}
-
 	if !parsedToken.Valid {
-		return false, nil, errors.New("jwt is invalid")
+		return false, nil, fmt.Errorf("jwt is invalid")
 	}
 
 	claims, ok := parsedToken.Claims.(*RefreshClaims)
 	if !ok {
-		return false, nil, errors.New("failed to parse claims")
+		return false, nil, fmt.Errorf("failed to parse claims")
 	}
 
 	return true, claims, nil
@@ -144,17 +138,17 @@ func (s *service) VerifyRefreshToken(ctx context.Context, token string) (bool, *
 func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
 	_, claims, err := s.VerifyRefreshToken(ctx, refreshToken)
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to verify refresh token")
+		return "", "", fmt.Errorf("failed to verify refresh token: %w", err)
 	}
 
 	userId, err := strconv.ParseInt(claims.Subject, 10, 64)
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to parse user id")
+		return "", "", fmt.Errorf("failed to parse user id: %w", err)
 	}
 
 	accessToken, newRefreshToken, err := s.generateTokenPair(int(userId))
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to generate jwts")
+		return "", "", fmt.Errorf("failed to generate token pair: %w", err)
 	}
 
 	return accessToken, newRefreshToken, nil
@@ -164,31 +158,31 @@ func (s *service) generateTokenPair(userId int) (string, string, error) {
 	now := time.Now()
 
 	accessclaims := AccessClaims{
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   strconv.Itoa(userId),
-			IssuedAt:  now.Unix(),
-			ExpiresAt: now.Add(time.Hour).Unix(),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.AccessExpiry)),
 		},
 	}
 
 	accessTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, accessclaims)
 	accessTokenSigned, err := accessTokenUnsigned.SignedString([]byte(s.config.Secret))
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to sign access token")
+		return "", "", fmt.Errorf("failed to sign access token: %w", err)
 	}
 
 	refreshClaims := RefreshClaims{
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   strconv.Itoa(userId),
-			IssuedAt:  now.Unix(),
-			ExpiresAt: now.Add(12 * time.Hour).Unix(),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.RefreshExpiry)),
 		},
 	}
 
 	refreshTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshTokenSigned, err := refreshTokenUnsigned.SignedString([]byte(s.config.Secret))
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to sign refresh token")
+		return "", "", fmt.Errorf("failed to sign refresh token: %w", err)
 	}
 
 	return accessTokenSigned, refreshTokenSigned, nil

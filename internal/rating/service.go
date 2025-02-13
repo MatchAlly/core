@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Sebsh1/openskill.go"
-	"github.com/pkg/errors"
 )
 
 type Service interface {
@@ -35,7 +34,7 @@ func (s *service) CreateRating(ctx context.Context, memberID, gameID int) (int, 
 
 	id, err := s.repo.CreateRating(ctx, rating)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to create rating")
+		return 0, fmt.Errorf("failed to create rating: %w", err)
 	}
 
 	return id, nil
@@ -45,7 +44,7 @@ func (s *service) UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][
 	ids, shape := flatten(teamsByMemberIDs)
 	ratings, err := s.repo.GetRatingsByMemberIds(ctx, ids)
 	if err != nil {
-		return errors.Wrap(err, "failed to get ratings")
+		return fmt.Errorf("failed to get ratings: %w", err)
 	}
 
 	openSkillRatings := make([]openskill.Rating, len(ratings))
@@ -58,12 +57,12 @@ func (s *service) UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][
 
 	teams, err := unflatten(openSkillRatings, shape)
 	if err != nil {
-		return errors.Wrap(err, "failed to unflatten ratings")
+		return fmt.Errorf("failed to unflatten ratings: %w", err)
 	}
 
 	updatedRatings, err := s.rater.Rate(teams, ranks, nil, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to calculate new ratings")
+		return fmt.Errorf("failed to rate teams: %w", err)
 	}
 
 	newRatings, _ := flatten(updatedRatings)
@@ -73,7 +72,7 @@ func (s *service) UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][
 	}
 
 	if err := s.repo.UpdateRatings(ctx, ratings); err != nil {
-		return errors.Wrap(err, "failed to update ratings")
+		return fmt.Errorf("failed to update ratings: %w", err)
 	}
 
 	return nil

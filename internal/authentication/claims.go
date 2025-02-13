@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AccessClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	Subscription  subscription.Tier          `json:"s"`
 	Organizations map[int]ClaimsOrganization `json:"o"` // Map of organization ID to tier and role
 }
@@ -67,5 +67,5 @@ func (c *AccessClaims) UnmarshalJSON(data []byte) error {
 }
 
 type RefreshClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }

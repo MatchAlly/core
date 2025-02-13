@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/pressly/goose/v3"
 )
@@ -20,7 +21,7 @@ var migrations embed.FS
 var seeds embed.FS
 
 func NewClient(ctx context.Context, dsn string) (*sqlx.DB, error) {
-	db, err := sqlx.ConnectContext(ctx, "postgres", dsn)
+	db, err := sqlx.ConnectContext(ctx, "pgx", dsn)
 	if err != nil {
 		return nil, err
 	}

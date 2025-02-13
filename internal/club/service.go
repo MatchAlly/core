@@ -3,8 +3,7 @@ package club
 import (
 	"context"
 	"core/internal/game"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 type Service interface {
@@ -29,7 +28,7 @@ func NewService(repo Repository) Service {
 func (s *service) GetClub(ctx context.Context, id int) (*Club, error) {
 	club, err := s.repo.GetClub(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get club")
+		return nil, fmt.Errorf("failed to get club: %w", err)
 	}
 
 	return club, nil
@@ -38,7 +37,7 @@ func (s *service) GetClub(ctx context.Context, id int) (*Club, error) {
 func (s *service) GetClubs(ctx context.Context, ids []int) ([]Club, error) {
 	clubs, err := s.repo.GetClubs(ctx, ids)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get clubs")
+		return nil, fmt.Errorf("failed to get clubs: %w", err)
 	}
 
 	return clubs, nil
@@ -51,7 +50,7 @@ func (s *service) CreateClub(ctx context.Context, name string, adminUserId int) 
 
 	clubId, err := s.repo.CreateClub(ctx, c)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to create club")
+		return 0, fmt.Errorf("failed to create club: %w", err)
 	}
 
 	return clubId, nil
@@ -59,7 +58,7 @@ func (s *service) CreateClub(ctx context.Context, name string, adminUserId int) 
 
 func (s *service) DeleteClub(ctx context.Context, id int) error {
 	if err := s.repo.DeleteClub(ctx, id); err != nil {
-		return errors.Wrap(err, "failed to delete club")
+		return fmt.Errorf("failed to delete club: %w", err)
 	}
 
 	return nil
@@ -67,7 +66,7 @@ func (s *service) DeleteClub(ctx context.Context, id int) error {
 
 func (s *service) UpdateClub(ctx context.Context, id int, name string) error {
 	if err := s.repo.UpdateClub(ctx, id, name); err != nil {
-		return errors.Wrap(err, "failed to update club")
+		return fmt.Errorf("failed to update club: %w", err)
 	}
 
 	return nil
@@ -76,7 +75,7 @@ func (s *service) UpdateClub(ctx context.Context, id int, name string) error {
 func (s *service) GetGames(ctx context.Context, clubID int) ([]game.Game, error) {
 	games, err := s.repo.GetGames(ctx, clubID)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get games")
+		return nil, fmt.Errorf("failed to get games: %w", err)
 	}
 
 	return games, nil

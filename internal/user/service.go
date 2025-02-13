@@ -2,8 +2,9 @@ package user
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,7 +30,7 @@ func NewService(repo Repository) Service {
 func (s *service) GetUser(ctx context.Context, id int) (*User, error) {
 	user, err := s.repo.GetUser(ctx, id)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get user %d", id)
+		return nil, fmt.Errorf("failed to get user with id %d: %w", id, err)
 	}
 
 	return user, nil
@@ -44,7 +45,7 @@ func (s *service) CreateUser(ctx context.Context, email, name, hash string) (int
 
 	id, err := s.repo.CreateUser(ctx, user)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to create user")
+		return 0, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return id, nil
@@ -57,7 +58,7 @@ func (s *service) GetUserByEmail(ctx context.Context, email string) (bool, *User
 			return false, nil, nil
 		}
 
-		return false, nil, errors.Wrap(err, "failed to get user by email")
+		return false, nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
 
 	return true, user, nil
@@ -65,7 +66,7 @@ func (s *service) GetUserByEmail(ctx context.Context, email string) (bool, *User
 
 func (s *service) DeleteUser(ctx context.Context, id int) error {
 	if err := s.repo.DeleteUser(ctx, id); err != nil {
-		return errors.Wrap(err, "failed to delete user by id")
+		return fmt.Errorf("failed to delete user with id %d: %w", id, err)
 	}
 
 	return nil
@@ -79,7 +80,7 @@ func (s *service) UpdateUser(ctx context.Context, id int, email, name string) er
 	}
 
 	if err := s.repo.UpdateUser(ctx, user); err != nil {
-		return errors.Wrap(err, "failed to update user")
+		return fmt.Errorf("failed to update user with id %d: %w", id, err)
 	}
 
 	return nil
@@ -88,20 +89,20 @@ func (s *service) UpdateUser(ctx context.Context, id int, email, name string) er
 func (s *service) UpdatePassword(ctx context.Context, userID int, oldPassword, newPassword string) error {
 	u, err := s.GetUser(ctx, userID)
 	if err != nil {
-		return errors.Wrap(err, "failed to get user")
+		return fmt.Errorf("failed to get user with id %d: %w", userID, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Hash), []byte(oldPassword)); err != nil {
-		return errors.Wrap(err, "incorrect password")
+		return fmt.Errorf("failed to compare password: %w", err)
 	}
 
 	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.MinCost)
 	if err != nil {
-		return errors.Wrap(err, "failed to hash password")
+		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	if err := s.repo.UpdatePassword(ctx, userID, string(hashedPasswordBytes)); err != nil {
-		return errors.Wrap(err, "failed to update password")
+		return fmt.Errorf("failed to update password: %w", err)
 	}
 
 	return nil

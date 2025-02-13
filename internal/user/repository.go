@@ -3,17 +3,19 @@ package user
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
+	"errors"
+
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	"github.com/pkg/errors"
 )
 
-const UniqueViolationCode = pq.ErrorCode("23505")
+const UniqueViolationCode = "23505"
 
 var (
-	ErrDuplicateEntry = errors.New("already exists")
-	ErrNotFound       = errors.New("not found")
+	ErrDuplicateEntry = fmt.Errorf("already exists")
+	ErrNotFound       = fmt.Errorf("not found")
 )
 
 type Repository interface {
@@ -66,7 +68,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 func (r *repository) CreateUser(ctx context.Context, user *User) (int, error) {
 	result, err := r.db.ExecContext(ctx, "INSERT INTO users (email, name, hash) VALUES ($1, $2, $3)", user.Email, user.Name, user.Hash)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == UniqueViolationCode {
+		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == UniqueViolationCode {
 			return 0, ErrDuplicateEntry
 		}
 		return 0, err

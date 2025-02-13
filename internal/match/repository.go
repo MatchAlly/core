@@ -6,7 +6,6 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type Repository interface {
@@ -144,7 +143,7 @@ func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID in
         LEFT JOIN team_members tm ON t.id = tm.team_id
         LEFT JOIN members mem ON tm.member_id = mem.id
         WHERE m.club_id = $1 AND m.game_id = $2
-        ORDER BY m.id, t.id, mem.id; -- Crucial for correct grouping
+        ORDER BY m.id, t.id, mem.id;
     `, clubID, gameID)
 	if err != nil {
 		return nil, err
@@ -277,7 +276,6 @@ func (r *repository) TeamOfMembersExists(ctx context.Context, clubID int, member
 			SELECT 
 				tm.team_id,
 				COUNT(*) as member_count,
-				-- Count how many of the specified members are in this team
 				COUNT(CASE WHEN tm.member_id = ANY($2) THEN 1 END) as matching_members
 			FROM team_candidates tc 
 			JOIN team_members tm ON tm.team_id = tc.team_id
@@ -289,7 +287,7 @@ func (r *repository) TeamOfMembersExists(ctx context.Context, clubID int, member
 		AND matching_members = array_length($2, 1)`
 
 	var teamID int
-	err := r.db.GetContext(ctx, &teamID, query, clubID, pq.Array(memberIDs))
+	err := r.db.GetContext(ctx, &teamID, query, clubID, memberIDs)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, 0, nil
