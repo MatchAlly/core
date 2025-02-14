@@ -12,7 +12,7 @@ const shutdownPeriod = 15 * time.Second
 
 type Config struct {
 	DatabaseDSN        string        `mapstructure:"DATABASE_DSN"`
-	ValkeyPort         int           `mapstructure:"VALKEY_DSN"`
+	ValkeyPort         int           `mapstructure:"VALKEY_PORT"`
 	DenylistExpiry     time.Duration `mapstructure:"DENYLIST_EXPIRY"`
 	APIPort            int           `mapstructure:"API_PORT"`
 	APIVersion         string        `mapstructure:"API_VERSION"`

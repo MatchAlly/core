@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/valkey-io/valkey-go"
@@ -53,7 +52,9 @@ func api(cmd *cobra.Command, args []string) {
 		l.Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	valkeyClient, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{"127.0.0.1:" + strconv.Itoa(config.ValkeyPort)}})
+	valkeyClient, err := valkey.NewClient(valkey.ClientOption{
+		InitAddress: []string{fmt.Sprintf("valkey:%d", config.ValkeyPort)},
+	})
 	if err != nil {
 		l.Fatal("failed to connect to valkey", zap.Error(err))
 	}
@@ -109,7 +110,7 @@ func api(cmd *cobra.Command, args []string) {
 	defer cancel()
 
 	// Start the API server
-	l.Info("api server starting", zap.String("port", fmt.Sprint(config.APIPort)))
+	l.Info("api server starting", zap.Int("port", config.APIPort), zap.String("version", config.APIVersion))
 	go func() {
 		if err := apiServer.Start(); err != nil {
 			l.Fatal("failed to start api server", zap.Error(err))

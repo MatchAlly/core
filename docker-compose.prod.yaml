@@ -14,9 +14,6 @@ services:
       target: prod
     environment:
       - GO_ENV=prod
-      - DB_HOST=db
-      - DB_PASSWORD=${DB_PASSWORD}
-      - VALKEY_HOST=valkey
     ports:
       - "8080:8080"
     deploy:

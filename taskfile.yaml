@@ -6,46 +6,49 @@ tasks:
   up:
     desc: Start the service and dependencies
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f core
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml logs -f core
 
   migrate:
     desc: Run database migrations
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml exec core go run migrate
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core go run migrate
 
   seed:
     desc: Seed the database with initial data
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml exec core go run seed
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core go run seed
 
   test:
     desc: Run tests
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml exec core go test -v ./...
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core go test -v ./...
     env:
       GO_ENV: test
 
   down:
     desc: Stop all containers
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down
 
   rebuild:
     desc: Rebuild and restart the core service
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build core
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d --build core
 
   logs:
     desc: View logs from all services
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml logs -f
 
   db:
     desc: Connect to the database
     cmds:
-      - docker compose -f docker-compose.yml -f docker-compose.dev.yml exec db psql -U core -d core
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec db psql -U core -d core
 
   init:
     desc: Initialize the project
-    deps: [up, migrate, seed]
+    cmds:
+      - task: up
+      - task: migrate
+      - task: seed

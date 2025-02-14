@@ -15,9 +15,6 @@ services:
       - go-modules:/go/pkg/mod
     environment:
       - GO_ENV=dev
-      - DEBUG=true
-      - DB_HOST=db
-      - VALKEY_HOST=valkey
     ports:
       - "8080:8080"
 

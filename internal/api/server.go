@@ -36,22 +36,13 @@ func NewServer(config Config, version string, l *zap.SugaredLogger, handler *han
 	e.HidePort = true
 	e.Use(echoMiddleware.Recover())
 
-	humaConfig := huma.Config{
-		OpenAPI: &huma.OpenAPI{
-			Info: &huma.Info{
-				Title:   "MatchAlly",
-				Version: config.Version,
-			},
-			Servers: []*huma.Server{{URL: "https://matchally.me/api"}},
-			Components: &huma.Components{
-				SecuritySchemes: map[string]*huma.SecurityScheme{
-					"bearerAuth": {
-						Type:         "http",
-						Scheme:       "bearer",
-						BearerFormat: "JWT",
-					},
-				},
-			},
+	humaConfig := huma.DefaultConfig("MatchAlly", config.Version)
+	humaConfig.OpenAPI.Servers = []*huma.Server{{URL: "https://matchally.me/api"}}
+	humaConfig.OpenAPI.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
+		"bearerAuth": {
+			Type:         "http",
+			Scheme:       "bearer",
+			BearerFormat: "JWT",
 		},
 	}
 

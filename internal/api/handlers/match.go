@@ -57,8 +57,8 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 }
 
 type getClubMatchesRequest struct {
-	ClubID int  `path:"clubId" minimum:"1"`
-	GameID *int `query:"gameId" required:"false" minimum:"1"`
+	ClubID int `path:"clubId" minimum:"1"`
+	GameID int `query:"gameId" required:"false" minimum:"1"`
 }
 
 type getClubMatchesResponse struct {
@@ -97,7 +97,11 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 		return nil, huma.Error403Forbidden("user not authorized to get matches in this club")
 	}
 
-	matches, err := h.matchService.GetMatches(ctx, req.ClubID, req.GameID)
+	var gameID *int
+	if req.GameID != 0 {
+		gameID = &req.GameID
+	}
+	matches, err := h.matchService.GetMatches(ctx, req.ClubID, gameID)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to get matches, try again later")
 	}
