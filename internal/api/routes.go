@@ -10,7 +10,6 @@ func addPublicRoutes(api huma.API, h *handlers.Handler) {
 	// Authentication
 	huma.Post(api, "/auth/signup", h.Signup)
 	huma.Post(api, "/auth/login", h.Login)
-	huma.Get(api, "/health", h.Health)
 }
 
 func addAuthRoutes(api huma.API, h *handlers.Handler) {

@@ -20,7 +20,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/valkey-io/valkey-go"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -52,14 +52,9 @@ func api(cmd *cobra.Command, args []string) {
 		l.Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	valkeyClient, err := valkey.NewClient(valkey.ClientOption{
-		InitAddress: []string{fmt.Sprintf("valkey:%d", config.ValkeyPort)},
-	})
-	if err != nil {
-		l.Fatal("failed to connect to valkey", zap.Error(err))
-	}
+	client := redis.NewClient(&redis.Options{Addr: fmt.Sprintf("redis:%d", config.RedisPort)})
 
-	cacheService := cache.NewService(valkeyClient, config.DenylistExpiry)
+	cacheService := cache.NewService(client, config.DenylistExpiry)
 
 	// Initialize Services
 	userRepository := user.NewRepository(db)

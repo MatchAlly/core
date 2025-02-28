@@ -5,9 +5,11 @@ services:
     volumes:
       - /var/lib/postgresql/data:/var/lib/postgresql/data
 
-  valkey:
+  redis:
+    image: redis:7
     volumes:
-      - /var/lib/valkey:/data
+      - /var/lib/redis:/data
+    command: redis-server --appendonly yes
 
   core:
     build:

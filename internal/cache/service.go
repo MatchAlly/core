@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/valkey-io/valkey-go"
+	"github.com/redis/go-redis/v9"
 )
 
 type Service interface {
@@ -13,11 +13,11 @@ type Service interface {
 }
 
 type service struct {
-	client         valkey.Client
+	client         *redis.Client
 	denylistExpiry time.Duration
 }
 
-func NewService(client valkey.Client, denylistExpiry time.Duration) Service {
+func NewService(client *redis.Client, denylistExpiry time.Duration) Service {
 	return &service{
 		denylistExpiry: denylistExpiry,
 		client:         client,
@@ -26,10 +26,10 @@ func NewService(client valkey.Client, denylistExpiry time.Duration) Service {
 
 func (s *service) SetTokenUsed(ctx context.Context, token string) error {
 	key := denylistTokenKey(token)
-	return s.client.Do(ctx, s.client.B().Set().Key(key).Value("1").Nx().Ex(s.denylistExpiry).Build()).Error()
+	return s.client.Set(ctx, key, true, s.denylistExpiry).Err()
 }
 
 func (s *service) GetTokenUsed(ctx context.Context, token string) (bool, error) {
 	key := denylistTokenKey(token)
-	return s.client.Do(ctx, s.client.B().Get().Key(key).Build()).AsBool()
+	return s.client.Get(ctx, key).Bool()
 }

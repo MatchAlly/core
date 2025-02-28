@@ -29,8 +29,6 @@ type Server struct {
 }
 
 func NewServer(config Config, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service, cacheService cache.Service) *Server {
-	var api huma.API
-
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -46,20 +44,15 @@ func NewServer(config Config, version string, l *zap.SugaredLogger, handler *han
 		},
 	}
 
-	baseAPI := humaecho.NewWithGroup(e, e.Group("/api"), humaConfig)
+	api := humaecho.New(e, humaConfig)
+	api.UseMiddleware(middleware.CanonicalLogger(l))
 
-	publicAPI := baseAPI
-	publicAPI.UseMiddleware(middleware.CanonicalLogger(l))
-	addPublicRoutes(publicAPI, handler)
+	authGroup := huma.NewGroup(api, "/api/v1")
+	authGroup.UseMiddleware(middleware.Authenticated(authService, cacheService))
+	addAuthRoutes(authGroup, handler)
 
-	authAPI := baseAPI
-	openapi := authAPI.OpenAPI()
-	openapi.Security = append(openapi.Security, map[string][]string{"bearerAuth": {}})
-	authAPI.UseMiddleware(
-		middleware.CanonicalLogger(l),
-		middleware.Authenticated(authService, cacheService),
-	)
-	addAuthRoutes(authAPI, handler)
+	baseGroup := huma.NewGroup(api, "/api")
+	addPublicRoutes(baseGroup, handler)
 
 	return &Server{
 		config: config,
