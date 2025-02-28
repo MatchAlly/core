@@ -21,7 +21,6 @@ func CanonicalLogger(log *zap.SugaredLogger) func(ctx huma.Context, next func(hu
 			"status", ctx.Status(),
 			"duration_ms", duration.Milliseconds(),
 			"ip", ctx.RemoteAddr(),
-			"error", ctx.Context().Value("error"),
 		)
 	}
 }
