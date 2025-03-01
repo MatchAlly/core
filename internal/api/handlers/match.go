@@ -25,11 +25,13 @@ type postClubMatchResponse struct {
 func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) (*postClubMatchResponse, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
+		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
 	ok, err := h.authZService.IsMember(ctx, userID, req.ClubID)
 	if err != nil {
+		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
 	}
 	if !ok {
@@ -43,11 +45,13 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 
 	teams, err := h.matchService.GetOrCreateTeams(ctx, req.ClubID, tempTeams)
 	if err != nil {
+		h.l.Error("failed to get or create teams", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get or create teams, try again later")
 	}
 
 	matchID, err := h.matchService.CreateMatch(ctx, req.ClubID, req.GameID, teams, req.Sets)
 	if err != nil {
+		h.l.Error("failed to create match", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create match, try again later")
 	}
 
@@ -86,11 +90,13 @@ type getClubMatchesResponseTeamMember struct {
 func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest) (*getClubMatchesResponse, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
+		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
 	ok, err := h.authZService.IsMember(ctx, userID, req.ClubID)
 	if err != nil {
+		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
 	}
 	if !ok {
@@ -103,6 +109,7 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 	}
 	matches, err := h.matchService.GetMatches(ctx, req.ClubID, gameID)
 	if err != nil {
+		h.l.Error("failed to get matches", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get matches, try again later")
 	}
 

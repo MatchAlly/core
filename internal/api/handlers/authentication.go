@@ -22,6 +22,7 @@ type loginResponse struct {
 func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse, error) {
 	correct, accessToken, refreshToken, err := h.authNService.Login(ctx, req.Email, req.Password)
 	if err != nil {
+		h.l.Errorw("failed to login", "error", err)
 		return nil, huma.Error500InternalServerError("failed to login, try again later")
 	}
 	if !correct {
@@ -63,9 +64,9 @@ type refreshResponse struct {
 }
 
 func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshResponse, error) {
-
 	valid, _, err := h.authNService.VerifyRefreshToken(ctx, req.RefreshToken.Value)
 	if err != nil {
+		h.l.Error("failed to verify refresh token", "error", err)
 		return nil, huma.Error500InternalServerError("failed to verify refresh token")
 	}
 
@@ -75,6 +76,7 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 
 	accessToken, refreshToken, err := h.authNService.RefreshTokens(ctx, req.RefreshToken.Value)
 	if err != nil {
+		h.l.Error("failed to refresh tokens", "error", err)
 		return nil, huma.Error500InternalServerError("failed to refresh tokens")
 	}
 
@@ -110,6 +112,7 @@ type signupRequest struct {
 func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, error) {
 	success, err := h.authNService.Signup(ctx, req.Email, req.Name, req.Password)
 	if err != nil {
+		h.l.Errorw("failed to signup", "error", err)
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 	if !success {
@@ -118,6 +121,7 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 
 	exists, u, err := h.userService.GetUserByEmail(ctx, req.Email)
 	if err != nil || !exists {
+		h.l.Errorw("failed to get user by email", "error", err)
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 
@@ -127,6 +131,7 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 		CreatedAt: time.Now(),
 	}
 	if err := h.subscriptionService.CreateSubscription(ctx, sub); err != nil {
+		h.l.Errorw("failed to create subscription", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create subscription")
 	}
 
@@ -141,10 +146,12 @@ type changePasswordRequest struct {
 func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest) (*struct{}, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
+		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
 	if err := h.userService.UpdatePassword(ctx, userID, req.OldPassword, req.NewPassword); err != nil {
+		h.l.Errorw("failed to change password", "error", err)
 		return nil, huma.Error500InternalServerError("failed to change password, try again later")
 	}
 
@@ -158,10 +165,12 @@ type logoutresponse struct {
 func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutresponse, error) {
 	token, ok := ctx.Value("token").(string)
 	if !ok {
+		h.l.Error("failed to get token from context")
 		return nil, huma.Error500InternalServerError("failed to get token from context")
 	}
 
 	if err := h.authNService.Logout(ctx, token); err != nil {
+		h.l.Errorw("failed to logout", "error", err)
 		return nil, huma.Error500InternalServerError("failed to logout, try again later")
 	}
 

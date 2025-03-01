@@ -22,11 +22,13 @@ type getClubGamesResponseGame struct {
 func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*getClubGamesResponse, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
+		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
 	ok, err := h.authZService.IsMember(ctx, userID, req.ClubId)
 	if err != nil {
+		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
 	}
 	if !ok {
@@ -35,6 +37,7 @@ func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*
 
 	games, err := h.clubService.GetGames(ctx, req.ClubId)
 	if err != nil {
+		h.l.Error("failed to get games", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get games, try again later")
 	}
 
@@ -66,11 +69,13 @@ type postClubGameResponse struct {
 func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*postClubGameResponse, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
+		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
 	ok, err := h.authZService.IsAdmin(ctx, userID, req.ClubID)
 	if err != nil {
+		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
 	}
 	if !ok {
@@ -79,6 +84,7 @@ func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*
 
 	gameID, err := h.gameService.CreateGame(ctx, req.ClubID, req.Name)
 	if err != nil {
+		h.l.Error("failed to create game", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create game, try again later")
 	}
 
