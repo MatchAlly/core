@@ -11,6 +11,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -o /usr/local/bin/core main.go
 RUN chmod +x /usr/local/bin/core
 RUN go install github.com/air-verse/air@latest
+ENV PATH="/go/bin:${PATH}"
 EXPOSE 8080
 ENTRYPOINT ["air"]
 CMD ["-c", ".air.toml"]

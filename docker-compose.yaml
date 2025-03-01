@@ -8,6 +8,7 @@ services:
       POSTGRES_DB: core
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./migrations:/migrations
     networks:
       - local-network
     healthcheck:

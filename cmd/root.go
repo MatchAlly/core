@@ -19,6 +19,7 @@ type Config struct {
 	AuthNSecret        string        `mapstructure:"AUTHN_SECRET"`
 	AuthNAccessExpiry  time.Duration `mapstructure:"AUTHN_ACCESS_EXPIRY"`
 	AuthNRefreshExpiry time.Duration `mapstructure:"AUTHN_REFRESH_EXPIRY"`
+	Pepper             string        `mapstructure:"PEPPER"`
 }
 
 var rootCmd = &cobra.Command{

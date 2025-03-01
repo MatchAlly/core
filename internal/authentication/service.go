@@ -16,6 +16,7 @@ type Config struct {
 	Secret        string        `mapstructure:"secret" validate:"required"`
 	AccessExpiry  time.Duration `mapstructure:"access_expiry" validate:"required"`
 	RefreshExpiry time.Duration `mapstructure:"refresh_expiry" validate:"required"`
+	Pepper        string        `mapstructure:"pepper" validate:"required"`
 }
 
 type Service interface {
@@ -50,7 +51,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 		return false, "", "", nil
 	}
 
-	if err = bcrypt.CompareHashAndPassword([]byte(user.Hash), []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Hash), []byte(password+s.config.Pepper)); err != nil {
 		return false, "", "", nil
 	}
 
@@ -79,7 +80,7 @@ func (s *service) Signup(ctx context.Context, email string, username string, pas
 		return false, nil
 	}
 
-	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(password+s.config.Pepper), bcrypt.MinCost)
 	if err != nil {
 		return false, fmt.Errorf("failed to hash password: %w", err)
 	}

@@ -70,6 +70,7 @@ func api(cmd *cobra.Command, args []string) {
 		Secret:        config.AuthNSecret,
 		AccessExpiry:  config.AuthNAccessExpiry,
 		RefreshExpiry: config.AuthNRefreshExpiry,
+		Pepper:        config.Pepper,
 	}
 	authenticationService := authentication.NewService(authenticationConfig, userService, cacheService)
 

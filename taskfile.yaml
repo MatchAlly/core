@@ -9,32 +9,25 @@ tasks:
       - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
       - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml logs -f core
 
-  migrate:
-    desc: Run database migrations
+  build:
+    desc: Rebuild and restart the core service
     cmds:
-      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core go run migrate
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build core
 
+  migrate:
+    desc: Apply all migrations to the database using goose
+    cmds:
+      - echo "Applying migrations..."
+      - go tool goose -dir ./migrations postgres "{{.DATABASE_DSN}}" up
   seed:
     desc: Seed the database with initial data
     cmds:
-      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core go run seed
-
-  test:
-    desc: Run tests
-    cmds:
-      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core go test -v ./...
-    env:
-      GO_ENV: test
+      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core /go/bin/air -- seed
 
   down:
     desc: Stop all containers
     cmds:
       - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down
-
-  rebuild:
-    desc: Rebuild and restart the core service
-    cmds:
-      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d --build core
 
   logs:
     desc: View logs from all services
