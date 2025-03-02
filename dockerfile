@@ -7,6 +7,7 @@ COPY . .
 
 # Development stage with Air for hot reload
 FROM base AS dev
+USER root
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -o /usr/local/bin/core main.go
 RUN chmod +x /usr/local/bin/core

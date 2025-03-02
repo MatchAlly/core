@@ -14,15 +14,18 @@ tasks:
     cmds:
       - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build core
 
+  # Remember to switch the "host=db" to "host=localhost" in the .env file
   migrate:
     desc: Apply all migrations to the database using goose
     cmds:
-      - echo "Applying migrations..."
       - go tool goose -dir ./migrations postgres "{{.DATABASE_DSN}}" up
+
   seed:
     desc: Seed the database with initial data
     cmds:
-      - docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec core /go/bin/air -- seed
+      - echo "Running database seeds from /seed directory..."
+      - for: [seed/*.sql]
+        cmd: docker compose -f docker-compose.yaml -f docker-compose.dev.yaml exec -T db psql -U core -d core < {{.ITEM}}
 
   down:
     desc: Stop all containers

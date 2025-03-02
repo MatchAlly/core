@@ -18,7 +18,6 @@ services:
       - GO_ENV=dev
     ports:
       - "8080:8080"
-    user: "${UID:-1000}:${GID:-1000}"
     tty: true
     stdin_open: true
 
