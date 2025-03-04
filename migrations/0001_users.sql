@@ -1,0 +1,15 @@
+-- +goose up
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_id ON users(id);
+
+-- +goose down
+DROP INDEX IF EXISTS idx_users_id;
+
+DROP TABLE IF EXISTS users;

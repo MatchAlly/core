@@ -1,0 +1,13 @@
+-- +goose up
+CREATE TABLE IF NOT EXISTS clubs (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_clubs_id ON clubs(id);
+
+-- +goose down
+DROP INDEX IF EXISTS idx_clubs_id;
+
+DROP TABLE IF EXISTS clubs;

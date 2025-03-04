@@ -1,17 +1,15 @@
 package member
 
-type Role int
+type Role string
 
 const (
-	RoleNone Role = iota
-	RoleMember
-	RoleManager
-	RoleAdmin
+	RoleNone     Role = "none"
+	RoleObserver Role = "observer"
+	RoleMember   Role = "member"
+	RoleManager  Role = "manager"
+	RoleAdmin    Role = "admin"
+	RoleOwner    Role = "owner"
 )
-
-func (r Role) String() string {
-	return [...]string{"none", "member", "manager", "admin"}[r]
-}
 
 type Member struct {
 	ID          int    `db:"id"`

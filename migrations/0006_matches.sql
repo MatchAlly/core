@@ -1,19 +1,4 @@
 -- +goose up
-CREATE TABLE IF NOT EXISTS games (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    club_id BIGINT NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS gamemode (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    game_id BIGINT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-    mode SMALLINT DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (game_id, mode)
-);
-
 CREATE TABLE IF NOT EXISTS matches (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     club_id BIGINT NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
@@ -46,8 +31,6 @@ CREATE TABLE IF NOT EXISTS match_teams (
     UNIQUE (match_id, team_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_games_club_id ON games(club_id);
-CREATE INDEX IF NOT EXISTS idx_games_gamemode_id ON gamemode(game_id);
 CREATE INDEX IF NOT EXISTS idx_match_teams_match_id ON match_teams(match_id);
 CREATE INDEX IF NOT EXISTS idx_match_teams_team_id ON match_teams(team_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_member_id ON team_members(member_id);
@@ -56,10 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_team_members_member_id ON team_members(member_id)
 DROP INDEX IF EXISTS idx_team_members_member_id;
 DROP INDEX IF EXISTS idx_match_teams_team_id;
 DROP INDEX IF EXISTS idx_match_teams_match_id;
-DROP INDEX IF EXISTS idx_games_club_id;
 
-DROP TABLE games;
-DROP TABLE gamemode;
 DROP TABLE match_teams;
 DROP TABLE team_members;
 DROP TABLE teams;

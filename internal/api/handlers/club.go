@@ -214,7 +214,7 @@ func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubReq
 		membersResponse[i] = membersInClub{
 			Id:   m.ID,
 			Name: m.DisplayName,
-			Role: m.Role.String(),
+			Role: string(m.Role),
 		}
 	}
 
