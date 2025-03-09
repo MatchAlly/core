@@ -6,32 +6,32 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-func addPublicRoutes(api huma.API, h *handlers.Handler) {
+func addPublicRoutes(g *huma.Group, h *handlers.Handler) {
 	// Authentication
-	huma.Post(api, "/auth/signup", h.Signup)
-	huma.Post(api, "/auth/login", h.Login)
+	huma.Post(g, "/auth/signup", h.Signup)
+	huma.Post(g, "/auth/login", h.Login)
 }
 
-func addAuthRoutes(api huma.API, h *handlers.Handler) {
+func addAuthRoutes(g *huma.Group, h *handlers.Handler) {
 	// Authentication
-	huma.Post(api, "/auth/logout", h.Logout)
-	huma.Post(api, "/auth/refresh", h.Refresh)
-	huma.Post(api, "/auth/password", h.ChangePassword)
+	huma.Post(g, "/auth/logout", h.Logout)
+	huma.Post(g, "/auth/refresh", h.Refresh)
+	huma.Post(g, "/auth/password", h.ChangePassword)
 
 	// Users
-	huma.Delete(api, "/users", h.DeleteUser)
-	huma.Put(api, "/users", h.UpdateUser)
-	huma.Get(api, "/users/:userId/clubs", h.GetMemberships)
+	huma.Delete(g, "/users", h.DeleteUser)
+	huma.Put(g, "/users", h.UpdateUser)
+	huma.Get(g, "/users/:userId/clubs", h.GetMemberships)
 
 	// Clubs
-	huma.Post(api, "/clubs", h.CreateClub)
-	huma.Put(api, "/clubs/:clubId", h.UpdateClub)
-	huma.Delete(api, "/clubs/:clubId", h.DeleteClub)
-	huma.Get(api, "/clubs/:clubId/members", h.GetMembersInClub)
-	huma.Delete(api, "/clubs/:clubId/members/:memberId", h.RemoveMemberFromClub)
-	huma.Put(api, "/clubs/:clubId/members/:memberId", h.UpdateMemberRole)
-	huma.Post(api, "/clubs/:clubId/matches", h.PostClubMatch)
-	huma.Get(api, "/clubs/:clubId/matches", h.GetClubMatches)
-	huma.Get(api, "/clubs/:clubId/games", h.GetClubGames)
-	huma.Post(api, "/clubs/:clubId/games", h.PostClubGame)
+	huma.Post(g, "/clubs", h.CreateClub)
+	huma.Put(g, "/clubs/:clubId", h.UpdateClub)
+	huma.Delete(g, "/clubs/:clubId", h.DeleteClub)
+	huma.Get(g, "/clubs/:clubId/members", h.GetMembersInClub)
+	huma.Delete(g, "/clubs/:clubId/members/:memberId", h.RemoveMemberFromClub)
+	huma.Put(g, "/clubs/:clubId/members/:memberId", h.UpdateMemberRole)
+	huma.Post(g, "/clubs/:clubId/matches", h.PostClubMatch)
+	huma.Get(g, "/clubs/:clubId/matches", h.GetClubMatches)
+	huma.Get(g, "/clubs/:clubId/games", h.GetClubGames)
+	huma.Post(g, "/clubs/:clubId/games", h.PostClubGame)
 }

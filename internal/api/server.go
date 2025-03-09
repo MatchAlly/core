@@ -35,7 +35,7 @@ func NewServer(config Config, version string, l *zap.SugaredLogger, handler *han
 	e.Use(echoMiddleware.Recover())
 
 	humaConfig := huma.DefaultConfig("MatchAlly", config.Version)
-	humaConfig.OpenAPI.Servers = []*huma.Server{{URL: "https://matchally.me/api"}}
+	humaConfig.OpenAPI.Servers = []*huma.Server{{URL: "http://localhost:8080"}, {URL: "https://matchally.me"}}
 	humaConfig.OpenAPI.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
 		"bearerAuth": {
 			Type:         "http",

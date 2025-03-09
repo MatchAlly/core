@@ -8,10 +8,12 @@ import (
 )
 
 type postClubMatchRequest struct {
-	ClubID int                        `json:"clubId" minimum:"1"`
-	GameID int                        `json:"gameId" minimum:"1"`
-	Teams  []postClubMatchRequestTeam `json:"teams" minItems:"1"`
-	Sets   []string                   `json:"sets,omitempty"`
+	Body struct {
+		ClubID int                        `json:"clubId" minimum:"1"`
+		GameID int                        `json:"gameId" minimum:"1"`
+		Teams  []postClubMatchRequestTeam `json:"teams" minItems:"1"`
+		Sets   []string                   `json:"sets,omitempty"`
+	}
 }
 
 type postClubMatchRequestTeam struct {
@@ -19,7 +21,9 @@ type postClubMatchRequestTeam struct {
 }
 
 type postClubMatchResponse struct {
-	MatchID int `json:"matchId"`
+	Body struct {
+		MatchID int `json:"matchId"`
+	}
 }
 
 func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) (*postClubMatchResponse, error) {
@@ -29,7 +33,7 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	ok, err := h.authZService.IsMember(ctx, userID, req.ClubID)
+	ok, err := h.authZService.IsMember(ctx, userID, req.Body.ClubID)
 	if err != nil {
 		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
@@ -38,18 +42,18 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 		return nil, huma.Error403Forbidden("user not authorized to get matches in this club")
 	}
 
-	tempTeams := make([][]int, len(req.Teams))
-	for i, t := range req.Teams {
+	tempTeams := make([][]int, len(req.Body.Teams))
+	for i, t := range req.Body.Teams {
 		tempTeams[i] = t.Members
 	}
 
-	teams, err := h.matchService.GetOrCreateTeams(ctx, req.ClubID, tempTeams)
+	teams, err := h.matchService.GetOrCreateTeams(ctx, req.Body.ClubID, tempTeams)
 	if err != nil {
 		h.l.Error("failed to get or create teams", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get or create teams, try again later")
 	}
 
-	matchID, err := h.matchService.CreateMatch(ctx, req.ClubID, req.GameID, teams, req.Sets)
+	matchID, err := h.matchService.CreateMatch(ctx, req.Body.ClubID, req.Body.GameID, teams, req.Body.Sets)
 	if err != nil {
 		h.l.Error("failed to create match", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create match, try again later")
@@ -57,7 +61,10 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 
 	// TODO update statistics and rankings
 
-	return &postClubMatchResponse{MatchID: matchID}, nil
+	resp := &postClubMatchResponse{}
+	resp.Body.MatchID = matchID
+
+	return resp, nil
 }
 
 type getClubMatchesRequest struct {
@@ -66,7 +73,9 @@ type getClubMatchesRequest struct {
 }
 
 type getClubMatchesResponse struct {
-	Matches []getClubMatchesResponseMatch `json:"matches"`
+	Body struct {
+		Matches []getClubMatchesResponseMatch `json:"matches"`
+	}
 }
 
 type getClubMatchesResponseMatch struct {
@@ -139,9 +148,8 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 		}
 	}
 
-	resp := &getClubMatchesResponse{
-		Matches: mappedMatches,
-	}
+	resp := &getClubMatchesResponse{}
+	resp.Body.Matches = mappedMatches
 
 	return resp, nil
 }

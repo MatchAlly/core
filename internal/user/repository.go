@@ -38,9 +38,9 @@ func NewRepository(db *sqlx.DB) Repository {
 }
 
 func (r *repository) GetUser(ctx context.Context, id int) (*User, error) {
-	var user *User
+	var user User
 
-	err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE id = $1", id)
+	err := r.db.GetContext(ctx, &user, "SELECT * FROM users WHERE id = $1", id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
@@ -48,13 +48,13 @@ func (r *repository) GetUser(ctx context.Context, id int) (*User, error) {
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	var user *User
+	var user User
 
-	err := r.db.GetContext(ctx, user, "SELECT * FROM users WHERE email = $1", email)
+	err := r.db.GetContext(ctx, &user, "SELECT * FROM users WHERE email = $1", email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
@@ -62,11 +62,15 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func (r *repository) CreateUser(ctx context.Context, user *User) (int, error) {
-	result, err := r.db.ExecContext(ctx, "INSERT INTO users (email, name, hash) VALUES ($1, $2, $3)", user.Email, user.Name, user.Hash)
+	var id int
+
+	err := r.db.QueryRowContext(ctx,
+		"INSERT INTO users (email, name, hash) VALUES ($1, $2, $3) RETURNING id",
+		user.Email, user.Name, user.Hash).Scan(&id)
 	if err != nil {
 		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == UniqueViolationCode {
 			return 0, ErrDuplicateEntry
@@ -74,12 +78,7 @@ func (r *repository) CreateUser(ctx context.Context, user *User) (int, error) {
 		return 0, err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
+	return id, nil
 }
 
 func (r *repository) DeleteUser(ctx context.Context, id int) error {

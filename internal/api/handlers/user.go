@@ -7,13 +7,17 @@ import (
 )
 
 type updateUserRequest struct {
-	Email string `json:"userId" format:"email"`
-	Name  string `json:"name" minLength:"1" maxLength:"50"`
+	Body struct {
+		Email string `json:"userId" format:"email"`
+		Name  string `json:"name" minLength:"1" maxLength:"50"`
+	}
 }
 
 type updateUserResponse struct {
-	Email string `json:"userId"`
-	Name  string `json:"name"`
+	Body struct {
+		Email string `json:"userId"`
+		Name  string `json:"name"`
+	}
 }
 
 func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*updateUserResponse, error) {
@@ -23,15 +27,14 @@ func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*upda
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	if err := h.userService.UpdateUser(ctx, userID, req.Email, req.Name); err != nil {
+	if err := h.userService.UpdateUser(ctx, userID, req.Body.Email, req.Body.Name); err != nil {
 		h.l.Error("failed to update user", "error", err)
 		return nil, huma.Error500InternalServerError("failed to update user, try again later")
 	}
 
-	resp := &updateUserResponse{
-		Email: req.Email,
-		Name:  req.Name,
-	}
+	resp := &updateUserResponse{}
+	resp.Body.Email = req.Body.Email
+	resp.Body.Name = req.Body.Name
 
 	return resp, nil
 }

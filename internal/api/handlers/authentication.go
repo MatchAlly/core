@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"core/internal/subscription"
+	"fmt"
 	"time"
 
 	"net/http"
@@ -11,8 +12,10 @@ import (
 )
 
 type loginRequest struct {
-	Email    string `json:"email" format:"email"`
-	Password string `json:"password" minLength:"8" maxLength:"256"`
+	Body struct {
+		Email    string `json:"email" format:"email"`
+		Password string `json:"password" minLength:"8" maxLength:"256"`
+	}
 }
 
 type loginResponse struct {
@@ -20,7 +23,7 @@ type loginResponse struct {
 }
 
 func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse, error) {
-	correct, accessToken, refreshToken, err := h.authNService.Login(ctx, req.Email, req.Password)
+	correct, accessToken, refreshToken, err := h.authNService.Login(ctx, req.Body.Email, req.Body.Password)
 	if err != nil {
 		h.l.Errorw("failed to login", "error", err)
 		return nil, huma.Error500InternalServerError("failed to login, try again later")
@@ -104,13 +107,16 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 }
 
 type signupRequest struct {
-	Email    string `json:"email" format:"email"`
-	Name     string `json:"name" minLength:"2" maxLength:"20"`
-	Password string `json:"password" minLength:"8" maxLength:"256"`
+	Body struct {
+		Email    string `json:"email" format:"email"`
+		Name     string `json:"name" minLength:"2" maxLength:"20"`
+		Password string `json:"password" minLength:"8" maxLength:"256"`
+	}
 }
 
 func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, error) {
-	success, err := h.authNService.Signup(ctx, req.Email, req.Name, req.Password)
+	fmt.Println("Signup request:", req)
+	success, err := h.authNService.Signup(ctx, req.Body.Email, req.Body.Name, req.Body.Password)
 	if err != nil {
 		h.l.Errorw("failed to signup", "error", err)
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
@@ -119,7 +125,7 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 		return nil, huma.Error400BadRequest("user with the given email already exists")
 	}
 
-	exists, u, err := h.userService.GetUserByEmail(ctx, req.Email)
+	exists, u, err := h.userService.GetUserByEmail(ctx, req.Body.Email)
 	if err != nil || !exists {
 		h.l.Errorw("failed to get user by email", "error", err)
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
@@ -139,8 +145,10 @@ func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, er
 }
 
 type changePasswordRequest struct {
-	OldPassword string `json:"oldPassword" minLength:"8" maxLength:"256"`
-	NewPassword string `json:"newPassword" minLength:"8" maxLength:"256"`
+	Body struct {
+		OldPassword string `json:"oldPassword" minLength:"8" maxLength:"256"`
+		NewPassword string `json:"newPassword" minLength:"8" maxLength:"256"`
+	}
 }
 
 func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest) (*struct{}, error) {
@@ -150,7 +158,7 @@ func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	if err := h.userService.UpdatePassword(ctx, userID, req.OldPassword, req.NewPassword); err != nil {
+	if err := h.userService.UpdatePassword(ctx, userID, req.Body.OldPassword, req.Body.NewPassword); err != nil {
 		h.l.Errorw("failed to change password", "error", err)
 		return nil, huma.Error500InternalServerError("failed to change password, try again later")
 	}
@@ -158,11 +166,11 @@ func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest
 	return nil, nil
 }
 
-type logoutresponse struct {
+type logoutResponse struct {
 	SetCookie []http.Cookie `header:"Set-Cookie"`
 }
 
-func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutresponse, error) {
+func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutResponse, error) {
 	token, ok := ctx.Value("token").(string)
 	if !ok {
 		h.l.Error("failed to get token from context")
@@ -174,7 +182,7 @@ func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutresponse, e
 		return nil, huma.Error500InternalServerError("failed to logout, try again later")
 	}
 
-	resp := &logoutresponse{
+	resp := &logoutResponse{
 		SetCookie: []http.Cookie{
 			{
 				Name:     "accessToken",

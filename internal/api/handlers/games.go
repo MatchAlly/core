@@ -11,7 +11,9 @@ type getClubGamesRequest struct {
 }
 
 type getClubGamesResponse struct {
-	Games []getClubGamesResponseGame `json:"games"`
+	Body struct {
+		Games []getClubGamesResponseGame `json:"games"`
+	}
 }
 
 type getClubGamesResponseGame struct {
@@ -49,21 +51,24 @@ func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*
 		}
 	}
 
-	resp := &getClubGamesResponse{
-		Games: mappedGames,
-	}
+	resp := &getClubGamesResponse{}
+	resp.Body.Games = mappedGames
 
 	return resp, nil
 }
 
 type postClubGameRequest struct {
-	ClubID int    `path:"clubId" minimum:"1"`
-	Name   string `json:"name" minLength:"1" maxLength:"50"`
+	ClubID int `path:"clubId" minimum:"1"`
+	Body   struct {
+		Name string `json:"name" minLength:"1" maxLength:"50"`
+	}
 }
 
 type postClubGameResponse struct {
-	GameID int    `json:"gameId"`
-	Name   string `json:"name"`
+	Body struct {
+		GameID int    `json:"gameId"`
+		Name   string `json:"name"`
+	}
 }
 
 func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*postClubGameResponse, error) {
@@ -82,16 +87,15 @@ func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*
 		return nil, huma.Error403Forbidden("user not authorized to create games in this club")
 	}
 
-	gameID, err := h.gameService.CreateGame(ctx, req.ClubID, req.Name)
+	gameID, err := h.gameService.CreateGame(ctx, req.ClubID, req.Body.Name)
 	if err != nil {
 		h.l.Error("failed to create game", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create game, try again later")
 	}
 
-	resp := &postClubGameResponse{
-		GameID: gameID,
-		Name:   req.Name,
-	}
+	resp := &postClubGameResponse{}
+	resp.Body.GameID = gameID
+	resp.Body.Name = req.Body.Name
 
 	return resp, nil
 }
