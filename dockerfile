@@ -1,31 +1,15 @@
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine3.21 AS base
-WORKDIR /app
+FROM --platform=$BUILDPLATFORM golang:1.24-alpine3.22 AS builder
+WORKDIR /build
 RUN apk add --no-cache build-base
 COPY go.mod go.sum ./
-RUN go mod download -x
+RUN --mount=type=cache,target=/go/pkg/mod go mod download -x
 COPY . .
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /build/bin/core main.go
 
-# Development stage with Air for hot reload
-FROM base AS dev
-USER root
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
-    -o /usr/local/bin/core main.go
-RUN chmod +x /usr/local/bin/core
-RUN go install github.com/air-verse/air@latest
-ENV PATH="/go/bin:${PATH}"
-EXPOSE 8080
-ENTRYPOINT ["air"]
-CMD ["-c", ".air.toml"]
+FROM gcr.io/distroless/static:nonroot AS runtime
+WORKDIR /app
+COPY --from=builder /build/bin/core /usr/bin/core
 
-# Production stage
-FROM base AS builder
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
-    -ldflags="-w -s" \
-    -o /usr/local/bin/core main.go
-
-FROM gcr.io/distroless/static:nonroot AS prod
-COPY --from=builder /usr/local/bin/core /usr/local/bin/core
-USER 65532:65532
-EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/core"]
-CMD ["api"]
+ENTRYPOINT [ "/usr/bin/core" ]
+CMD [ "api" ]

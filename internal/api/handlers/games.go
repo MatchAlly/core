@@ -28,7 +28,7 @@ func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	ok, err := h.authZService.IsMember(ctx, userID, req.ClubId)
+	ok, err := h.authorization.IsMember(ctx, userID, req.ClubId)
 	if err != nil {
 		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
@@ -37,7 +37,7 @@ func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*
 		return nil, huma.Error403Forbidden("user not authorized to get matches in this club")
 	}
 
-	games, err := h.clubService.GetGames(ctx, req.ClubId)
+	games, err := h.club.GetGames(ctx, req.ClubId)
 	if err != nil {
 		h.l.Error("failed to get games", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get games, try again later")
@@ -78,7 +78,7 @@ func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	ok, err := h.authZService.IsAdmin(ctx, userID, req.ClubID)
+	ok, err := h.authorization.IsAdmin(ctx, userID, req.ClubID)
 	if err != nil {
 		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
@@ -87,7 +87,7 @@ func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*
 		return nil, huma.Error403Forbidden("user not authorized to create games in this club")
 	}
 
-	gameID, err := h.gameService.CreateGame(ctx, req.ClubID, req.Body.Name)
+	gameID, err := h.game.CreateGame(ctx, req.ClubID, req.Body.Name)
 	if err != nil {
 		h.l.Error("failed to create game", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create game, try again later")

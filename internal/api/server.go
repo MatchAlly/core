@@ -7,13 +7,12 @@ import (
 	"core/internal/authentication"
 	"core/internal/cache"
 	"fmt"
+	"log/slog"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
-
-	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -25,10 +24,10 @@ type Server struct {
 	config Config
 	e      *echo.Echo
 	api    huma.API
-	l      *zap.SugaredLogger
+	l      *slog.Logger
 }
 
-func NewServer(config Config, version string, l *zap.SugaredLogger, handler *handlers.Handler, authService authentication.Service, cacheService cache.Service) *Server {
+func NewServer(config Config, version string, l *slog.Logger, handler *handlers.Handler, authService authentication.Service, cacheService cache.Service) *Server {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true

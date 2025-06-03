@@ -7,7 +7,8 @@ import (
 )
 
 type updateUserRequest struct {
-	Body struct {
+	UserID int `path:"userId" minimum:"1"`
+	Body   struct {
 		Email string `json:"userId" format:"email"`
 		Name  string `json:"name" minLength:"1" maxLength:"50"`
 	}
@@ -27,7 +28,12 @@ func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*upda
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	if err := h.userService.UpdateUser(ctx, userID, req.Body.Email, req.Body.Name); err != nil {
+	if userID != req.UserID {
+		h.l.Error("user id from context does not match request")
+		return nil, huma.Error403Forbidden("user id from context does not match request")
+	}
+
+	if err := h.user.UpdateUser(ctx, userID, req.Body.Email, req.Body.Name); err != nil {
 		h.l.Error("failed to update user", "error", err)
 		return nil, huma.Error500InternalServerError("failed to update user, try again later")
 	}
@@ -39,19 +45,23 @@ func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*upda
 	return resp, nil
 }
 
-func (h *Handler) DeleteUser(ctx context.Context, req *struct{}) (*struct{}, error) {
+type deleteUserRequest struct {
+	UserID int `path:"userId" minimum:"1" `
+}
+
+func (h *Handler) DeleteUser(ctx context.Context, req *deleteUserRequest) (*struct{}, error) {
 	userID, ok := ctx.Value("user_id").(int)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	if err := h.subscriptionService.DeleteSubscription(ctx, userID); err != nil {
-		h.l.Error("failed to delete subscription", "error", err)
-		return nil, huma.Error500InternalServerError("failed to delete subscription, try again later")
+	if userID != req.UserID {
+		h.l.Error("user id from context does not match request")
+		return nil, huma.Error403Forbidden("user id from context does not match request")
 	}
 
-	if err := h.userService.DeleteUser(ctx, userID); err != nil {
+	if err := h.user.DeleteUser(ctx, userID); err != nil {
 		h.l.Error("failed to delete user", "error", err)
 		return nil, huma.Error500InternalServerError("failed to delete user, try again later")
 	}

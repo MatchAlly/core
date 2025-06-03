@@ -66,17 +66,15 @@ func (r *repository) GetClubs(ctx context.Context, ids []int) ([]Club, error) {
 }
 
 func (r *repository) CreateClub(ctx context.Context, c *Club) (int, error) {
-	result, err := r.db.ExecContext(ctx, "INSERT INTO clubs (name) VALUES ($1) RETURNING id", c.Name)
+	var id int
+	err := r.db.QueryRowContext(ctx,
+		"INSERT INTO clubs (name) VALUES ($1) RETURNING id",
+		c.Name).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
+	return id, nil
 }
 
 func (r *repository) DeleteClub(ctx context.Context, id int) error {

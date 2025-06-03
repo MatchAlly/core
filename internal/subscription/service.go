@@ -3,10 +3,9 @@ package subscription
 import "context"
 
 type Service interface {
-	CreateSubscription(ctx context.Context, subscription Subscription) error
-	GetSubscriptionByUserID(ctx context.Context, userID int) (*Subscription, error)
-	UpdateSubscription(ctx context.Context, subscription Subscription) error
-	DeleteSubscription(ctx context.Context, userID int) error
+	Create(ctx context.Context, userID int) error
+	GetByUserID(ctx context.Context, userID int) (*Subscription, error)
+	Update(ctx context.Context, userID int, tier Tier) error
 }
 
 type service struct {
@@ -19,18 +18,14 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) CreateSubscription(ctx context.Context, subscription Subscription) error {
-	return s.repo.CreateSubscription(ctx, subscription)
+func (s *service) Create(ctx context.Context, id int) error {
+	return s.repo.Create(ctx, id)
 }
 
-func (s *service) GetSubscriptionByUserID(ctx context.Context, userID int) (*Subscription, error) {
-	return s.repo.GetSubscriptionByUserID(ctx, userID)
+func (s *service) GetByUserID(ctx context.Context, userID int) (*Subscription, error) {
+	return s.repo.GetByUserID(ctx, userID)
 }
 
-func (s *service) UpdateSubscription(ctx context.Context, subscription Subscription) error {
-	return s.repo.UpdateSubscription(ctx, subscription)
-}
-
-func (s *service) DeleteSubscription(ctx context.Context, userID int) error {
-	return s.repo.DeleteSubscription(ctx, userID)
+func (s *service) Update(ctx context.Context, userID int, tier Tier) error {
+	return s.repo.Update(ctx, userID, tier)
 }

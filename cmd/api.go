@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	xapi "core/internal/api"
+	"core/internal/api"
 	"core/internal/api/handlers"
 	"core/internal/authentication"
 	"core/internal/authorization"
@@ -16,47 +16,48 @@ import (
 	"core/internal/subscription"
 	"core/internal/user"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/redis/go-redis/v9"
-
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 var apiCmd = &cobra.Command{
-	Use:  "api",
-	Long: "Start the api server",
-	Run:  api,
+	Use:   "api",
+	Short: "Start the api server",
+	Run:   startAPIserver,
 }
 
 func init() {
 	rootCmd.AddCommand(apiCmd)
 }
 
-func api(cmd *cobra.Command, args []string) {
+func startAPIserver(cmd *cobra.Command, args []string) {
 	ctx := cmd.Context()
 
 	config, err := loadConfig()
 	if err != nil {
-		zap.L().Fatal("failed to read config", zap.Error(err))
+		slog.Error("Failed to read config", "error", err)
+		os.Exit(1)
 	}
 
 	l := getLogger()
 
-	// Initialize database connection
+	// Initialize connections to dependencies
 	db, err := database.NewClient(ctx, config.DatabaseDSN)
 	if err != nil {
-		l.Fatal("failed to connect to database", zap.Error(err))
+		l.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 
 	client := redis.NewClient(&redis.Options{Addr: fmt.Sprintf("redis:%d", config.RedisPort)})
 
 	cacheService := cache.NewService(client, config.DenylistExpiry)
 
-	// Initialize Services
+	// Initialize services
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 
@@ -91,41 +92,40 @@ func api(cmd *cobra.Command, args []string) {
 	// Initialize API server
 	handlerConfig := handlers.Config{}
 
-	apiConfig := xapi.Config{
+	apiConfig := api.Config{
 		Port:    config.APIPort,
 		Version: config.APIVersion,
 	}
 
 	handler := handlers.NewHandler(l, handlerConfig, authenticationService, authorizationService, userService, clubService, memberService, matchService, ratingService, gameService, subscriptionService)
-	apiServer := xapi.NewServer(apiConfig, config.APIVersion, l, handler, authenticationService, cacheService)
+	apiServer := api.NewServer(apiConfig, config.APIVersion, l, handler, authenticationService, cacheService)
 	if err != nil {
-		l.Fatal("failed to create api server", zap.Error(err))
+		l.Error("Failed to create api server", "error", err)
+		os.Exit(1)
 	}
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	// Start the API server
-	l.Info("api server starting", zap.Int("port", config.APIPort), zap.String("version", config.APIVersion))
+	l.Info("API server starting", "port", config.APIPort, "version", config.APIVersion)
 	go func() {
 		if err := apiServer.Start(); err != nil {
-			l.Fatal("failed to start api server", zap.Error(err))
+			l.Error("Failed to start api server", "error", err)
 			cancel()
 		}
 	}()
 
-	l.Info("ready")
+	l.Info("Ready")
 
-	// Wait for shutdown signal
 	<-ctx.Done()
 
-	// Stop the servers
-	l.Info("shutting down")
+	l.Info("Shutting down")
 
 	shutdownctx, stop := context.WithTimeout(context.Background(), shutdownPeriod)
 	defer stop()
 
 	if err := apiServer.Shutdown(shutdownctx); err != nil {
-		l.Error("failed to shutdown api server", zap.Error(err))
+		l.Error("Failed to shutdown api server", "error", err)
 	}
 }

@@ -7,7 +7,6 @@ import (
 
 	"errors"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -72,9 +71,6 @@ func (r *repository) CreateUser(ctx context.Context, user *User) (int, error) {
 		"INSERT INTO users (email, name, hash) VALUES ($1, $2, $3) RETURNING id",
 		user.Email, user.Name, user.Hash).Scan(&id)
 	if err != nil {
-		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == UniqueViolationCode {
-			return 0, ErrDuplicateEntry
-		}
 		return 0, err
 	}
 

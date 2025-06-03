@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS game_modes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_games_club_id ON games(club_id);
-CREATE INDEX IF NOT EXISTS idx_game_modes_id ON game_modes(game_id);
+CREATE INDEX IF NOT EXISTS idx_game_modes_game_id ON game_modes(game_id);
 
 -- +goose down
 DROP INDEX IF EXISTS idx_games_club_id;
-DROP INDEX IF EXISTS idx_game_modes_id;
+DROP INDEX IF EXISTS idx_game_modes_game_id;
 
 DROP TABLE game_modes;
 DROP TABLE games;

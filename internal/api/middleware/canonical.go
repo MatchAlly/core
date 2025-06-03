@@ -1,13 +1,13 @@
 package middleware
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
-	"go.uber.org/zap"
 )
 
-func CanonicalLogger(log *zap.SugaredLogger) func(ctx huma.Context, next func(huma.Context)) {
+func CanonicalLogger(log *slog.Logger) func(ctx huma.Context, next func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		start := time.Now()
 
@@ -15,7 +15,7 @@ func CanonicalLogger(log *zap.SugaredLogger) func(ctx huma.Context, next func(hu
 
 		duration := time.Since(start)
 
-		log.Infow("request",
+		log.Info("Request",
 			"method", ctx.Method(),
 			"path", ctx.URL().Path,
 			"status", ctx.Status(),

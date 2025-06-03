@@ -51,20 +51,16 @@ func (r *repository) GetGames(ctx context.Context, ids []int) ([]Game, error) {
 }
 
 func (r *repository) CreateGame(ctx context.Context, game *Game) (int, error) {
-	result, err := r.db.ExecContext(ctx,
-		"INSERT INTO games (club_id, name) VALUES ($1, $2)",
-		game.ClubID, game.Name,
-	)
+	var id int
+
+	err := r.db.QueryRowContext(ctx,
+		"INSERT INTO games (club_id, name) VALUES ($1, $2) RETURNING id",
+		game.ClubID, game.Name).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
+	return id, nil
 }
 
 func (r *repository) UpdateGame(ctx context.Context, game *Game) error {

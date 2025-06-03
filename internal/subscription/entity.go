@@ -2,21 +2,18 @@ package subscription
 
 import "time"
 
-type Tier int
+type Tier string
 
 const (
-	TierNone Tier = iota
-	TierFree
-	TierMinor
-	TierMajor
+	TierNone  Tier = "none"
+	TierFree  Tier = "free"
+	TierMinor Tier = "minor"
+	TierMajor Tier = "major"
 )
 
 type Subscription struct {
-	ID                     int       `db:"id"`
-	UserID                 int       `db:"user_id"`
-	ManagedOrganizationIDs []int     `db:"managed_organization_ids"`
-	TotalManagedUsers      int       `db:"total_managed_users"`
-	Tier                   Tier      `db:"tier"`
-	CreatedAt              time.Time `db:"created_at"`
-	UpdatedAt              time.Time `db:"updated_at"`
+	ID        int       `db:"id"`
+	UserID    int       `db:"user_id"`
+	Tier      Tier      `db:"tier"`
+	CreatedAt time.Time `db:"created_at"`
 }

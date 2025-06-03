@@ -13,8 +13,8 @@ import (
 
 type AccessClaims struct {
 	jwt.RegisteredClaims
-	Subscription  subscription.Tier          `json:"s"`
-	Organizations map[int]ClaimsOrganization `json:"o"` // Map of organization ID to tier and role
+	SubscriptionTier subscription.Tier          `json:"s"`
+	Organizations    map[int]ClaimsOrganization `json:"o"` // Map of organization ID to tier and role
 }
 
 type ClaimsOrganization struct {
@@ -47,19 +47,9 @@ func (c *AccessClaims) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("org id is not an integer: %s", parts[0])
 		}
 
-		tier, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return fmt.Errorf("tier is not an integer: %s", parts[1])
-		}
-
-		role, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return fmt.Errorf("role is not an integer: %s", parts[2])
-		}
-
 		c.Organizations[id] = ClaimsOrganization{
-			Tier: subscription.Tier(tier),
-			Role: member.Role(role),
+			Tier: subscription.Tier(parts[1]),
+			Role: member.Role(parts[2]),
 		}
 	}
 

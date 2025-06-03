@@ -51,20 +51,16 @@ func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []int)
 }
 
 func (r *repository) CreateRating(ctx context.Context, rating *Rating) (int, error) {
-	result, err := r.db.ExecContext(ctx,
-		"INSERT INTO ratings (member_id, game_id, mu, sigma) VALUES ($1, $2, $3, $4)",
-		rating.MemberID, rating.GameID, rating.Mu, rating.Sigma,
-	)
+	var id int
+
+	err := r.db.QueryRowContext(ctx,
+		"INSERT INTO ratings (member_id, game_id, mu, sigma) VALUES ($1, $2, $3, $4) RETURNING id",
+		rating.MemberID, rating.GameID, rating.Mu, rating.Sigma).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
+	return id, nil
 }
 
 func (r *repository) UpdateRatings(ctx context.Context, ratings []Rating) error {

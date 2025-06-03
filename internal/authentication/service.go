@@ -3,6 +3,7 @@ package authentication
 import (
 	"context"
 	"core/internal/cache"
+	"core/internal/subscription"
 	"core/internal/user"
 	"fmt"
 	"strconv"
@@ -29,9 +30,10 @@ type Service interface {
 }
 
 type service struct {
-	config      Config
-	userService user.Service
-	cache       cache.Service
+	config              Config
+	userService         user.Service
+	subscriptionService subscription.Service
+	cache               cache.Service
 }
 
 func NewService(config Config, userService user.Service, cache cache.Service) Service {
@@ -55,7 +57,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 		return false, "", "", nil
 	}
 
-	accessToken, refreshToken, err := s.generateTokenPair(user.ID)
+	accessToken, refreshToken, err := s.generateTokenPair(ctx, user.ID)
 	if err != nil {
 		return false, "", "", fmt.Errorf("failed to generate jwts: %w", err)
 	}
@@ -66,6 +68,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 func (s *service) Logout(ctx context.Context, token string) error {
 	if err := s.cache.SetTokenUsed(ctx, token); err != nil {
 		return fmt.Errorf("failed to set token as used: %w", err)
+
 	}
 
 	return nil
@@ -142,12 +145,12 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 		return "", "", fmt.Errorf("failed to verify refresh token: %w", err)
 	}
 
-	userId, err := strconv.ParseInt(claims.Subject, 10, 64)
+	userId, err := strconv.Atoi(claims.Subject)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to parse user id: %w", err)
 	}
 
-	accessToken, newRefreshToken, err := s.generateTokenPair(int(userId))
+	accessToken, newRefreshToken, err := s.generateTokenPair(ctx, userId)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate token pair: %w", err)
 	}
@@ -155,7 +158,12 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 	return accessToken, newRefreshToken, nil
 }
 
-func (s *service) generateTokenPair(userId int) (string, string, error) {
+func (s *service) generateTokenPair(ctx context.Context, userId int) (string, string, error) {
+	sub, err := s.subscriptionService.GetByUserID(ctx, userId)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get subscription: %w", err)
+	}
+
 	now := time.Now()
 
 	accessclaims := AccessClaims{
@@ -164,6 +172,7 @@ func (s *service) generateTokenPair(userId int) (string, string, error) {
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.AccessExpiry)),
 		},
+		SubscriptionTier: sub.Tier,
 	}
 
 	accessTokenUnsigned := jwt.NewWithClaims(jwt.SigningMethodHS256, accessclaims)

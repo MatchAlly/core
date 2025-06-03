@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"context"
-	"core/internal/subscription"
-	"fmt"
 	"time"
 
 	"net/http"
@@ -23,9 +21,9 @@ type loginResponse struct {
 }
 
 func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse, error) {
-	correct, accessToken, refreshToken, err := h.authNService.Login(ctx, req.Body.Email, req.Body.Password)
+	correct, accessToken, refreshToken, err := h.authentication.Login(ctx, req.Body.Email, req.Body.Password)
 	if err != nil {
-		h.l.Errorw("failed to login", "error", err)
+		h.l.Error("failed to login", "error", err)
 		return nil, huma.Error500InternalServerError("failed to login, try again later")
 	}
 	if !correct {
@@ -35,7 +33,7 @@ func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse,
 	resp := &loginResponse{
 		SetCookie: []http.Cookie{
 			{
-				Name:     "accessToken",
+				Name:     "access",
 				Value:    accessToken,
 				Path:     "/",
 				Secure:   true,
@@ -44,7 +42,7 @@ func (h *Handler) Login(ctx context.Context, req *loginRequest) (*loginResponse,
 				MaxAge:   int(h.config.AccessTokenDuration.Seconds()),
 			},
 			{
-				Name:     "refreshToken",
+				Name:     "refresh",
 				Value:    refreshToken,
 				Path:     "/",
 				Secure:   true,
@@ -67,7 +65,7 @@ type refreshResponse struct {
 }
 
 func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshResponse, error) {
-	valid, _, err := h.authNService.VerifyRefreshToken(ctx, req.RefreshToken.Value)
+	valid, _, err := h.authentication.VerifyRefreshToken(ctx, req.RefreshToken.Value)
 	if err != nil {
 		h.l.Error("failed to verify refresh token", "error", err)
 		return nil, huma.Error500InternalServerError("failed to verify refresh token")
@@ -77,7 +75,7 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 		return nil, huma.Error401Unauthorized("invalid refresh token")
 	}
 
-	accessToken, refreshToken, err := h.authNService.RefreshTokens(ctx, req.RefreshToken.Value)
+	accessToken, refreshToken, err := h.authentication.RefreshTokens(ctx, req.RefreshToken.Value)
 	if err != nil {
 		h.l.Error("failed to refresh tokens", "error", err)
 		return nil, huma.Error500InternalServerError("failed to refresh tokens")
@@ -86,14 +84,14 @@ func (h *Handler) Refresh(ctx context.Context, req *refreshRequest) (*refreshRes
 	resp := &refreshResponse{
 		SetCookie: []http.Cookie{
 			{
-				Name:     "accessToken",
+				Name:     "access",
 				Value:    accessToken,
 				Path:     "/",
 				Expires:  time.Now().Add(time.Hour),
 				Secure:   true,
 				HttpOnly: true,
 			}, {
-				Name:     "refreshToken",
+				Name:     "refresh",
 				Value:    refreshToken,
 				Path:     "/",
 				Expires:  time.Now().Add(12 * time.Hour),
@@ -114,34 +112,32 @@ type signupRequest struct {
 	}
 }
 
-func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*struct{}, error) {
-	fmt.Println("Signup request:", req)
-	success, err := h.authNService.Signup(ctx, req.Body.Email, req.Body.Name, req.Body.Password)
+func (h *Handler) Signup(ctx context.Context, req *signupRequest) (*loginResponse, error) {
+	success, err := h.authentication.Signup(ctx, req.Body.Email, req.Body.Name, req.Body.Password)
 	if err != nil {
-		h.l.Errorw("failed to signup", "error", err)
+		h.l.Error("failed to signup", "error", err)
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 	if !success {
 		return nil, huma.Error400BadRequest("user with the given email already exists")
 	}
 
-	exists, u, err := h.userService.GetUserByEmail(ctx, req.Body.Email)
+	exists, u, err := h.user.GetUserByEmail(ctx, req.Body.Email)
 	if err != nil || !exists {
-		h.l.Errorw("failed to get user by email", "error", err)
+		h.l.Error("failed to get user by email", "error", err)
 		return nil, huma.Error500InternalServerError("failed to signup, try again later")
 	}
 
-	sub := subscription.Subscription{
-		UserID:    u.ID,
-		Tier:      subscription.TierFree,
-		CreatedAt: time.Now(),
-	}
-	if err := h.subscriptionService.CreateSubscription(ctx, sub); err != nil {
-		h.l.Errorw("failed to create subscription", "error", err)
+	if err := h.subscription.Create(ctx, u.ID); err != nil {
+		h.l.Error("failed to create subscription", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create subscription")
 	}
 
-	return nil, nil
+	loginReq := &loginRequest{}
+	loginReq.Body.Email = req.Body.Email
+	loginReq.Body.Password = req.Body.Password
+
+	return h.Login(ctx, loginReq)
 }
 
 type changePasswordRequest struct {
@@ -158,8 +154,8 @@ func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	if err := h.userService.UpdatePassword(ctx, userID, req.Body.OldPassword, req.Body.NewPassword); err != nil {
-		h.l.Errorw("failed to change password", "error", err)
+	if err := h.user.UpdatePassword(ctx, userID, req.Body.OldPassword, req.Body.NewPassword); err != nil {
+		h.l.Error("failed to change password", "error", err)
 		return nil, huma.Error500InternalServerError("failed to change password, try again later")
 	}
 
@@ -177,15 +173,15 @@ func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutResponse, e
 		return nil, huma.Error500InternalServerError("failed to get token from context")
 	}
 
-	if err := h.authNService.Logout(ctx, token); err != nil {
-		h.l.Errorw("failed to logout", "error", err)
+	if err := h.authentication.Logout(ctx, token); err != nil {
+		h.l.Error("failed to logout", "error", err)
 		return nil, huma.Error500InternalServerError("failed to logout, try again later")
 	}
 
 	resp := &logoutResponse{
 		SetCookie: []http.Cookie{
 			{
-				Name:     "accessToken",
+				Name:     "access",
 				Value:    "",
 				Path:     "/",
 				HttpOnly: true,
@@ -194,7 +190,7 @@ func (h *Handler) Logout(ctx context.Context, req *struct{}) (*logoutResponse, e
 				MaxAge:   -1,
 			},
 			{
-				Name:     "refreshToken",
+				Name:     "refresh",
 				Value:    "",
 				Path:     "/",
 				HttpOnly: true,

@@ -34,13 +34,17 @@ CREATE TABLE IF NOT EXISTS match_teams (
 CREATE INDEX IF NOT EXISTS idx_match_teams_match_id ON match_teams(match_id);
 CREATE INDEX IF NOT EXISTS idx_match_teams_team_id ON match_teams(team_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_member_id ON team_members(member_id);
+CREATE INDEX IF NOT EXISTS idx_matches_club_id ON matches(club_id);
+CREATE INDEX IF NOT EXISTS idx_matches_game_id ON matches(game_id);
 
 -- +goose down
+DROP INDEX IF EXISTS idx_matches_game_id;
+DROP INDEX IF EXISTS idx_matches_club_id;
 DROP INDEX IF EXISTS idx_team_members_member_id;
 DROP INDEX IF EXISTS idx_match_teams_team_id;
 DROP INDEX IF EXISTS idx_match_teams_match_id;
 
-DROP TABLE match_teams;
-DROP TABLE team_members;
-DROP TABLE teams;
-DROP TABLE matches;
+DROP TABLE IF EXISTS match_teams;
+DROP TABLE IF EXISTS team_members;
+DROP TABLE IF EXISTS teams;
+DROP TABLE IF EXISTS matches;

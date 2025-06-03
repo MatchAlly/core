@@ -33,7 +33,7 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	ok, err := h.authZService.IsMember(ctx, userID, req.Body.ClubID)
+	ok, err := h.authorization.IsMember(ctx, userID, req.Body.ClubID)
 	if err != nil {
 		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
@@ -47,13 +47,13 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 		tempTeams[i] = t.Members
 	}
 
-	teams, err := h.matchService.GetOrCreateTeams(ctx, req.Body.ClubID, tempTeams)
+	teams, err := h.match.GetOrCreateTeams(ctx, req.Body.ClubID, tempTeams)
 	if err != nil {
 		h.l.Error("failed to get or create teams", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get or create teams, try again later")
 	}
 
-	matchID, err := h.matchService.CreateMatch(ctx, req.Body.ClubID, req.Body.GameID, teams, req.Body.Sets)
+	matchID, err := h.match.CreateMatch(ctx, req.Body.ClubID, req.Body.GameID, teams, req.Body.Sets)
 	if err != nil {
 		h.l.Error("failed to create match", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create match, try again later")
@@ -103,7 +103,7 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
 	}
 
-	ok, err := h.authZService.IsMember(ctx, userID, req.ClubID)
+	ok, err := h.authorization.IsMember(ctx, userID, req.ClubID)
 	if err != nil {
 		h.l.Error("failed to check authorization", "error", err)
 		return nil, huma.Error500InternalServerError("failed to check authorization")
@@ -116,7 +116,7 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 	if req.GameID != 0 {
 		gameID = &req.GameID
 	}
-	matches, err := h.matchService.GetMatches(ctx, req.ClubID, gameID)
+	matches, err := h.match.GetMatches(ctx, req.ClubID, gameID)
 	if err != nil {
 		h.l.Error("failed to get matches", "error", err)
 		return nil, huma.Error500InternalServerError("failed to get matches, try again later")

@@ -19,8 +19,8 @@ func addAuthRoutes(g *huma.Group, h *handlers.Handler) {
 	huma.Post(g, "/auth/password", h.ChangePassword)
 
 	// Users
-	huma.Delete(g, "/users", h.DeleteUser)
-	huma.Put(g, "/users", h.UpdateUser)
+	huma.Delete(g, "/users/:userId", h.DeleteUser)
+	huma.Put(g, "/users/:userId", h.UpdateUser)
 	huma.Get(g, "/users/:userId/clubs", h.GetMemberships)
 
 	// Clubs

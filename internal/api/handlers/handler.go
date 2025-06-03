@@ -10,9 +10,8 @@ import (
 	"core/internal/rating"
 	"core/internal/subscription"
 	"core/internal/user"
+	"log/slog"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -20,43 +19,43 @@ type Config struct {
 	RefreshTokenDuration time.Duration
 }
 type Handler struct {
-	l                   *zap.SugaredLogger
-	config              Config
-	authNService        authentication.Service
-	authZService        authorization.Service
-	userService         user.Service
-	clubService         club.Service
-	memberService       member.Service
-	matchService        match.Service
-	ratingService       rating.Service
-	gameService         game.Service
-	subscriptionService subscription.Service
+	l              *slog.Logger
+	config         Config
+	authentication authentication.Service
+	authorization  authorization.Service
+	user           user.Service
+	club           club.Service
+	member         member.Service
+	match          match.Service
+	rating         rating.Service
+	game           game.Service
+	subscription   subscription.Service
 }
 
 func NewHandler(
-	l *zap.SugaredLogger,
+	l *slog.Logger,
 	config Config,
-	authService authentication.Service,
-	authZService authorization.Service,
-	userService user.Service,
-	clubService club.Service,
-	memberService member.Service,
-	matchService match.Service,
-	ratingService rating.Service,
-	gameService game.Service,
-	subscriptionService subscription.Service,
+	authentication authentication.Service,
+	authorization authorization.Service,
+	user user.Service,
+	club club.Service,
+	member member.Service,
+	match match.Service,
+	rating rating.Service,
+	game game.Service,
+	subscription subscription.Service,
 ) *Handler {
 	return &Handler{
-		l:                   l,
-		config:              config,
-		authNService:        authService,
-		authZService:        authZService,
-		userService:         userService,
-		clubService:         clubService,
-		memberService:       memberService,
-		matchService:        matchService,
-		ratingService:       ratingService,
-		gameService:         gameService,
-		subscriptionService: subscriptionService,
+		l:              l,
+		config:         config,
+		authentication: authentication,
+		authorization:  authorization,
+		user:           user,
+		club:           club,
+		member:         member,
+		match:          match,
+		rating:         rating,
+		game:           game,
+		subscription:   subscription,
 	}
 }

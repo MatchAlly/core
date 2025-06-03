@@ -16,6 +16,6 @@ CREATE INDEX IF NOT EXISTS idx_member_statistics_game_id ON member_statistics(ga
 
 -- +goose down
 DROP INDEX IF EXISTS idx_member_statistics_game_id;
-DROP INDEX IF EXISTS idx_member_statistics_game_id;
+DROP INDEX IF EXISTS idx_member_statistics_member_id;
 
 DROP TABLE IF EXISTS member_statistics;

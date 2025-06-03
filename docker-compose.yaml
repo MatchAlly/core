@@ -19,34 +19,19 @@ services:
       start_period: 10s
 
   redis:
-    image: redis:7
+    image: valkey/valkey:8.1
     restart: unless-stopped
-    command: redis-server --save 60 1 --loglevel notice
+    command: valkey-server --save 60 1 --loglevel notice
     volumes:
       - redis-data:/data
     networks:
       - local-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 3
       start_period: 5s
-
-  core:
-    build:
-      context: .
-      dockerfile: dockerfile
-    networks:
-      - local-network
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    volumes:
-      - ./.env:/app/.env
 
 volumes:
   postgres-data:
