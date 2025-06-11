@@ -20,9 +20,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
+
+const shutdownPeriod = 15 * time.Second
 
 // StartAPIserver initializes and starts the API server
 func StartAPIserver(l *slog.Logger) {
