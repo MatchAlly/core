@@ -57,6 +57,10 @@ func (s *service) Login(ctx context.Context, email string, password string) (boo
 		return false, "", "", nil
 	}
 
+	if err := s.userService.UpdateLastLogin(ctx, user.ID); err != nil {
+		return false, "", "", fmt.Errorf("failed to update last login: %w", err)
+	}
+
 	accessToken, refreshToken, err := s.generateTokenPair(ctx, user.ID)
 	if err != nil {
 		return false, "", "", fmt.Errorf("failed to generate jwts: %w", err)

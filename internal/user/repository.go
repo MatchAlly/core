@@ -24,6 +24,7 @@ type Repository interface {
 	DeleteUser(ctx context.Context, id int) error
 	UpdateUser(ctx context.Context, user *User) error
 	UpdatePassword(ctx context.Context, userID int, hash string) error
+	UpdateLastLogin(ctx context.Context, userID int) error
 }
 
 type repository struct {
@@ -97,6 +98,15 @@ func (r *repository) UpdateUser(ctx context.Context, user *User) error {
 
 func (r *repository) UpdatePassword(ctx context.Context, userID int, hash string) error {
 	_, err := r.db.ExecContext(ctx, "UPDATE users SET hash = $1 WHERE id = $2", hash, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) UpdateLastLogin(ctx context.Context, userID int) error {
+	_, err := r.db.ExecContext(ctx, "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1", userID)
 	if err != nil {
 		return err
 	}

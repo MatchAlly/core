@@ -15,6 +15,7 @@ type Service interface {
 	DeleteUser(ctx context.Context, id int) error
 	UpdateUser(ctx context.Context, id int, email, name string) error
 	UpdatePassword(ctx context.Context, userID int, oldPassword, newPassword string) error
+	UpdateLastLogin(ctx context.Context, userID int) error
 }
 
 type service struct {
@@ -103,6 +104,14 @@ func (s *service) UpdatePassword(ctx context.Context, userID int, oldPassword, n
 
 	if err := s.repo.UpdatePassword(ctx, userID, string(hashedPasswordBytes)); err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
+}
+
+func (s *service) UpdateLastLogin(ctx context.Context, userID int) error {
+	if err := s.repo.UpdateLastLogin(ctx, userID); err != nil {
+		return fmt.Errorf("failed to update last login for user with id %d: %w", userID, err)
 	}
 
 	return nil
