@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"core/internal/game"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -11,6 +12,7 @@ type postClubMatchRequest struct {
 	Body struct {
 		ClubID int                        `json:"clubId" minimum:"1"`
 		GameID int                        `json:"gameId" minimum:"1"`
+		Mode   string                     `json:"mode" enum:"FREE_FOR_ALL,TEAM,COOP"`
 		Teams  []postClubMatchRequestTeam `json:"teams" minItems:"1"`
 		Sets   []string                   `json:"sets,omitempty"`
 	}
@@ -53,7 +55,19 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 		return nil, huma.Error500InternalServerError("failed to get or create teams, try again later")
 	}
 
-	matchID, err := h.match.CreateMatch(ctx, req.Body.ClubID, req.Body.GameID, teams, req.Body.Sets)
+	var mode game.Mode
+	switch req.Body.Mode {
+	case "FREE_FOR_ALL":
+		mode = game.ModeFreeForAll
+	case "TEAM":
+		mode = game.ModeTeam
+	case "COOP":
+		mode = game.ModeCoop
+	default:
+		return nil, huma.Error400BadRequest("invalid game mode")
+	}
+
+	matchID, err := h.match.CreateMatch(ctx, req.Body.ClubID, req.Body.GameID, teams, req.Body.Sets, mode)
 	if err != nil {
 		h.l.Error("failed to create match", "error", err)
 		return nil, huma.Error500InternalServerError("failed to create match, try again later")

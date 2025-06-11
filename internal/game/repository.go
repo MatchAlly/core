@@ -12,6 +12,10 @@ type Repository interface {
 	CreateGame(ctx context.Context, game *Game) (int, error)
 	UpdateGame(ctx context.Context, game *Game) error
 	DeleteGame(ctx context.Context, id int) error
+	GetGameModes(ctx context.Context, gameID int) ([]Gamemode, error)
+	AddGameMode(ctx context.Context, gameID int, mode Mode) error
+	RemoveGameMode(ctx context.Context, gameID int, mode Mode) error
+	IsGameNameUnique(ctx context.Context, clubID int, name string, excludeGameID int) (bool, error)
 }
 
 type repository struct {
@@ -82,4 +86,44 @@ func (r *repository) DeleteGame(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+func (r *repository) GetGameModes(ctx context.Context, gameID int) ([]Gamemode, error) {
+	var modes []Gamemode
+	err := r.db.SelectContext(ctx, &modes, "SELECT * FROM game_modes WHERE game_id = $1", gameID)
+	if err != nil {
+		return nil, err
+	}
+	return modes, nil
+}
+
+func (r *repository) AddGameMode(ctx context.Context, gameID int, mode Mode) error {
+	_, err := r.db.ExecContext(ctx,
+		"INSERT INTO game_modes (game_id, mode) VALUES ($1, $2) ON CONFLICT (game_id, mode) DO NOTHING",
+		gameID, mode)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) RemoveGameMode(ctx context.Context, gameID int, mode Mode) error {
+	_, err := r.db.ExecContext(ctx,
+		"DELETE FROM game_modes WHERE game_id = $1 AND mode = $2",
+		gameID, mode)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) IsGameNameUnique(ctx context.Context, clubID int, name string, excludeGameID int) (bool, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count,
+		"SELECT COUNT(*) FROM games WHERE club_id = $1 AND name = $2 AND id != $3",
+		clubID, name, excludeGameID)
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
 }

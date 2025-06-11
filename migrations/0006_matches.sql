@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS matches (
     ranked BOOLEAN NOT NULL DEFAULT FALSE,
     sets TEXT[],
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (game_id, mode) REFERENCES gamemode(game_id, mode)
+    FOREIGN KEY (game_id, mode) REFERENCES game_modes(game_id, mode)
 );
 
 CREATE TABLE IF NOT EXISTS teams (
@@ -36,8 +36,10 @@ CREATE INDEX IF NOT EXISTS idx_match_teams_team_id ON match_teams(team_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_member_id ON team_members(member_id);
 CREATE INDEX IF NOT EXISTS idx_matches_club_id ON matches(club_id);
 CREATE INDEX IF NOT EXISTS idx_matches_game_id ON matches(game_id);
+CREATE INDEX IF NOT EXISTS idx_matches_created_at ON matches(created_at);
 
 -- +goose down
+DROP INDEX IF EXISTS idx_matches_created_at;
 DROP INDEX IF EXISTS idx_matches_game_id;
 DROP INDEX IF EXISTS idx_matches_club_id;
 DROP INDEX IF EXISTS idx_team_members_member_id;

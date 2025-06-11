@@ -34,4 +34,13 @@ func addAuthRoutes(g *huma.Group, h *handlers.Handler) {
 	huma.Get(g, "/clubs/:clubId/matches", h.GetClubMatches)
 	huma.Get(g, "/clubs/:clubId/games", h.GetClubGames)
 	huma.Post(g, "/clubs/:clubId/games", h.PostClubGame)
+
+	// Games
+	huma.Put(g, "/games/:gameId", h.PutGame)
+	huma.Delete(g, "/games/:gameId", h.DeleteGame)
+
+	// Game Modes
+	huma.Get(g, "/games/:gameId/modes", h.GetGameModes)
+	huma.Post(g, "/games/:gameId/modes", h.PostGameMode)
+	huma.Delete(g, "/games/:gameId/modes/:mode", h.DeleteGameMode)
 }

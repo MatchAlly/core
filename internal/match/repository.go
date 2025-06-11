@@ -4,9 +4,12 @@ import (
 	"context"
 	"core/internal/member"
 	"database/sql"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
+
+var ErrNotFound = fmt.Errorf("not found")
 
 type Repository interface {
 	CreateMatch(ctx context.Context, m *Match) (int, error)
@@ -15,6 +18,7 @@ type Repository interface {
 	GetTeam(ctx context.Context, teamID int) (*Team, error)
 	CreateTeam(ctx context.Context, clubID int, memberIDs []int) (int, error)
 	TeamOfMembersExists(ctx context.Context, clubID int, memberIDs []int) (bool, int, error)
+	IsClubMember(ctx context.Context, clubID, userID int) (bool, error)
 }
 
 type repository struct {
@@ -30,9 +34,34 @@ func NewRepository(db *sqlx.DB) Repository {
 func (r *repository) CreateMatch(ctx context.Context, m *Match) (int, error) {
 	var matchID int
 
-	const query = `INSERT INTO matches (club_id, game_id) VALUES ($1, $2) RETURNING id`
-	if err := r.db.GetContext(ctx, &matchID, query, m.ClubID, m.GameID); err != nil {
-		return 0, err
+	// Start a transaction
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Create the match
+	err = tx.QueryRowContext(ctx,
+		"INSERT INTO matches (club_id, game_id, mode, ranked, sets) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		m.ClubID, m.GameID, m.Gamemode, m.Ranked, m.Sets).Scan(&matchID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create match: %w", err)
+	}
+
+	// Create match-team associations
+	for i, team := range m.Teams {
+		_, err = tx.ExecContext(ctx,
+			"INSERT INTO match_teams (match_id, team_id, team_number) VALUES ($1, $2, $3)",
+			matchID, team.ID, i+1)
+		if err != nil {
+			return 0, fmt.Errorf("failed to create match-team association: %w", err)
+		}
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return matchID, nil
@@ -230,34 +259,34 @@ func (r *repository) GetTeam(ctx context.Context, teamID int) (*Team, error) {
 func (r *repository) CreateTeam(ctx context.Context, clubID int, memberIDs []int) (int, error) {
 	var teamID int
 
+	// Start a transaction
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Create the team
+	err = tx.QueryRowContext(ctx,
+		"INSERT INTO teams (club_id) VALUES ($1) RETURNING id",
+		clubID).Scan(&teamID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create team: %w", err)
 	}
 
-	const queryTeam = `INSERT INTO teams (club_id) VALUES ($1) RETURNING id`
-	if err := tx.GetContext(ctx, &teamID, queryTeam, clubID); err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	type teamMember struct {
-		TeamID   int `db:"team_id"`
-		MemberID int `db:"member_id"`
-	}
-
-	teamMembers := make([]teamMember, len(memberIDs))
-	for i, memberID := range memberIDs {
-		teamMembers[i] = teamMember{
-			TeamID:   teamID,
-			MemberID: memberID,
+	// Add team members
+	for _, memberID := range memberIDs {
+		_, err = tx.ExecContext(ctx,
+			"INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)",
+			teamID, memberID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to add team member: %w", err)
 		}
 	}
 
-	const queryTeamMembers = `INSERT INTO team_members (team_id, member_id) VALUES (:team_id, :member_id)`
-	if _, err = tx.NamedExec(queryTeamMembers, teamMembers); err != nil {
-		tx.Rollback()
-		return 0, err
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return teamID, nil
@@ -294,4 +323,15 @@ func (r *repository) TeamOfMembersExists(ctx context.Context, clubID int, member
 	}
 
 	return true, teamID, nil
+}
+
+func (r *repository) IsClubMember(ctx context.Context, clubID, userID int) (bool, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count,
+		"SELECT COUNT(*) FROM members WHERE club_id = $1 AND user_id = $2",
+		clubID, userID)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
