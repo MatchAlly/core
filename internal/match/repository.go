@@ -55,7 +55,6 @@ func (r *repository) GetMatches(ctx context.Context, clubID int) ([]Match, error
 					mem.id AS member_id,
 					mem.club_id AS member_club_id,
 					mem.user_id AS member_user_id,
-					mem.display_name AS member_display_name,
 					mem.role AS member_role
 			FROM matches m
 			LEFT JOIN match_teams mt ON m.id = mt.match_id
@@ -78,7 +77,7 @@ func (r *repository) GetMatches(ctx context.Context, clubID int) ([]Match, error
 		err = rows.Scan(
 			&m.ID, &m.ClubID, &m.GameID, &m.Gamemode, &m.Ranked, &m.Sets, &m.CreatedAt,
 			&t.ID, &t.ClubID,
-			&mem.ID, &mem.ClubID, &mem.UserID, &mem.DisplayName, &mem.Role,
+			&mem.ID, &mem.ClubID, &mem.UserID, &mem.Role,
 		)
 		if err != nil {
 			return nil, err
@@ -135,7 +134,6 @@ func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID in
             mem.id AS member_id,
             mem.club_id AS member_club_id,
             mem.user_id AS member_user_id,
-            mem.display_name AS member_display_name,
             mem.role AS member_role
         FROM matches m
         LEFT JOIN match_teams mt ON m.id = mt.match_id
@@ -158,7 +156,7 @@ func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID in
 		err = rows.Scan(
 			&m.ID, &m.ClubID, &m.GameID, &m.Gamemode, &m.Ranked, &m.Sets, &m.CreatedAt,
 			&t.ID, &t.ClubID,
-			&mem.ID, &mem.ClubID, &mem.UserID, &mem.DisplayName, &mem.Role,
+			&mem.ID, &mem.ClubID, &mem.UserID, &mem.Role,
 		)
 		if err != nil {
 			return nil, err

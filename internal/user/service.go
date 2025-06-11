@@ -19,12 +19,14 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo   Repository
+	pepper string
 }
 
-func NewService(repo Repository) Service {
+func NewService(repo Repository, pepper string) Service {
 	return &service{
-		repo: repo,
+		repo:   repo,
+		pepper: pepper,
 	}
 }
 
@@ -93,11 +95,11 @@ func (s *service) UpdatePassword(ctx context.Context, userID int, oldPassword, n
 		return fmt.Errorf("failed to get user with id %d: %w", userID, err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(u.Hash), []byte(oldPassword)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Hash), []byte(oldPassword+s.pepper)); err != nil {
 		return fmt.Errorf("failed to compare password: %w", err)
 	}
 
-	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.MinCost)
+	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(newPassword+s.pepper), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}

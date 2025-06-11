@@ -3,6 +3,7 @@ package club
 import (
 	"context"
 	"core/internal/game"
+	"core/internal/member"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -22,6 +23,13 @@ type Repository interface {
 	DeleteClub(ctx context.Context, id int) error
 	UpdateClub(ctx context.Context, id int, name string) error
 	GetGames(ctx context.Context, clubID int) ([]game.Game, error)
+	CreateMember(ctx context.Context, member *member.Member) error
+	IsMember(ctx context.Context, userId, clubId int) (bool, error)
+	CreateInvite(ctx context.Context, invite *Invite) error
+	GetPendingInvites(ctx context.Context, clubId int) ([]Invite, error)
+	GetUserInvites(ctx context.Context, userId int) ([]Invite, error)
+	GetInvite(ctx context.Context, id int) (*Invite, error)
+	DeleteInvite(ctx context.Context, id int) error
 }
 
 type repository struct {
@@ -104,4 +112,78 @@ func (r *repository) GetGames(ctx context.Context, clubID int) ([]game.Game, err
 	}
 
 	return games, nil
+}
+
+func (r *repository) CreateMember(ctx context.Context, member *member.Member) error {
+	_, err := r.db.ExecContext(ctx,
+		"INSERT INTO club_members (club_id, user_id, role) VALUES ($1, $2, $3)",
+		member.ClubID, member.UserID, member.Role)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) IsMember(ctx context.Context, userId, clubId int) (bool, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count,
+		"SELECT COUNT(*) FROM club_members WHERE user_id = $1 AND club_id = $2",
+		userId, clubId)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *repository) CreateInvite(ctx context.Context, invite *Invite) error {
+	_, err := r.db.ExecContext(ctx,
+		"INSERT INTO club_invites (club_id, user_id, initiator) VALUES ($1, $2, $3)",
+		invite.ClubId, invite.UserId, invite.Initiator)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) GetPendingInvites(ctx context.Context, clubId int) ([]Invite, error) {
+	var invites []Invite
+	err := r.db.SelectContext(ctx, &invites,
+		"SELECT * FROM club_invites WHERE club_id = $1",
+		clubId)
+	if err != nil {
+		return nil, err
+	}
+	return invites, nil
+}
+
+func (r *repository) GetUserInvites(ctx context.Context, userId int) ([]Invite, error) {
+	var invites []Invite
+	err := r.db.SelectContext(ctx, &invites,
+		"SELECT * FROM club_invites WHERE user_id = $1",
+		userId)
+	if err != nil {
+		return nil, err
+	}
+	return invites, nil
+}
+
+func (r *repository) GetInvite(ctx context.Context, id int) (*Invite, error) {
+	var invite Invite
+	err := r.db.GetContext(ctx, &invite,
+		"SELECT * FROM club_invites WHERE id = $1",
+		id)
+	if err != nil {
+		return nil, err
+	}
+	return &invite, nil
+}
+
+func (r *repository) DeleteInvite(ctx context.Context, id int) error {
+	_, err := r.db.ExecContext(ctx,
+		"DELETE FROM club_invites WHERE id = $1",
+		id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

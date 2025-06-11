@@ -92,8 +92,7 @@ type getClubMatchesResponseTeam struct {
 }
 
 type getClubMatchesResponseTeamMember struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID int `json:"id"`
 }
 
 func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest) (*getClubMatchesResponse, error) {
@@ -129,8 +128,7 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 			members := make([]getClubMatchesResponseTeamMember, len(t.Members))
 			for k, mem := range t.Members {
 				members[k] = getClubMatchesResponseTeamMember{
-					ID:   mem.ID,
-					Name: mem.DisplayName,
+					ID: mem.ID,
 				}
 			}
 			teams[j] = getClubMatchesResponseTeam{

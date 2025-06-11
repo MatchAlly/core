@@ -36,11 +36,12 @@ type service struct {
 	cache               cache.Service
 }
 
-func NewService(config Config, userService user.Service, cache cache.Service) Service {
+func NewService(config Config, userService user.Service, subscriptionService subscription.Service, cache cache.Service) Service {
 	return &service{
-		config:      config,
-		userService: userService,
-		cache:       cache,
+		config:              config,
+		userService:         userService,
+		subscriptionService: subscriptionService,
+		cache:               cache,
 	}
 }
 

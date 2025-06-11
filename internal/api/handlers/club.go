@@ -184,7 +184,6 @@ type getMembersInClubResponse struct {
 
 type membersInClub struct {
 	Id   int    `json:"id"`
-	Name string `json:"name"`
 	Role string `json:"role"`
 }
 
@@ -214,7 +213,6 @@ func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubReq
 	for i, m := range members {
 		membersResponse[i] = membersInClub{
 			Id:   m.ID,
-			Name: m.DisplayName,
 			Role: string(m.Role),
 		}
 	}

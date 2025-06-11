@@ -59,13 +59,16 @@ func startAPIserver(cmd *cobra.Command, args []string) {
 
 	// Initialize services
 	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
-	clubRepository := club.NewRepository(db)
-	clubService := club.NewService(clubRepository)
+	userService := user.NewService(userRepository, config.Pepper)
 
 	memberRepository := member.NewRepository(db)
 	memberService := member.NewService(memberRepository)
+
+	subscriptionRepository := subscription.NewRepository(db)
+	subscriptionService := subscription.NewService(subscriptionRepository)
+
+	clubRepository := club.NewRepository(db)
+	clubService := club.NewService(clubRepository, memberService, subscriptionService)
 
 	authenticationConfig := authentication.Config{
 		Secret:        config.AuthNSecret,
@@ -73,7 +76,7 @@ func startAPIserver(cmd *cobra.Command, args []string) {
 		RefreshExpiry: config.AuthNRefreshExpiry,
 		Pepper:        config.Pepper,
 	}
-	authenticationService := authentication.NewService(authenticationConfig, userService, cacheService)
+	authenticationService := authentication.NewService(authenticationConfig, userService, subscriptionService, cacheService)
 
 	authorizationService := authorization.NewService(memberService)
 
@@ -85,9 +88,6 @@ func startAPIserver(cmd *cobra.Command, args []string) {
 
 	gameRepository := game.NewRepository(db)
 	gameService := game.NewService(gameRepository)
-
-	subscriptionRepository := subscription.NewRepository(db)
-	subscriptionService := subscription.NewService(subscriptionRepository)
 
 	// Initialize API server
 	handlerConfig := handlers.Config{}

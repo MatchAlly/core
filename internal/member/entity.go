@@ -12,9 +12,8 @@ const (
 )
 
 type Member struct {
-	ID          int    `db:"id"`
-	ClubID      int    `db:"club_id"`
-	UserID      int    `db:"user_id"`
-	DisplayName string `db:"display_name"`
-	Role        Role   `db:"role"`
+	ID     int  `db:"id"`
+	ClubID int  `db:"club_id"`
+	UserID int  `db:"user_id"`
+	Role   Role `db:"role"`
 }

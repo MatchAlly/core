@@ -9,6 +9,8 @@ import (
 type Repository interface {
 	GetMembersInClub(ctx context.Context, clubId int) ([]Member, error)
 	GetUserMemberships(ctx context.Context, userId int) ([]Member, error)
+	GetMember(ctx context.Context, id int) (*Member, error)
+	CreateMember(ctx context.Context, member *Member) error
 	UpdateRole(ctx context.Context, memberId int, role Role) error
 	DeleteMember(ctx context.Context, memberId int) error
 }
@@ -41,6 +43,25 @@ func (r *repository) GetUserMemberships(ctx context.Context, userId int) ([]Memb
 	}
 
 	return memberships, nil
+}
+
+func (r *repository) GetMember(ctx context.Context, id int) (*Member, error) {
+	var member Member
+	err := r.db.GetContext(ctx, &member, "SELECT * FROM club_members WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	return &member, nil
+}
+
+func (r *repository) CreateMember(ctx context.Context, member *Member) error {
+	_, err := r.db.ExecContext(ctx,
+		"INSERT INTO club_members (club_id, user_id, role) VALUES ($1, $2, $3)",
+		member.ClubID, member.UserID, member.Role)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *repository) UpdateRole(ctx context.Context, memberId int, role Role) error {
