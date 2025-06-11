@@ -80,14 +80,14 @@ func startAPIserver(cmd *cobra.Command, args []string) {
 
 	authorizationService := authorization.NewService(memberService)
 
+	gameRepository := game.NewRepository(db)
+	gameService := game.NewService(gameRepository)
+
 	matchRepository := match.NewRepository(db)
-	matchService := match.NewService(matchRepository)
+	matchService := match.NewService(matchRepository, gameService)
 
 	ratingRepository := rating.NewRepository(db)
 	ratingService := rating.NewService(ratingRepository)
-
-	gameRepository := game.NewRepository(db)
-	gameService := game.NewService(gameRepository)
 
 	// Initialize API server
 	handlerConfig := handlers.Config{}
