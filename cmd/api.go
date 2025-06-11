@@ -22,29 +22,17 @@ import (
 	"syscall"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/spf13/cobra"
 )
 
-var apiCmd = &cobra.Command{
-	Use:   "api",
-	Short: "Start the api server",
-	Run:   startAPIserver,
-}
-
-func init() {
-	rootCmd.AddCommand(apiCmd)
-}
-
-func startAPIserver(cmd *cobra.Command, args []string) {
-	ctx := cmd.Context()
+// StartAPIserver initializes and starts the API server
+func StartAPIserver(l *slog.Logger) {
+	ctx := context.Background()
 
 	config, err := loadConfig()
 	if err != nil {
 		slog.Error("Failed to read config", "error", err)
 		os.Exit(1)
 	}
-
-	l := getLogger()
 
 	// Initialize connections to dependencies
 	db, err := database.NewClient(ctx, config.DatabaseDSN)
