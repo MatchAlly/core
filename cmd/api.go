@@ -13,6 +13,7 @@ import (
 	"core/internal/match"
 	"core/internal/member"
 	"core/internal/rating"
+	"core/internal/statistic"
 	"core/internal/subscription"
 	"core/internal/user"
 	"fmt"
@@ -74,11 +75,14 @@ func StartAPIserver(l *slog.Logger) {
 	gameRepository := game.NewRepository(db)
 	gameService := game.NewService(gameRepository)
 
-	matchRepository := match.NewRepository(db)
-	matchService := match.NewService(matchRepository, gameService)
-
 	ratingRepository := rating.NewRepository(db)
 	ratingService := rating.NewService(ratingRepository)
+
+	statisticRepository := statistic.NewRepository(db)
+	statisticService := statistic.NewService(statisticRepository)
+
+	matchRepository := match.NewRepository(db)
+	matchService := match.NewService(matchRepository, gameService, ratingService, statisticService)
 
 	// Initialize API server
 	handlerConfig := handlers.Config{}
@@ -88,7 +92,7 @@ func StartAPIserver(l *slog.Logger) {
 		Version: config.APIVersion,
 	}
 
-	handler := handlers.NewHandler(l, handlerConfig, authenticationService, authorizationService, userService, clubService, memberService, matchService, ratingService, gameService, subscriptionService)
+	handler := handlers.NewHandler(l, handlerConfig, authenticationService, authorizationService, userService, clubService, memberService, matchService, ratingService, gameService, subscriptionService, statisticService)
 	apiServer := api.NewServer(apiConfig, config.APIVersion, l, handler, authenticationService, cacheService)
 	if err != nil {
 		l.Error("Failed to create api server", "error", err)

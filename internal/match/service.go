@@ -3,6 +3,8 @@ package match
 import (
 	"context"
 	"core/internal/game"
+	"core/internal/rating"
+	"core/internal/statistic"
 	"fmt"
 )
 
@@ -13,14 +15,18 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
-	game game.Service
+	repo      Repository
+	game      game.Service
+	rating    rating.Service
+	statistic statistic.Service
 }
 
-func NewService(repo Repository, game game.Service) Service {
+func NewService(repo Repository, game game.Service, rating rating.Service, statistic statistic.Service) Service {
 	return &service{
-		repo: repo,
-		game: game,
+		repo:      repo,
+		game:      game,
+		rating:    rating,
+		statistic: statistic,
 	}
 }
 
@@ -106,11 +112,54 @@ func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teams []T
 		Teams:    teams,
 		Sets:     sets,
 		Gamemode: mode,
+		Ranked:   true, // Set ranked to true by default
 	}
 
 	matchID, err := s.repo.CreateMatch(ctx, m)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create match: %w", err)
+	}
+
+	// Update statistics for each player
+	for i, team := range teams {
+		for _, member := range team.Members {
+			// For now, we'll consider the first team as the winner
+			won := i == 0
+			drawn := false
+			if err := s.statistic.UpdateStatistics(ctx, member.ID, gameID, won, drawn); err != nil {
+				// Log the error but don't fail the match creation
+				fmt.Printf("failed to update statistics for member %d: %v\n", member.ID, err)
+			}
+		}
+	}
+
+	// Update ratings if the match is ranked
+	if m.Ranked {
+		// Convert teams to member IDs for rating update
+		teamsByMemberIDs := make([][]int, len(teams))
+		for i, team := range teams {
+			memberIDs := make([]int, len(team.Members))
+			for j, member := range team.Members {
+				memberIDs[j] = member.ID
+			}
+			teamsByMemberIDs[i] = memberIDs
+		}
+
+		// For now, we'll consider the first team as the winner
+		// In a real implementation, you would determine the ranks based on the match results
+		ranks := make([]int, len(teams))
+		for i := range teams {
+			if i == 0 {
+				ranks[i] = 1 // First place
+			} else {
+				ranks[i] = 2 // Second place
+			}
+		}
+
+		if err := s.rating.UpdateRatingsByRanks(ctx, teamsByMemberIDs, ranks); err != nil {
+			// Log the error but don't fail the match creation
+			fmt.Printf("failed to update ratings: %v\n", err)
+		}
 	}
 
 	return matchID, nil

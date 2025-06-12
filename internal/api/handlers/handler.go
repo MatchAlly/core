@@ -8,6 +8,7 @@ import (
 	"core/internal/match"
 	"core/internal/member"
 	"core/internal/rating"
+	"core/internal/statistic"
 	"core/internal/subscription"
 	"core/internal/user"
 	"log/slog"
@@ -18,6 +19,7 @@ type Config struct {
 	AccessTokenDuration  time.Duration
 	RefreshTokenDuration time.Duration
 }
+
 type Handler struct {
 	l              *slog.Logger
 	config         Config
@@ -30,6 +32,7 @@ type Handler struct {
 	rating         rating.Service
 	game           game.Service
 	subscription   subscription.Service
+	statistic      statistic.Service
 }
 
 func NewHandler(
@@ -44,6 +47,7 @@ func NewHandler(
 	rating rating.Service,
 	game game.Service,
 	subscription subscription.Service,
+	statistic statistic.Service,
 ) *Handler {
 	return &Handler{
 		l:              l,
@@ -57,5 +61,6 @@ func NewHandler(
 		rating:         rating,
 		game:           game,
 		subscription:   subscription,
+		statistic:      statistic,
 	}
 }
