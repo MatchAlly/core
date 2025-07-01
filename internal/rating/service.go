@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"github.com/Sebsh1/openskill.go"
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	CreateRating(ctx context.Context, memberID, gameID int) (int, error)
-	UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][]int, ranks []int) error
+	CreateRating(ctx context.Context, memberID, gameID uuid.UUID) (uuid.UUID, error)
+	UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][]uuid.UUID, ranks []int) error
 }
 
 type service struct {
@@ -24,7 +25,7 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) CreateRating(ctx context.Context, memberID, gameID int) (int, error) {
+func (s *service) CreateRating(ctx context.Context, memberID, gameID uuid.UUID) (uuid.UUID, error) {
 	rating := &Rating{
 		MemberID: memberID,
 		GameID:   gameID,
@@ -34,13 +35,13 @@ func (s *service) CreateRating(ctx context.Context, memberID, gameID int) (int, 
 
 	id, err := s.repo.CreateRating(ctx, rating)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create rating: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create rating: %w", err)
 	}
 
 	return id, nil
 }
 
-func (s *service) UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][]int, ranks []int) error {
+func (s *service) UpdateRatingsByRanks(ctx context.Context, teamsByMemberIDs [][]uuid.UUID, ranks []int) error {
 	ids, shape := flatten(teamsByMemberIDs)
 	ratings, err := s.repo.GetRatingsByMemberIds(ctx, ids)
 	if err != nil {

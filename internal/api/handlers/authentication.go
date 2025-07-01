@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 )
 
 type loginRequest struct {
@@ -148,7 +149,7 @@ type changePasswordRequest struct {
 }
 
 func (h *Handler) ChangePassword(ctx context.Context, req *changePasswordRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")

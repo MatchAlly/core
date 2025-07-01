@@ -3,19 +3,20 @@ package game
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type Repository interface {
-	GetGame(ctx context.Context, id int) (*Game, error)
-	GetGames(ctx context.Context, ids []int) ([]Game, error)
-	CreateGame(ctx context.Context, game *Game) (int, error)
+	GetGame(ctx context.Context, id uuid.UUID) (*Game, error)
+	GetGames(ctx context.Context, ids []uuid.UUID) ([]Game, error)
+	CreateGame(ctx context.Context, game *Game) (uuid.UUID, error)
 	UpdateGame(ctx context.Context, game *Game) error
-	DeleteGame(ctx context.Context, id int) error
-	GetGameModes(ctx context.Context, gameID int) ([]Gamemode, error)
-	AddGameMode(ctx context.Context, gameID int, mode Mode) error
-	RemoveGameMode(ctx context.Context, gameID int, mode Mode) error
-	IsGameNameUnique(ctx context.Context, clubID int, name string, excludeGameID int) (bool, error)
+	DeleteGame(ctx context.Context, id uuid.UUID) error
+	GetGameModes(ctx context.Context, gameID uuid.UUID) ([]Gamemode, error)
+	AddGameMode(ctx context.Context, gameID uuid.UUID, mode Mode) error
+	RemoveGameMode(ctx context.Context, gameID uuid.UUID, mode Mode) error
+	IsGameNameUnique(ctx context.Context, clubID uuid.UUID, name string, excludeGameID uuid.UUID) (bool, error)
 }
 
 type repository struct {
@@ -26,7 +27,7 @@ func NewRepository(db *sqlx.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetGame(ctx context.Context, id int) (*Game, error) {
+func (r *repository) GetGame(ctx context.Context, id uuid.UUID) (*Game, error) {
 	var game *Game
 
 	err := r.db.GetContext(ctx, game, "SELECT * FROM games WHERE id = $1", id)
@@ -37,7 +38,7 @@ func (r *repository) GetGame(ctx context.Context, id int) (*Game, error) {
 	return game, nil
 }
 
-func (r *repository) GetGames(ctx context.Context, ids []int) ([]Game, error) {
+func (r *repository) GetGames(ctx context.Context, ids []uuid.UUID) ([]Game, error) {
 	var games []Game
 
 	query, args, err := sqlx.In("SELECT * FROM games WHERE id IN (?)", ids)
@@ -54,14 +55,14 @@ func (r *repository) GetGames(ctx context.Context, ids []int) ([]Game, error) {
 	return games, nil
 }
 
-func (r *repository) CreateGame(ctx context.Context, game *Game) (int, error) {
-	var id int
+func (r *repository) CreateGame(ctx context.Context, game *Game) (uuid.UUID, error) {
+	var id uuid.UUID
 
 	err := r.db.QueryRowContext(ctx,
 		"INSERT INTO games (club_id, name) VALUES ($1, $2) RETURNING id",
 		game.ClubID, game.Name).Scan(&id)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 
 	return id, nil
@@ -79,7 +80,7 @@ func (r *repository) UpdateGame(ctx context.Context, game *Game) error {
 	return nil
 }
 
-func (r *repository) DeleteGame(ctx context.Context, id int) error {
+func (r *repository) DeleteGame(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM games WHERE id = $1", id)
 	if err != nil {
 		return err
@@ -88,7 +89,7 @@ func (r *repository) DeleteGame(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r *repository) GetGameModes(ctx context.Context, gameID int) ([]Gamemode, error) {
+func (r *repository) GetGameModes(ctx context.Context, gameID uuid.UUID) ([]Gamemode, error) {
 	var modes []Gamemode
 	err := r.db.SelectContext(ctx, &modes, "SELECT * FROM game_modes WHERE game_id = $1", gameID)
 	if err != nil {
@@ -97,7 +98,7 @@ func (r *repository) GetGameModes(ctx context.Context, gameID int) ([]Gamemode, 
 	return modes, nil
 }
 
-func (r *repository) AddGameMode(ctx context.Context, gameID int, mode Mode) error {
+func (r *repository) AddGameMode(ctx context.Context, gameID uuid.UUID, mode Mode) error {
 	_, err := r.db.ExecContext(ctx,
 		"INSERT INTO game_modes (game_id, mode) VALUES ($1, $2) ON CONFLICT (game_id, mode) DO NOTHING",
 		gameID, mode)
@@ -107,7 +108,7 @@ func (r *repository) AddGameMode(ctx context.Context, gameID int, mode Mode) err
 	return nil
 }
 
-func (r *repository) RemoveGameMode(ctx context.Context, gameID int, mode Mode) error {
+func (r *repository) RemoveGameMode(ctx context.Context, gameID uuid.UUID, mode Mode) error {
 	_, err := r.db.ExecContext(ctx,
 		"DELETE FROM game_modes WHERE game_id = $1 AND mode = $2",
 		gameID, mode)
@@ -117,7 +118,7 @@ func (r *repository) RemoveGameMode(ctx context.Context, gameID int, mode Mode) 
 	return nil
 }
 
-func (r *repository) IsGameNameUnique(ctx context.Context, clubID int, name string, excludeGameID int) (bool, error) {
+func (r *repository) IsGameNameUnique(ctx context.Context, clubID uuid.UUID, name string, excludeGameID uuid.UUID) (bool, error) {
 	var count int
 	err := r.db.GetContext(ctx, &count,
 		"SELECT COUNT(*) FROM games WHERE club_id = $1 AND name = $2 AND id != $3",

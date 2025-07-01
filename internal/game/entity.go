@@ -1,5 +1,7 @@
 package game
 
+import "github.com/google/uuid"
+
 type Mode int
 
 const (
@@ -23,13 +25,13 @@ func (m Mode) String() string {
 }
 
 type Game struct {
-	ID     int    `db:"id"`
-	ClubID int    `db:"club_id"`
-	Name   string `db:"name"`
+	ID     uuid.UUID `db:"id"`
+	ClubID uuid.UUID `db:"club_id"`
+	Name   string    `db:"name"`
 }
 
 type Gamemode struct {
-	ID     int  `db:"id"`
-	GameID int  `db:"game_id"`
-	Mode   Mode `db:"mode"`
+	ID     uuid.UUID `db:"id"`
+	GameID uuid.UUID `db:"game_id"`
+	Mode   Mode      `db:"mode"`
 }

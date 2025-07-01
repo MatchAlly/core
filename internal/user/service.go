@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	GetUser(ctx context.Context, id int) (*User, error)
+	GetUser(ctx context.Context, id uuid.UUID) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (exists bool, user *User, err error)
-	CreateUser(ctx context.Context, email, name, hash string) (int, error)
-	DeleteUser(ctx context.Context, id int) error
-	UpdateUser(ctx context.Context, id int, email, name string) error
-	UpdatePassword(ctx context.Context, userID int, oldPassword, newPassword string) error
-	UpdateLastLogin(ctx context.Context, userID int) error
+	CreateUser(ctx context.Context, email, name, hash string) (uuid.UUID, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	UpdateUser(ctx context.Context, id uuid.UUID, email, name string) error
+	UpdatePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error
+	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 }
 
 type service struct {
@@ -30,16 +31,16 @@ func NewService(repo Repository, pepper string) Service {
 	}
 }
 
-func (s *service) GetUser(ctx context.Context, id int) (*User, error) {
+func (s *service) GetUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	user, err := s.repo.GetUser(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user with id %d: %w", id, err)
+		return nil, fmt.Errorf("failed to get user with id %s: %w", id, err)
 	}
 
 	return user, nil
 }
 
-func (s *service) CreateUser(ctx context.Context, email, name, hash string) (int, error) {
+func (s *service) CreateUser(ctx context.Context, email, name, hash string) (uuid.UUID, error) {
 	user := &User{
 		Email: email,
 		Name:  name,
@@ -48,7 +49,7 @@ func (s *service) CreateUser(ctx context.Context, email, name, hash string) (int
 
 	id, err := s.repo.CreateUser(ctx, user)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create user: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return id, nil
@@ -67,15 +68,15 @@ func (s *service) GetUserByEmail(ctx context.Context, email string) (bool, *User
 	return true, user, nil
 }
 
-func (s *service) DeleteUser(ctx context.Context, id int) error {
+func (s *service) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.DeleteUser(ctx, id); err != nil {
-		return fmt.Errorf("failed to delete user with id %d: %w", id, err)
+		return fmt.Errorf("failed to delete user with id %s: %w", id, err)
 	}
 
 	return nil
 }
 
-func (s *service) UpdateUser(ctx context.Context, id int, email, name string) error {
+func (s *service) UpdateUser(ctx context.Context, id uuid.UUID, email, name string) error {
 	user := &User{
 		ID:    id,
 		Email: email,
@@ -83,16 +84,16 @@ func (s *service) UpdateUser(ctx context.Context, id int, email, name string) er
 	}
 
 	if err := s.repo.UpdateUser(ctx, user); err != nil {
-		return fmt.Errorf("failed to update user with id %d: %w", id, err)
+		return fmt.Errorf("failed to update user with id %s: %w", id, err)
 	}
 
 	return nil
 }
 
-func (s *service) UpdatePassword(ctx context.Context, userID int, oldPassword, newPassword string) error {
+func (s *service) UpdatePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error {
 	u, err := s.GetUser(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("failed to get user with id %d: %w", userID, err)
+		return fmt.Errorf("failed to get user with id %s: %w", userID, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Hash), []byte(oldPassword+s.pepper)); err != nil {
@@ -111,9 +112,9 @@ func (s *service) UpdatePassword(ctx context.Context, userID int, oldPassword, n
 	return nil
 }
 
-func (s *service) UpdateLastLogin(ctx context.Context, userID int) error {
+func (s *service) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
 	if err := s.repo.UpdateLastLogin(ctx, userID); err != nil {
-		return fmt.Errorf("failed to update last login for user with id %d: %w", userID, err)
+		return fmt.Errorf("failed to update last login for user with id %s: %w", userID, err)
 	}
 
 	return nil

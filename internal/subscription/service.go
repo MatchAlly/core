@@ -1,11 +1,15 @@
 package subscription
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type Service interface {
-	Create(ctx context.Context, userID int) error
-	GetByUserID(ctx context.Context, userID int) (*Subscription, error)
-	Update(ctx context.Context, userID int, tier Tier) error
+	Create(ctx context.Context, userID uuid.UUID) error
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*Subscription, error)
+	Update(ctx context.Context, userID uuid.UUID, tier Tier) error
 }
 
 type service struct {
@@ -18,14 +22,14 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) Create(ctx context.Context, id int) error {
+func (s *service) Create(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Create(ctx, id)
 }
 
-func (s *service) GetByUserID(ctx context.Context, userID int) (*Subscription, error) {
+func (s *service) GetByUserID(ctx context.Context, userID uuid.UUID) (*Subscription, error) {
 	return s.repo.GetByUserID(ctx, userID)
 }
 
-func (s *service) Update(ctx context.Context, userID int, tier Tier) error {
+func (s *service) Update(ctx context.Context, userID uuid.UUID, tier Tier) error {
 	return s.repo.Update(ctx, userID, tier)
 }

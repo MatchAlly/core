@@ -3,16 +3,18 @@ package member
 import (
 	"context"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	GetMembersInClub(ctx context.Context, clubId int) ([]Member, error)
-	GetUserMemberships(ctx context.Context, userId int) ([]Member, error)
-	GetMember(ctx context.Context, id int) (*Member, error)
+	GetMembersInClub(ctx context.Context, clubId uuid.UUID) ([]Member, error)
+	GetUserMemberships(ctx context.Context, userId uuid.UUID) ([]Member, error)
+	GetMember(ctx context.Context, id uuid.UUID) (*Member, error)
 	CreateMember(ctx context.Context, member *Member) error
-	UpdateRole(ctx context.Context, memberId int, role Role) error
-	DeleteMember(ctx context.Context, memberId int) error
-	IsMember(ctx context.Context, userId, clubId int) (bool, error)
+	UpdateRole(ctx context.Context, memberId uuid.UUID, role Role) error
+	DeleteMember(ctx context.Context, memberId uuid.UUID) error
+	IsMember(ctx context.Context, userId, clubId uuid.UUID) (bool, error)
 }
 
 type service struct {
@@ -25,15 +27,15 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) GetMembersInClub(ctx context.Context, clubId int) ([]Member, error) {
+func (s *service) GetMembersInClub(ctx context.Context, clubId uuid.UUID) ([]Member, error) {
 	return s.repo.GetMembersInClub(ctx, clubId)
 }
 
-func (s *service) GetUserMemberships(ctx context.Context, userId int) ([]Member, error) {
+func (s *service) GetUserMemberships(ctx context.Context, userId uuid.UUID) ([]Member, error) {
 	return s.repo.GetUserMemberships(ctx, userId)
 }
 
-func (s *service) GetMember(ctx context.Context, id int) (*Member, error) {
+func (s *service) GetMember(ctx context.Context, id uuid.UUID) (*Member, error) {
 	return s.repo.GetMember(ctx, id)
 }
 
@@ -44,21 +46,21 @@ func (s *service) CreateMember(ctx context.Context, member *Member) error {
 	return nil
 }
 
-func (s *service) UpdateRole(ctx context.Context, memberId int, role Role) error {
+func (s *service) UpdateRole(ctx context.Context, memberId uuid.UUID, role Role) error {
 	if err := s.repo.UpdateRole(ctx, memberId, role); err != nil {
 		return fmt.Errorf("failed to update role: %w", err)
 	}
 	return nil
 }
 
-func (s *service) DeleteMember(ctx context.Context, memberId int) error {
+func (s *service) DeleteMember(ctx context.Context, memberId uuid.UUID) error {
 	if err := s.repo.DeleteMember(ctx, memberId); err != nil {
 		return fmt.Errorf("failed to delete member: %w", err)
 	}
 	return nil
 }
 
-func (s *service) IsMember(ctx context.Context, userId, clubId int) (bool, error) {
+func (s *service) IsMember(ctx context.Context, userId, clubId uuid.UUID) (bool, error) {
 	memberships, err := s.repo.GetUserMemberships(ctx, userId)
 	if err != nil {
 		return false, err

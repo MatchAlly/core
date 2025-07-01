@@ -5,11 +5,12 @@ import (
 	"core/internal/statistic"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 )
 
 type getMemberStatisticsRequest struct {
-	MemberID int `path:"memberId" minimum:"1"`
-	GameID   int `query:"gameId" required:"false" minimum:"1"`
+	MemberID uuid.UUID  `path:"memberId"`
+	GameID   *uuid.UUID `query:"gameId" required:"false"`
 }
 
 type getMemberStatisticsResponse struct {
@@ -19,15 +20,15 @@ type getMemberStatisticsResponse struct {
 }
 
 type getMemberStatisticsResponseStatistic struct {
-	GameID int `json:"gameId"`
-	Wins   int `json:"wins"`
-	Losses int `json:"losses"`
-	Draws  int `json:"draws"`
-	Streak int `json:"streak"`
+	GameID uuid.UUID `json:"gameId"`
+	Wins   int       `json:"wins"`
+	Losses int       `json:"losses"`
+	Draws  int       `json:"draws"`
+	Streak int       `json:"streak"`
 }
 
 func (h *Handler) GetMemberStatistics(ctx context.Context, req *getMemberStatisticsRequest) (*getMemberStatisticsResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -51,9 +52,9 @@ func (h *Handler) GetMemberStatistics(ctx context.Context, req *getMemberStatist
 	}
 
 	var stats []statistic.Statistic
-	if req.GameID != 0 {
+	if req.GameID != nil {
 		// Get statistics for a specific game
-		stat, err := h.statistic.GetStatistics(ctx, req.MemberID, req.GameID)
+		stat, err := h.statistic.GetStatistics(ctx, req.MemberID, *req.GameID)
 		if err != nil {
 			h.l.Error("failed to get statistics", "error", err)
 			return nil, huma.Error500InternalServerError("failed to get statistics")
@@ -86,7 +87,7 @@ func (h *Handler) GetMemberStatistics(ctx context.Context, req *getMemberStatist
 }
 
 type getGameRankingsRequest struct {
-	GameID int `path:"gameId" minimum:"1"`
+	GameID uuid.UUID `path:"gameId"`
 }
 
 type getGameRankingsResponse struct {
@@ -96,15 +97,15 @@ type getGameRankingsResponse struct {
 }
 
 type getGameRankingsResponseRanking struct {
-	MemberID int `json:"memberId"`
-	Wins     int `json:"wins"`
-	Losses   int `json:"losses"`
-	Draws    int `json:"draws"`
-	Streak   int `json:"streak"`
+	MemberID uuid.UUID `json:"memberId"`
+	Wins     int       `json:"wins"`
+	Losses   int       `json:"losses"`
+	Draws    int       `json:"draws"`
+	Streak   int       `json:"streak"`
 }
 
 func (h *Handler) GetGameRankings(ctx context.Context, req *getGameRankingsRequest) (*getGameRankingsResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")

@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 )
 
 type postClubMatchRequest struct {
 	Body struct {
-		ClubID int                        `json:"clubId" minimum:"1"`
-		GameID int                        `json:"gameId" minimum:"1"`
+		ClubID uuid.UUID                  `json:"clubId"`
+		GameID uuid.UUID                  `json:"gameId"`
 		Mode   string                     `json:"mode" enum:"FREE_FOR_ALL,TEAM,COOP"`
 		Teams  []postClubMatchRequestTeam `json:"teams" minItems:"1"`
 		Sets   []string                   `json:"sets,omitempty"`
@@ -19,17 +20,17 @@ type postClubMatchRequest struct {
 }
 
 type postClubMatchRequestTeam struct {
-	Members []int `json:"members" minItems:"1"`
+	Members []uuid.UUID `json:"members" minItems:"1"`
 }
 
 type postClubMatchResponse struct {
 	Body struct {
-		MatchID int `json:"matchId"`
+		MatchID uuid.UUID `json:"matchId"`
 	}
 }
 
 func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) (*postClubMatchResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -44,7 +45,7 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 		return nil, huma.Error403Forbidden("user not authorized to get matches in this club")
 	}
 
-	tempTeams := make([][]int, len(req.Body.Teams))
+	tempTeams := make([][]uuid.UUID, len(req.Body.Teams))
 	for i, t := range req.Body.Teams {
 		tempTeams[i] = t.Members
 	}
@@ -82,8 +83,8 @@ func (h *Handler) PostClubMatch(ctx context.Context, req *postClubMatchRequest) 
 }
 
 type getClubMatchesRequest struct {
-	ClubID int `path:"clubId" minimum:"1"`
-	GameID int `query:"gameId" required:"false" minimum:"1"`
+	ClubID uuid.UUID  `path:"clubId"`
+	GameID *uuid.UUID `query:"gameId" required:"false"`
 }
 
 type getClubMatchesResponse struct {
@@ -93,24 +94,24 @@ type getClubMatchesResponse struct {
 }
 
 type getClubMatchesResponseMatch struct {
-	ID     int                          `json:"id"`
-	GameID int                          `json:"game_id"`
+	ID     uuid.UUID                    `json:"id"`
+	GameID uuid.UUID                    `json:"game_id"`
 	Sets   []string                     `json:"sets,omitempty"`
 	Teams  []getClubMatchesResponseTeam `json:"teams"`
 	Date   time.Time                    `json:"date"`
 }
 
 type getClubMatchesResponseTeam struct {
-	ID      int                                `json:"id"`
+	ID      uuid.UUID                          `json:"id"`
 	Members []getClubMatchesResponseTeamMember `json:"members"`
 }
 
 type getClubMatchesResponseTeamMember struct {
-	ID int `json:"id"`
+	ID uuid.UUID `json:"id"`
 }
 
 func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest) (*getClubMatchesResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -125,9 +126,9 @@ func (h *Handler) GetClubMatches(ctx context.Context, req *getClubMatchesRequest
 		return nil, huma.Error403Forbidden("user not authorized to get matches in this club")
 	}
 
-	var gameID *int
-	if req.GameID != 0 {
-		gameID = &req.GameID
+	var gameID *uuid.UUID
+	if req.GameID != nil {
+		gameID = req.GameID
 	}
 	matches, err := h.match.GetMatches(ctx, req.ClubID, gameID)
 	if err != nil {

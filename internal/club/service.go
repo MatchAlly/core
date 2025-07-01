@@ -6,20 +6,22 @@ import (
 	"core/internal/member"
 	"core/internal/subscription"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	GetClub(ctx context.Context, id int) (*Club, error)
-	GetClubs(ctx context.Context, ids []int) ([]Club, error)
-	CreateClub(ctx context.Context, name string, userId int) (int, error)
-	DeleteClub(ctx context.Context, id int) error
-	UpdateClub(ctx context.Context, id int, name string) error
-	GetGames(ctx context.Context, clubID int) ([]game.Game, error)
-	CreateInvite(ctx context.Context, clubId, userId int, initiator Initiator) error
-	GetPendingInvites(ctx context.Context, clubId int) ([]Invite, error)
-	GetUserInvites(ctx context.Context, userId int) ([]Invite, error)
-	AcceptInvite(ctx context.Context, inviteId int) error
-	RejectInvite(ctx context.Context, inviteId int) error
+	GetClub(ctx context.Context, id uuid.UUID) (*Club, error)
+	GetClubs(ctx context.Context, ids []uuid.UUID) ([]Club, error)
+	CreateClub(ctx context.Context, name string, userId uuid.UUID) (uuid.UUID, error)
+	DeleteClub(ctx context.Context, id uuid.UUID) error
+	UpdateClub(ctx context.Context, id uuid.UUID, name string) error
+	GetGames(ctx context.Context, clubID uuid.UUID) ([]game.Game, error)
+	CreateInvite(ctx context.Context, clubId, userId uuid.UUID, initiator Initiator) error
+	GetPendingInvites(ctx context.Context, clubId uuid.UUID) ([]Invite, error)
+	GetUserInvites(ctx context.Context, userId uuid.UUID) ([]Invite, error)
+	AcceptInvite(ctx context.Context, inviteId uuid.UUID) error
+	RejectInvite(ctx context.Context, inviteId uuid.UUID) error
 }
 
 type service struct {
@@ -36,7 +38,7 @@ func NewService(repo Repository, memberService member.Service, subscriptionServi
 	}
 }
 
-func (s *service) GetClub(ctx context.Context, id int) (*Club, error) {
+func (s *service) GetClub(ctx context.Context, id uuid.UUID) (*Club, error) {
 	club, err := s.repo.GetClub(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get club: %w", err)
@@ -45,7 +47,7 @@ func (s *service) GetClub(ctx context.Context, id int) (*Club, error) {
 	return club, nil
 }
 
-func (s *service) GetClubs(ctx context.Context, ids []int) ([]Club, error) {
+func (s *service) GetClubs(ctx context.Context, ids []uuid.UUID) ([]Club, error) {
 	clubs, err := s.repo.GetClubs(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clubs: %w", err)
@@ -54,10 +56,10 @@ func (s *service) GetClubs(ctx context.Context, ids []int) ([]Club, error) {
 	return clubs, nil
 }
 
-func (s *service) CreateClub(ctx context.Context, name string, userId int) (int, error) {
+func (s *service) CreateClub(ctx context.Context, name string, userId uuid.UUID) (uuid.UUID, error) {
 	// Validate club name
 	if len(name) < 2 || len(name) > 50 {
-		return 0, fmt.Errorf("club name must be between 2 and 50 characters")
+		return uuid.Nil, fmt.Errorf("club name must be between 2 and 50 characters")
 	}
 
 	// Create club
@@ -66,7 +68,7 @@ func (s *service) CreateClub(ctx context.Context, name string, userId int) (int,
 	}
 	clubId, err := s.repo.CreateClub(ctx, club)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create club: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create club: %w", err)
 	}
 
 	// Create initial owner member
@@ -78,15 +80,15 @@ func (s *service) CreateClub(ctx context.Context, name string, userId int) (int,
 	if err := s.memberService.CreateMember(ctx, member); err != nil {
 		// If member creation fails, delete the club to maintain consistency
 		if delErr := s.repo.DeleteClub(ctx, clubId); delErr != nil {
-			return 0, fmt.Errorf("failed to create member and cleanup club: %w (cleanup error: %v)", err, delErr)
+			return uuid.Nil, fmt.Errorf("failed to create member and cleanup club: %w (cleanup error: %v)", err, delErr)
 		}
-		return 0, fmt.Errorf("failed to create initial owner member: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create initial owner member: %w", err)
 	}
 
 	return clubId, nil
 }
 
-func (s *service) DeleteClub(ctx context.Context, id int) error {
+func (s *service) DeleteClub(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.DeleteClub(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete club: %w", err)
 	}
@@ -94,7 +96,7 @@ func (s *service) DeleteClub(ctx context.Context, id int) error {
 	return nil
 }
 
-func (s *service) UpdateClub(ctx context.Context, id int, name string) error {
+func (s *service) UpdateClub(ctx context.Context, id uuid.UUID, name string) error {
 	if len(name) < 2 || len(name) > 50 {
 		return fmt.Errorf("club name must be between 2 and 50 characters")
 	}
@@ -106,7 +108,7 @@ func (s *service) UpdateClub(ctx context.Context, id int, name string) error {
 	return nil
 }
 
-func (s *service) GetGames(ctx context.Context, clubID int) ([]game.Game, error) {
+func (s *service) GetGames(ctx context.Context, clubID uuid.UUID) ([]game.Game, error) {
 	games, err := s.repo.GetGames(ctx, clubID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get games: %w", err)
@@ -115,7 +117,7 @@ func (s *service) GetGames(ctx context.Context, clubID int) ([]game.Game, error)
 	return games, nil
 }
 
-func (s *service) CreateInvite(ctx context.Context, clubId, userId int, initiator Initiator) error {
+func (s *service) CreateInvite(ctx context.Context, clubId, userId uuid.UUID, initiator Initiator) error {
 	// Check if user is already a member
 	isMember, err := s.repo.IsMember(ctx, userId, clubId)
 	if err != nil {
@@ -149,15 +151,15 @@ func (s *service) CreateInvite(ctx context.Context, clubId, userId int, initiato
 	return nil
 }
 
-func (s *service) GetPendingInvites(ctx context.Context, clubId int) ([]Invite, error) {
+func (s *service) GetPendingInvites(ctx context.Context, clubId uuid.UUID) ([]Invite, error) {
 	return s.repo.GetPendingInvites(ctx, clubId)
 }
 
-func (s *service) GetUserInvites(ctx context.Context, userId int) ([]Invite, error) {
+func (s *service) GetUserInvites(ctx context.Context, userId uuid.UUID) ([]Invite, error) {
 	return s.repo.GetUserInvites(ctx, userId)
 }
 
-func (s *service) AcceptInvite(ctx context.Context, inviteId int) error {
+func (s *service) AcceptInvite(ctx context.Context, inviteId uuid.UUID) error {
 	invite, err := s.repo.GetInvite(ctx, inviteId)
 	if err != nil {
 		return fmt.Errorf("failed to get invite: %w", err)
@@ -190,7 +192,7 @@ func (s *service) AcceptInvite(ctx context.Context, inviteId int) error {
 	return nil
 }
 
-func (s *service) RejectInvite(ctx context.Context, inviteId int) error {
+func (s *service) RejectInvite(ctx context.Context, inviteId uuid.UUID) error {
 	if err := s.repo.DeleteInvite(ctx, inviteId); err != nil {
 		return fmt.Errorf("failed to delete invite: %w", err)
 	}

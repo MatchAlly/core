@@ -6,19 +6,20 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 var ErrNotFound = fmt.Errorf("not found")
 
 type Repository interface {
-	CreateMatch(ctx context.Context, m *Match) (int, error)
-	GetMatches(ctx context.Context, clubID int) ([]Match, error)
-	GetMatchesByGame(ctx context.Context, clubID, gameID int) ([]Match, error)
-	GetTeam(ctx context.Context, teamID int) (*Team, error)
-	CreateTeam(ctx context.Context, clubID int, memberIDs []int) (int, error)
-	TeamOfMembersExists(ctx context.Context, clubID int, memberIDs []int) (bool, int, error)
-	IsClubMember(ctx context.Context, clubID, userID int) (bool, error)
+	CreateMatch(ctx context.Context, m *Match) (uuid.UUID, error)
+	GetMatches(ctx context.Context, clubID uuid.UUID) ([]Match, error)
+	GetMatchesByGame(ctx context.Context, clubID, gameID uuid.UUID) ([]Match, error)
+	GetTeam(ctx context.Context, teamID uuid.UUID) (*Team, error)
+	CreateTeam(ctx context.Context, clubID uuid.UUID, memberIDs []uuid.UUID) (uuid.UUID, error)
+	TeamOfMembersExists(ctx context.Context, clubID uuid.UUID, memberIDs []uuid.UUID) (bool, uuid.UUID, error)
+	IsClubMember(ctx context.Context, clubID, userID uuid.UUID) (bool, error)
 }
 
 type repository struct {
@@ -31,13 +32,13 @@ func NewRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (r *repository) CreateMatch(ctx context.Context, m *Match) (int, error) {
-	var matchID int
+func (r *repository) CreateMatch(ctx context.Context, m *Match) (uuid.UUID, error) {
+	var matchID uuid.UUID
 
 	// Start a transaction
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -46,7 +47,7 @@ func (r *repository) CreateMatch(ctx context.Context, m *Match) (int, error) {
 		"INSERT INTO matches (club_id, game_id, mode, ranked, sets) VALUES ($1, $2, $3, $4, $5) RETURNING id",
 		m.ClubID, m.GameID, m.Gamemode, m.Ranked, m.Sets).Scan(&matchID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create match: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create match: %w", err)
 	}
 
 	// Create match-team associations
@@ -55,20 +56,20 @@ func (r *repository) CreateMatch(ctx context.Context, m *Match) (int, error) {
 			"INSERT INTO match_teams (match_id, team_id, team_number) VALUES ($1, $2, $3)",
 			matchID, team.ID, i+1)
 		if err != nil {
-			return 0, fmt.Errorf("failed to create match-team association: %w", err)
+			return uuid.Nil, fmt.Errorf("failed to create match-team association: %w", err)
 		}
 	}
 
 	// Commit the transaction
 	if err = tx.Commit(); err != nil {
-		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return matchID, nil
 }
 
-func (r *repository) GetMatches(ctx context.Context, clubID int) ([]Match, error) {
-	matchesMap := make(map[int]*Match)
+func (r *repository) GetMatches(ctx context.Context, clubID uuid.UUID) ([]Match, error) {
+	matchesMap := make(map[uuid.UUID]*Match)
 
 	rows, err := r.db.QueryxContext(ctx, `
 			SELECT
@@ -119,7 +120,7 @@ func (r *repository) GetMatches(ctx context.Context, clubID int) ([]Match, error
 			matchesMap[m.ID] = match
 		}
 
-		if t.ID != 0 {
+		if t.ID != uuid.Nil {
 			teamExists := false
 			for i := range match.Teams {
 				if match.Teams[i].ID == t.ID {
@@ -146,8 +147,8 @@ func (r *repository) GetMatches(ctx context.Context, clubID int) ([]Match, error
 	return matches, nil
 }
 
-func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID int) ([]Match, error) {
-	matchesMap := make(map[int]*Match)
+func (r *repository) GetMatchesByGame(ctx context.Context, clubID uuid.UUID, gameID uuid.UUID) ([]Match, error) {
+	matchesMap := make(map[uuid.UUID]*Match)
 
 	rows, err := r.db.QueryxContext(ctx, `
         SELECT
@@ -198,7 +199,7 @@ func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID in
 			matchesMap[m.ID] = match
 		}
 
-		if t.ID != 0 {
+		if t.ID != uuid.Nil {
 			teamExists := false
 			for i := range match.Teams {
 				if match.Teams[i].ID == t.ID {
@@ -226,7 +227,7 @@ func (r *repository) GetMatchesByGame(ctx context.Context, clubID int, gameID in
 	return matches, nil
 }
 
-func (r *repository) GetTeam(ctx context.Context, teamID int) (*Team, error) {
+func (r *repository) GetTeam(ctx context.Context, teamID uuid.UUID) (*Team, error) {
 	const teamQuery = `SELECT * FROM teams WHERE id = $1`
 
 	var team Team
@@ -256,13 +257,13 @@ func (r *repository) GetTeam(ctx context.Context, teamID int) (*Team, error) {
 	return &team, nil
 }
 
-func (r *repository) CreateTeam(ctx context.Context, clubID int, memberIDs []int) (int, error) {
-	var teamID int
+func (r *repository) CreateTeam(ctx context.Context, clubID uuid.UUID, memberIDs []uuid.UUID) (uuid.UUID, error) {
+	var teamID uuid.UUID
 
 	// Start a transaction
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -271,7 +272,7 @@ func (r *repository) CreateTeam(ctx context.Context, clubID int, memberIDs []int
 		"INSERT INTO teams (club_id) VALUES ($1) RETURNING id",
 		clubID).Scan(&teamID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create team: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create team: %w", err)
 	}
 
 	// Add team members
@@ -280,19 +281,19 @@ func (r *repository) CreateTeam(ctx context.Context, clubID int, memberIDs []int
 			"INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)",
 			teamID, memberID)
 		if err != nil {
-			return 0, fmt.Errorf("failed to add team member: %w", err)
+			return uuid.Nil, fmt.Errorf("failed to add team member: %w", err)
 		}
 	}
 
 	// Commit the transaction
 	if err = tx.Commit(); err != nil {
-		return 0, fmt.Errorf("failed to commit transaction: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return teamID, nil
 }
 
-func (r *repository) TeamOfMembersExists(ctx context.Context, clubID int, memberIDs []int) (bool, int, error) {
+func (r *repository) TeamOfMembersExists(ctx context.Context, clubID uuid.UUID, memberIDs []uuid.UUID) (bool, uuid.UUID, error) {
 	const query = `
 		WITH team_candidates AS (
 			SELECT t.id as team_id
@@ -313,19 +314,19 @@ func (r *repository) TeamOfMembersExists(ctx context.Context, clubID int, member
 		WHERE member_count = array_length($2, 1)
 		AND matching_members = array_length($2, 1)`
 
-	var teamID int
+	var teamID uuid.UUID
 	err := r.db.GetContext(ctx, &teamID, query, clubID, memberIDs)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, 0, nil
+			return false, uuid.Nil, nil
 		}
-		return false, 0, err
+		return false, uuid.Nil, err
 	}
 
 	return true, teamID, nil
 }
 
-func (r *repository) IsClubMember(ctx context.Context, clubID, userID int) (bool, error) {
+func (r *repository) IsClubMember(ctx context.Context, clubID, userID uuid.UUID) (bool, error) {
 	var count int
 	err := r.db.GetContext(ctx, &count,
 		"SELECT COUNT(*) FROM members WHERE club_id = $1 AND user_id = $2",

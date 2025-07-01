@@ -4,12 +4,14 @@ import (
 	"core/internal/game"
 	"core/internal/member"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Match struct {
-	ID        int       `json:"id" db:"id"`
-	ClubID    int       `json:"club_id" db:"club_id"`
-	GameID    int       `json:"game_id" db:"game_id"`
+	ID        uuid.UUID `json:"id" db:"id"`
+	ClubID    uuid.UUID `json:"club_id" db:"club_id"`
+	GameID    uuid.UUID `json:"game_id" db:"game_id"`
 	Gamemode  game.Mode `json:"gamemode" db:"gamemode"`
 	Ranked    bool      `json:"ranked" db:"ranked"`
 	Sets      []string  `json:"sets" db:"sets"`
@@ -18,7 +20,7 @@ type Match struct {
 }
 
 type Team struct {
-	ID      int             `json:"id" db:"id"`
-	ClubID  int             `json:"club_id" db:"club_id"`
+	ID      uuid.UUID       `json:"id" db:"id"`
+	ClubID  uuid.UUID       `json:"club_id" db:"club_id"`
 	Members []member.Member `json:"members,omitempty"` // Must be loaded by joins
 }

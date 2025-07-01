@@ -7,6 +7,7 @@ import (
 
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -18,13 +19,13 @@ var (
 )
 
 type Repository interface {
-	GetUser(ctx context.Context, id int) (*User, error)
+	GetUser(ctx context.Context, id uuid.UUID) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
-	CreateUser(ctx context.Context, user *User) (int, error)
-	DeleteUser(ctx context.Context, id int) error
+	CreateUser(ctx context.Context, user *User) (uuid.UUID, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
 	UpdateUser(ctx context.Context, user *User) error
-	UpdatePassword(ctx context.Context, userID int, hash string) error
-	UpdateLastLogin(ctx context.Context, userID int) error
+	UpdatePassword(ctx context.Context, userID uuid.UUID, hash string) error
+	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 }
 
 type repository struct {
@@ -37,7 +38,7 @@ func NewRepository(db *sqlx.DB) Repository {
 	}
 }
 
-func (r *repository) GetUser(ctx context.Context, id int) (*User, error) {
+func (r *repository) GetUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	var user User
 
 	err := r.db.GetContext(ctx, &user, "SELECT * FROM users WHERE id = $1", id)
@@ -65,20 +66,20 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 	return &user, nil
 }
 
-func (r *repository) CreateUser(ctx context.Context, user *User) (int, error) {
-	var id int
+func (r *repository) CreateUser(ctx context.Context, user *User) (uuid.UUID, error) {
+	var id uuid.UUID
 
 	err := r.db.QueryRowContext(ctx,
 		"INSERT INTO users (email, name, hash) VALUES ($1, $2, $3) RETURNING id",
 		user.Email, user.Name, user.Hash).Scan(&id)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 
 	return id, nil
 }
 
-func (r *repository) DeleteUser(ctx context.Context, id int) error {
+func (r *repository) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id)
 	if err != nil {
 		return err
@@ -96,7 +97,7 @@ func (r *repository) UpdateUser(ctx context.Context, user *User) error {
 	return nil
 }
 
-func (r *repository) UpdatePassword(ctx context.Context, userID int, hash string) error {
+func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, hash string) error {
 	_, err := r.db.ExecContext(ctx, "UPDATE users SET hash = $1 WHERE id = $2", hash, userID)
 	if err != nil {
 		return err
@@ -105,7 +106,7 @@ func (r *repository) UpdatePassword(ctx context.Context, userID int, hash string
 	return nil
 }
 
-func (r *repository) UpdateLastLogin(ctx context.Context, userID int) error {
+func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
 	_, err := r.db.ExecContext(ctx, "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1", userID)
 	if err != nil {
 		return err

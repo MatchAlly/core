@@ -1,6 +1,10 @@
 package subscription
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Tier string
 
@@ -12,8 +16,8 @@ const (
 )
 
 type Subscription struct {
-	ID        int       `db:"id"`
-	UserID    int       `db:"user_id"`
+	ID        uuid.UUID `db:"id"`
+	UserID    uuid.UUID `db:"user_id"`
 	Tier      Tier      `db:"tier"`
 	CreatedAt time.Time `db:"created_at"`
 }

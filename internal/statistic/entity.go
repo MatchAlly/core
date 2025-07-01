@@ -1,11 +1,15 @@
 package statistic
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Statistic struct {
-	ID        int       `db:"id"`
-	MemberId  int       `db:"member_id"`
-	GameId    int       `db:"game_id"`
+	ID        uuid.UUID `db:"id"`
+	MemberId  uuid.UUID `db:"member_id"`
+	GameId    uuid.UUID `db:"game_id"`
 	Wins      int       `db:"wins"`
 	Draws     int       `db:"draws"`
 	Losses    int       `db:"losses"`

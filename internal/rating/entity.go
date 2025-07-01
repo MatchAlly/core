@@ -2,6 +2,8 @@ package rating
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -10,9 +12,9 @@ const (
 )
 
 type Rating struct {
-	ID        int       `db:"id"`
-	MemberID  int       `db:"member_id"`
-	GameID    int       `db:"game_id"`
+	ID        uuid.UUID `db:"id"`
+	MemberID  uuid.UUID `db:"member_id"`
+	GameID    uuid.UUID `db:"game_id"`
 	Mu        float64   `db:"mu"`
 	Sigma     float64   `db:"sigma"`
 	CreatedAt time.Time `db:"created_at"`

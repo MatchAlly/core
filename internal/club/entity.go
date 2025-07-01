@@ -1,6 +1,10 @@
 package club
 
-import "core/internal/member"
+import (
+	"core/internal/member"
+
+	"github.com/google/uuid"
+)
 
 type Initiator int
 
@@ -11,15 +15,15 @@ const (
 )
 
 type Club struct {
-	ID        int    `db:"id"`
-	Name      string `db:"name"`
-	CreatedAt string `db:"created_at"`
+	ID        uuid.UUID `db:"id"`
+	Name      string    `db:"name"`
+	CreatedAt string    `db:"created_at"`
 }
 
 type Invite struct {
-	ID        int         `db:"id"`
-	ClubId    int         `db:"club_id"`
-	UserId    int         `db:"user_id"`
+	ID        uuid.UUID   `db:"id"`
+	ClubId    uuid.UUID   `db:"club_id"`
+	UserId    uuid.UUID   `db:"user_id"`
 	Initiator Initiator   `db:"initiator"`
 	Role      member.Role `db:"role"`
 }

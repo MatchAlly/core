@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 )
 
 type updateUserRequest struct {
-	UserID int `path:"userId" minimum:"1"`
+	UserID uuid.UUID `path:"userId"`
 	Body   struct {
 		Email string `json:"userId" format:"email"`
 		Name  string `json:"name" minLength:"1" maxLength:"50"`
@@ -22,7 +23,7 @@ type updateUserResponse struct {
 }
 
 func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*updateUserResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -46,11 +47,11 @@ func (h *Handler) UpdateUser(ctx context.Context, req *updateUserRequest) (*upda
 }
 
 type deleteUserRequest struct {
-	UserID int `path:"userId" minimum:"1" `
+	UserID uuid.UUID `path:"userId"`
 }
 
 func (h *Handler) DeleteUser(ctx context.Context, req *deleteUserRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")

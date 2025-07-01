@@ -5,10 +5,11 @@ import (
 	"core/internal/member"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 )
 
 type getMembershipsRequest struct {
-	UserID int `path:"userId" minimum:"1"`
+	UserID uuid.UUID `path:"userId" minimum:"1"`
 }
 
 type getMembershipsResponse struct {
@@ -18,8 +19,8 @@ type getMembershipsResponse struct {
 }
 
 type getMembershipsResponseClub struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 func (h *Handler) GetMemberships(ctx context.Context, req *getMembershipsRequest) (*getMembershipsResponse, error) {
@@ -29,7 +30,7 @@ func (h *Handler) GetMemberships(ctx context.Context, req *getMembershipsRequest
 		return nil, huma.Error500InternalServerError("failed to get memberships, try again later")
 	}
 
-	clubIDs := make([]int, len(memberships))
+	clubIDs := make([]uuid.UUID, len(memberships))
 	for i, m := range memberships {
 		clubIDs[i] = m.ClubID
 	}
@@ -60,13 +61,13 @@ type createClubRequest struct {
 
 type createClubResponse struct {
 	Body struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
 	}
 }
 
 func (h *Handler) CreateClub(ctx context.Context, req *createClubRequest) (*createClubResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -86,7 +87,7 @@ func (h *Handler) CreateClub(ctx context.Context, req *createClubRequest) (*crea
 }
 
 type deleteClubRequest struct {
-	ClubID int `path:"clubId"  minimum:"1"`
+	ClubID uuid.UUID `path:"clubId"  minimum:"1"`
 }
 
 func (h *Handler) DeleteClub(ctx context.Context, req *deleteClubRequest) (*struct{}, error) {
@@ -99,7 +100,7 @@ func (h *Handler) DeleteClub(ctx context.Context, req *deleteClubRequest) (*stru
 }
 
 type updateClubRequest struct {
-	ClubID int `path:"clubId" minimum:"1"`
+	ClubID uuid.UUID `path:"clubId" minimum:"1"`
 	Body   struct {
 		Name string `json:"name" minLength:"2" maxLength:"64"`
 	}
@@ -107,13 +108,13 @@ type updateClubRequest struct {
 
 type updateClubResponse struct {
 	Body struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
 	}
 }
 
 func (h *Handler) UpdateClub(ctx context.Context, req *updateClubRequest) (*updateClubResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -141,15 +142,15 @@ func (h *Handler) UpdateClub(ctx context.Context, req *updateClubRequest) (*upda
 }
 
 type updateMemberRoleRequest struct {
-	ClubID   int `path:"clubId" minimum:"1"`
-	MemberID int `path:"memberId" minimum:"1"`
+	ClubID   uuid.UUID `path:"clubId" minimum:"1"`
+	MemberID uuid.UUID `path:"memberId" minimum:"1"`
 	Body     struct {
 		Role member.Role `json:"role" enum:"ADMIN,MANAGER,MEMBER"`
 	}
 }
 
 func (h *Handler) UpdateMemberRole(ctx context.Context, req *updateMemberRoleRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -173,7 +174,7 @@ func (h *Handler) UpdateMemberRole(ctx context.Context, req *updateMemberRoleReq
 }
 
 type getMembersInClubRequest struct {
-	ClubId int `path:"clubId" minimum:"1"`
+	ClubId uuid.UUID `path:"clubId" minimum:"1"`
 }
 
 type getMembersInClubResponse struct {
@@ -183,12 +184,12 @@ type getMembersInClubResponse struct {
 }
 
 type membersInClub struct {
-	Id   int    `json:"id"`
-	Role string `json:"role"`
+	Id   uuid.UUID `json:"id"`
+	Role string    `json:"role"`
 }
 
 func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubRequest) (*getMembersInClubResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -224,12 +225,12 @@ func (h *Handler) GetMembersInClub(ctx context.Context, req *getMembersInClubReq
 }
 
 type removeUserFromClubRequest struct {
-	ClubId   int `path:"clubId" minimum:"1"`
-	MemberId int `path:"memberId" minimum:"1"`
+	ClubId   uuid.UUID `path:"clubId" minimum:"1"`
+	MemberId uuid.UUID `path:"memberId" minimum:"1"`
 }
 
 func (h *Handler) RemoveMemberFromClub(ctx context.Context, req *removeUserFromClubRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")

@@ -6,10 +6,10 @@ import (
 	"core/internal/subscription"
 	"core/internal/user"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -150,7 +150,7 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 		return "", "", fmt.Errorf("failed to verify refresh token: %w", err)
 	}
 
-	userId, err := strconv.Atoi(claims.Subject)
+	userId, err := uuid.Parse(claims.Subject)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to parse user id: %w", err)
 	}
@@ -163,7 +163,7 @@ func (s *service) RefreshTokens(ctx context.Context, refreshToken string) (strin
 	return accessToken, newRefreshToken, nil
 }
 
-func (s *service) generateTokenPair(ctx context.Context, userId int) (string, string, error) {
+func (s *service) generateTokenPair(ctx context.Context, userId uuid.UUID) (string, string, error) {
 	sub, err := s.subscriptionService.GetByUserID(ctx, userId)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get subscription: %w", err)
@@ -173,7 +173,7 @@ func (s *service) generateTokenPair(ctx context.Context, userId int) (string, st
 
 	accessclaims := AccessClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   strconv.Itoa(userId),
+			Subject:   userId.String(),
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.AccessExpiry)),
 		},
@@ -188,7 +188,7 @@ func (s *service) generateTokenPair(ctx context.Context, userId int) (string, st
 
 	refreshClaims := RefreshClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   strconv.Itoa(userId),
+			Subject:   userId.String(),
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.RefreshExpiry)),
 		},

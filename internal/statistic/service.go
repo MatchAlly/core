@@ -3,12 +3,14 @@ package statistic
 import (
 	"context"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	UpdateStatistics(ctx context.Context, memberID, gameID int, won, drawn bool) error
-	GetStatistics(ctx context.Context, memberID, gameID int) (*Statistic, error)
-	GetStatisticsByGame(ctx context.Context, gameID int) ([]Statistic, error)
+	UpdateStatistics(ctx context.Context, memberID, gameID uuid.UUID, won, drawn bool) error
+	GetStatistics(ctx context.Context, memberID, gameID uuid.UUID) (*Statistic, error)
+	GetStatisticsByGame(ctx context.Context, gameID uuid.UUID) ([]Statistic, error)
 }
 
 type service struct {
@@ -21,7 +23,7 @@ func NewService(repo Repository) Service {
 	}
 }
 
-func (s *service) UpdateStatistics(ctx context.Context, memberID, gameID int, won, drawn bool) error {
+func (s *service) UpdateStatistics(ctx context.Context, memberID, gameID uuid.UUID, won, drawn bool) error {
 	stats, err := s.repo.GetStatistics(ctx, memberID, gameID)
 	if err != nil {
 		// If statistics don't exist, create new ones
@@ -55,7 +57,7 @@ func (s *service) UpdateStatistics(ctx context.Context, memberID, gameID int, wo
 		}
 	}
 
-	if stats.ID == 0 {
+	if stats.ID == uuid.Nil {
 		// Create new statistics
 		_, err = s.repo.CreateStatistics(ctx, stats)
 	} else {
@@ -70,7 +72,7 @@ func (s *service) UpdateStatistics(ctx context.Context, memberID, gameID int, wo
 	return nil
 }
 
-func (s *service) GetStatistics(ctx context.Context, memberID, gameID int) (*Statistic, error) {
+func (s *service) GetStatistics(ctx context.Context, memberID, gameID uuid.UUID) (*Statistic, error) {
 	stats, err := s.repo.GetStatistics(ctx, memberID, gameID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get statistics: %w", err)
@@ -78,7 +80,7 @@ func (s *service) GetStatistics(ctx context.Context, memberID, gameID int) (*Sta
 	return stats, nil
 }
 
-func (s *service) GetStatisticsByGame(ctx context.Context, gameID int) ([]Statistic, error) {
+func (s *service) GetStatisticsByGame(ctx context.Context, gameID uuid.UUID) ([]Statistic, error) {
 	stats, err := s.repo.GetStatisticsByGame(ctx, gameID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get statistics by game: %w", err)

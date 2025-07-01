@@ -4,12 +4,13 @@ go 1.24.0
 
 require (
 	github.com/Sebsh1/openskill.go v0.0.0-20250103115416-4f6fe287ccb0
-	github.com/danielgtaylor/huma/v2 v2.32.0
+	github.com/danielgtaylor/huma/v2 v2.34.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/labstack/echo/v4 v4.13.4
-	github.com/redis/go-redis/v9 v9.10.0
+	github.com/redis/go-redis/v9 v9.11.0
 	golang.org/x/crypto v0.39.0
 )
 

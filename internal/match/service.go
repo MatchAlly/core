@@ -6,12 +6,14 @@ import (
 	"core/internal/rating"
 	"core/internal/statistic"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	CreateMatch(ctx context.Context, clubID, gameID int, teams []Team, sets []string, mode game.Mode) (int, error)
-	GetMatches(ctx context.Context, clubID int, gameID *int) ([]Match, error)
-	GetOrCreateTeams(ctx context.Context, clubID int, members [][]int) ([]Team, error)
+	CreateMatch(ctx context.Context, clubID, gameID uuid.UUID, teams []Team, sets []string, mode game.Mode) (uuid.UUID, error)
+	GetMatches(ctx context.Context, clubID uuid.UUID, gameID *uuid.UUID) ([]Match, error)
+	GetOrCreateTeams(ctx context.Context, clubID uuid.UUID, members [][]uuid.UUID) ([]Team, error)
 }
 
 type service struct {
@@ -30,7 +32,7 @@ func NewService(repo Repository, game game.Service, rating rating.Service, stati
 	}
 }
 
-func (s *service) validateTeamMembers(ctx context.Context, clubID int, memberIDs []int) error {
+func (s *service) validateTeamMembers(ctx context.Context, clubID uuid.UUID, memberIDs []uuid.UUID) error {
 	for _, memberID := range memberIDs {
 		isMember, err := s.repo.IsClubMember(ctx, clubID, memberID)
 		if err != nil {
@@ -43,7 +45,7 @@ func (s *service) validateTeamMembers(ctx context.Context, clubID int, memberIDs
 	return nil
 }
 
-func (s *service) validateGameMode(ctx context.Context, gameID int, mode game.Mode, numTeams int) error {
+func (s *service) validateGameMode(ctx context.Context, gameID uuid.UUID, mode game.Mode, numTeams int) error {
 	modes, err := s.game.GetGameModes(ctx, gameID)
 	if err != nil {
 		return fmt.Errorf("failed to get game modes: %w", err)
@@ -80,30 +82,30 @@ func (s *service) validateGameMode(ctx context.Context, gameID int, mode game.Mo
 	return nil
 }
 
-func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teams []Team, sets []string, mode game.Mode) (int, error) {
+func (s *service) CreateMatch(ctx context.Context, clubID, gameID uuid.UUID, teams []Team, sets []string, mode game.Mode) (uuid.UUID, error) {
 	// Validate game exists in club
 	g, err := s.game.GetGame(ctx, gameID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get game: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to get game: %w", err)
 	}
 	if g.ClubID != clubID {
-		return 0, fmt.Errorf("game does not belong to the specified club")
+		return uuid.Nil, fmt.Errorf("game does not belong to the specified club")
 	}
 
 	// Validate team members
 	for _, team := range teams {
-		memberIDs := make([]int, len(team.Members))
+		memberIDs := make([]uuid.UUID, len(team.Members))
 		for i, member := range team.Members {
 			memberIDs[i] = member.UserID
 		}
 		if err := s.validateTeamMembers(ctx, clubID, memberIDs); err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
 	}
 
 	// Validate game mode and number of teams
 	if err := s.validateGameMode(ctx, gameID, mode, len(teams)); err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 
 	m := &Match{
@@ -117,7 +119,7 @@ func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teams []T
 
 	matchID, err := s.repo.CreateMatch(ctx, m)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create match: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create match: %w", err)
 	}
 
 	// Update statistics for each player
@@ -136,9 +138,9 @@ func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teams []T
 	// Update ratings if the match is ranked
 	if m.Ranked {
 		// Convert teams to member IDs for rating update
-		teamsByMemberIDs := make([][]int, len(teams))
+		teamsByMemberIDs := make([][]uuid.UUID, len(teams))
 		for i, team := range teams {
-			memberIDs := make([]int, len(team.Members))
+			memberIDs := make([]uuid.UUID, len(team.Members))
 			for j, member := range team.Members {
 				memberIDs[j] = member.ID
 			}
@@ -165,7 +167,7 @@ func (s *service) CreateMatch(ctx context.Context, clubID, gameID int, teams []T
 	return matchID, nil
 }
 
-func (s *service) GetMatches(ctx context.Context, clubID int, gameID *int) ([]Match, error) {
+func (s *service) GetMatches(ctx context.Context, clubID uuid.UUID, gameID *uuid.UUID) ([]Match, error) {
 	var matches []Match
 	var err error
 
@@ -184,7 +186,7 @@ func (s *service) GetMatches(ctx context.Context, clubID int, gameID *int) ([]Ma
 	return matches, nil
 }
 
-func (s *service) GetOrCreateTeams(ctx context.Context, clubID int, memberIDTeams [][]int) ([]Team, error) {
+func (s *service) GetOrCreateTeams(ctx context.Context, clubID uuid.UUID, memberIDTeams [][]uuid.UUID) ([]Team, error) {
 	teams := make([]Team, 0, len(memberIDTeams))
 
 	for _, memberIDTeam := range memberIDTeams {

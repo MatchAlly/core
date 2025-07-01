@@ -5,10 +5,11 @@ import (
 	"core/internal/game"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 )
 
 type getClubGamesRequest struct {
-	ClubId int `path:"clubId" minimum:"1"`
+	ClubId uuid.UUID `path:"clubId"`
 }
 
 type getClubGamesResponse struct {
@@ -18,12 +19,12 @@ type getClubGamesResponse struct {
 }
 
 type getClubGamesResponseGame struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*getClubGamesResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -59,7 +60,7 @@ func (h *Handler) GetClubGames(ctx context.Context, req *getClubGamesRequest) (*
 }
 
 type postClubGameRequest struct {
-	ClubID int `path:"clubId" minimum:"1"`
+	ClubID uuid.UUID `path:"clubId"`
 	Body   struct {
 		Name string `json:"name" minLength:"1" maxLength:"50"`
 	}
@@ -67,13 +68,13 @@ type postClubGameRequest struct {
 
 type postClubGameResponse struct {
 	Body struct {
-		GameID int    `json:"gameId"`
-		Name   string `json:"name"`
+		GameID uuid.UUID `json:"gameId"`
+		Name   string    `json:"name"`
 	}
 }
 
 func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*postClubGameResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -102,7 +103,7 @@ func (h *Handler) PostClubGame(ctx context.Context, req *postClubGameRequest) (*
 }
 
 type getGameModesRequest struct {
-	GameID int `path:"gameId" minimum:"1"`
+	GameID uuid.UUID `path:"gameId"`
 }
 
 type getGameModesResponse struct {
@@ -112,12 +113,12 @@ type getGameModesResponse struct {
 }
 
 type getGameModesResponseMode struct {
-	ID   int    `json:"id"`
-	Mode string `json:"mode"`
+	ID   uuid.UUID `json:"id"`
+	Mode string    `json:"mode"`
 }
 
 func (h *Handler) GetGameModes(ctx context.Context, req *getGameModesRequest) (*getGameModesResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -159,14 +160,14 @@ func (h *Handler) GetGameModes(ctx context.Context, req *getGameModesRequest) (*
 }
 
 type postGameModeRequest struct {
-	GameID int `path:"gameId" minimum:"1"`
+	GameID uuid.UUID `path:"gameId"`
 	Body   struct {
 		Mode string `json:"mode" enum:"FREE_FOR_ALL,TEAM,COOP"`
 	}
 }
 
 func (h *Handler) PostGameMode(ctx context.Context, req *postGameModeRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -208,12 +209,12 @@ func (h *Handler) PostGameMode(ctx context.Context, req *postGameModeRequest) (*
 }
 
 type deleteGameModeRequest struct {
-	GameID int    `path:"gameId" minimum:"1"`
-	Mode   string `path:"mode" enum:"FREE_FOR_ALL,TEAM,COOP"`
+	GameID uuid.UUID `path:"gameId"`
+	Mode   string    `path:"mode" enum:"FREE_FOR_ALL,TEAM,COOP"`
 }
 
 func (h *Handler) DeleteGameMode(ctx context.Context, req *deleteGameModeRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -255,11 +256,11 @@ func (h *Handler) DeleteGameMode(ctx context.Context, req *deleteGameModeRequest
 }
 
 type deleteGameRequest struct {
-	GameID int `path:"gameId" minimum:"1"`
+	GameID uuid.UUID `path:"gameId"`
 }
 
 func (h *Handler) DeleteGame(ctx context.Context, req *deleteGameRequest) (*struct{}, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")
@@ -289,7 +290,7 @@ func (h *Handler) DeleteGame(ctx context.Context, req *deleteGameRequest) (*stru
 }
 
 type putGameRequest struct {
-	GameID int `path:"gameId" minimum:"1"`
+	GameID uuid.UUID `path:"gameId"`
 	Body   struct {
 		Name string `json:"name" minLength:"1" maxLength:"50"`
 	}
@@ -297,13 +298,13 @@ type putGameRequest struct {
 
 type putGameResponse struct {
 	Body struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
 	}
 }
 
 func (h *Handler) PutGame(ctx context.Context, req *putGameRequest) (*putGameResponse, error) {
-	userID, ok := ctx.Value("user_id").(int)
+	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
 		h.l.Error("failed to get user id from context")
 		return nil, huma.Error500InternalServerError("failed to get user id from context")

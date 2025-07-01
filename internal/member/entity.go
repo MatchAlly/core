@@ -1,5 +1,7 @@
 package member
 
+import "github.com/google/uuid"
+
 type Role string
 
 const (
@@ -12,8 +14,8 @@ const (
 )
 
 type Member struct {
-	ID     int  `db:"id"`
-	ClubID int  `db:"club_id"`
-	UserID int  `db:"user_id"`
-	Role   Role `db:"role"`
+	ID     uuid.UUID `db:"id"`
+	ClubID uuid.UUID `db:"club_id"`
+	UserID uuid.UUID `db:"user_id"`
+	Role   Role      `db:"role"`
 }

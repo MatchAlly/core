@@ -3,13 +3,14 @@ package rating
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type Repository interface {
-	GetRatingByMemberId(ctx context.Context, memberId int) (*Rating, error)
-	GetRatingsByMemberIds(ctx context.Context, memberIds []int) ([]Rating, error)
-	CreateRating(ctx context.Context, rating *Rating) (int, error)
+	GetRatingByMemberId(ctx context.Context, memberId uuid.UUID) (*Rating, error)
+	GetRatingsByMemberIds(ctx context.Context, memberIds []uuid.UUID) ([]Rating, error)
+	CreateRating(ctx context.Context, rating *Rating) (uuid.UUID, error)
 	UpdateRating(ctx context.Context, ratings *Rating) error
 	UpdateRatings(ctx context.Context, ratings []Rating) error
 }
@@ -22,7 +23,7 @@ func NewRepository(db *sqlx.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetRatingByMemberId(ctx context.Context, memberId int) (*Rating, error) {
+func (r *repository) GetRatingByMemberId(ctx context.Context, memberId uuid.UUID) (*Rating, error) {
 	var rating *Rating
 
 	err := r.db.GetContext(ctx, rating, "SELECT * FROM ratings WHERE member_id = $1", memberId)
@@ -33,7 +34,7 @@ func (r *repository) GetRatingByMemberId(ctx context.Context, memberId int) (*Ra
 	return rating, nil
 }
 
-func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []int) ([]Rating, error) {
+func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []uuid.UUID) ([]Rating, error) {
 	var ratings []Rating
 
 	query, args, err := sqlx.In("SELECT * FROM ratings WHERE member_id IN (?)", memberIds)
@@ -50,14 +51,14 @@ func (r *repository) GetRatingsByMemberIds(ctx context.Context, memberIds []int)
 	return ratings, nil
 }
 
-func (r *repository) CreateRating(ctx context.Context, rating *Rating) (int, error) {
-	var id int
+func (r *repository) CreateRating(ctx context.Context, rating *Rating) (uuid.UUID, error) {
+	var id uuid.UUID
 
 	err := r.db.QueryRowContext(ctx,
 		"INSERT INTO ratings (member_id, game_id, mu, sigma) VALUES ($1, $2, $3, $4) RETURNING id",
 		rating.MemberID, rating.GameID, rating.Mu, rating.Sigma).Scan(&id)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 
 	return id, nil
